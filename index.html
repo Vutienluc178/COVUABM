@@ -1,752 +1,1363 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đại Cẩm Nang Khai Cuộc Cờ Vua - Pro Version</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đại Cẩm Nang Khai Cuộc Cờ Vua - Pro Version</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+.custom-scrollbar::-webkit-scrollbar{width:6px}
+.custom-scrollbar::-webkit-scrollbar-track{background:#f1f1f1}
+.custom-scrollbar::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+.tag-white{background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:bold}
+.tag-black{background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:bold}
+.tag-basic{background:#e0f2fe;color:#075985;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:bold}
+.category-header{cursor:pointer;transition:background .2s}
+.category-header:hover{background:#e2e8f0}
+.category-icon{transition:transform .3s}
+.category-open .category-icon{transform:rotate(180deg)}
+.variation-btn{transition:all .2s;border-left:3px solid transparent}
+.variation-btn:hover:not(.active){background:#f8fafc;border-left-color:#cbd5e1}
+.variation-btn.active{background:#0f172a;color:white;border-left-color:#3b82f6}
+.variation-btn.active .tag-basic,.variation-btn.active .tag-white,.variation-btn.active .tag-black{opacity:.9}
+.variation-list{display:none}
+.category-open .variation-list{display:block}
+.blur-text{filter:blur(5px);user-select:none;transition:filter .3s}
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+/* Tab system */
+.tab-btn{flex:1;padding:.5rem .25rem;font-size:.7rem;font-weight:700;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;text-align:center;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap}
+.tab-btn.active{border-bottom-color:#f59e0b;color:#b45309;background:#fffbeb}
+.tab-btn:not(.active){color:#64748b}
+.tab-btn:not(.active):hover{color:#334155;background:#f8fafc}
 
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+/* Level & XP */
+.level-badge{display:inline-flex;align-items:center;gap:4px;background:#f59e0b;color:#1e293b;font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.xp-track{background:#334155;border-radius:999px;height:6px;overflow:hidden;min-width:80px}
+.xp-fill{background:linear-gradient(90deg,#f59e0b,#ef4444);height:100%;border-radius:999px;transition:width .7s ease}
 
-    <!-- Chessboard.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+/* Toast */
+#toast-container{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
+.toast{pointer-events:none;padding:.6rem 1rem;border-radius:.5rem;font-size:.8rem;font-weight:700;color:white;box-shadow:0 4px 12px rgba(0,0,0,.25);animation:slideIn .3s ease;max-width:260px}
+.toast-xp{background:linear-gradient(135deg,#059669,#10b981)}
+.toast-level{background:linear-gradient(135deg,#d97706,#f59e0b);color:#1e293b}
+.toast-chain{background:linear-gradient(135deg,#7c3aed,#a78bfa);color:white}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+/* Flashcard Modal */
+#flashcard-modal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
+#flashcard-modal.open{display:flex}
+.fc-card{background:white;border-radius:1rem;padding:1.5rem;max-width:520px;width:95%;box-shadow:0 25px 50px rgba(0,0,0,.4);max-height:95vh;overflow-y:auto}
+.fc-answer-btn{padding:.6rem .75rem;border-radius:.5rem;font-size:.8rem;font-weight:600;cursor:pointer;border:2px solid #e2e8f0;background:white;text-align:left;transition:all .2s;line-height:1.3}
+.fc-answer-btn:hover:not(:disabled){background:#f0f9ff;border-color:#60a5fa}
+.fc-answer-btn.correct{background:#d1fae5;border-color:#059669;color:#065f46}
+.fc-answer-btn.wrong{background:#fee2e2;border-color:#dc2626;color:#991b1b}
 
-    <style>
-        body {
-            background-color: #f1f5f9;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* Chain indicator */
+.chain-dot{width:12px;height:12px;border-radius:50%;background:#cbd5e1;transition:background .3s}
+.chain-dot.done{background:#10b981}
+.chain-dot.active{background:#f59e0b;box-shadow:0 0 0 3px #fef3c7}
 
-        .tag-white { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
-        .tag-black { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
-        .tag-basic { background: #e0f2fe; color: #075985; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
+/* Stats panel */
+.stat-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:.5rem;padding:.75rem;text-align:center}
+.stat-num{font-size:1.5rem;font-weight:800;color:#0f172a}
+.stat-label{font-size:.65rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.lesson-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem .5rem;border-radius:.375rem;font-size:.72rem;border-left:3px solid #e2e8f0}
+.lesson-row.completed{border-left-color:#10b981;background:#f0fdf4}
 
-        .category-header { cursor: pointer; transition: background 0.2s; }
-        .category-header:hover { background: #e2e8f0; }
-        .category-icon { transition: transform 0.3s; }
-        .category-open .category-icon { transform: rotate(180deg); }
-
-        .variation-btn { transition: all 0.2s; border-left: 3px solid transparent; }
-        .variation-btn:hover:not(.active) { background: #f8fafc; border-left-color: #cbd5e1; }
-        .variation-btn.active { background: #0f172a; color: white; border-left-color: #3b82f6; }
-        .variation-btn.active .tag-basic,
-        .variation-btn.active .tag-white,
-        .variation-btn.active .tag-black { opacity: 0.9; }
-        .variation-list { display: none; }
-        .category-open .variation-list { display: block; }
-
-        /* Chế độ giấu bài */
-        .blur-text {
-            filter: blur(5px);
-            user-select: none;
-            transition: filter 0.3s;
-        }
-    </style>
+/* Coach tip box */
+#coach-tip-box{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #f59e0b;border-radius:.6rem;padding:.65rem .85rem;display:flex;gap:.6rem;align-items:flex-start;min-height:52px;transition:all .35s ease}
+#coach-tip-box.hidden{display:none}
+.coach-avatar{font-size:1.4rem;flex-shrink:0;line-height:1;margin-top:1px}
+#coach-tip-text{font-size:.78rem;color:#78350f;font-weight:600;line-height:1.45;flex:1}
+.move-badge{display:inline-block;background:#92400e;color:#fef3c7;font-size:.6rem;font-weight:800;padding:1px 5px;border-radius:4px;margin-right:4px;letter-spacing:.04em;vertical-align:middle}
+@keyframes tipPulse{0%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}70%{box-shadow:0 0 0 6px rgba(245,158,11,0)}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+.tip-new{animation:tipPulse .6s ease}
+</style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col">
 
-    <!-- Header -->
-    <header class="bg-slate-900 text-white p-4 shadow-md z-10 border-b-4 border-amber-500">
-        <div class="container mx-auto flex items-center justify-center text-center">
-            <i class="fa-solid fa-chess-king text-3xl mr-3 text-amber-400"></i>
-            <div>
-                <h1 class="text-xl md:text-2xl font-bold">Khai Cuộc Cờ Vua Pro</h1>
-                <p class="text-xs md:text-sm text-slate-400">Huấn luyện chuyên sâu: Lật bàn cờ, Thi đấu & Chấm điểm</p>
-            </div>
+<!-- Header -->
+<header class="bg-slate-900 text-white p-3 shadow-md z-10 border-b-4 border-amber-500">
+  <div class="container mx-auto flex flex-col items-center text-center gap-2">
+    <div class="flex items-center gap-3">
+      <img src="https://i.ibb.co/TqBJb9Tf/426a1f835d61.jpg" alt="Logo" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;flex-shrink:0">
+      <div>
+        <h1 class="text-lg md:text-xl font-bold">Khai Cuộc Cờ Vua Pro</h1>
+        <p class="text-xs text-slate-400">Huấn luyện chuyên sâu: Lật bàn cờ, Thi đấu & Chấm điểm</p>
+      </div>
+    </div>
+    <!-- Stats bar -->
+    <div class="flex items-center gap-3 flex-wrap justify-center">
+      <span id="level-badge-el" class="level-badge">⚔️ Tân Binh</span>
+      <div class="flex flex-col items-center gap-0.5">
+        <div class="xp-track" style="width:100px"><div id="xp-fill-el" class="xp-fill" style="width:0%"></div></div>
+        <span id="xp-text-el" class="text-xs text-slate-400">0 / 150 XP</span>
+      </div>
+      <span id="streak-el" class="text-xs font-bold text-orange-400">🔥 0 ngày</span>
+      <span id="header-completed-el" class="text-xs font-bold text-emerald-400">✅ 0 bài</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-1 container mx-auto p-4 flex flex-col md:flex-row gap-6 overflow-hidden">
+
+  <!-- Sidebar -->
+  <div class="w-full md:w-1/3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-[50vh] md:h-auto border border-slate-200">
+    <!-- Tab buttons -->
+    <div class="flex border-b border-slate-200 bg-slate-50">
+      <button class="tab-btn active" id="tab-btn-lessons" onclick="switchTab('lessons')">📚 Bài Học</button>
+      <button class="tab-btn" id="tab-btn-challenge" onclick="switchTab('challenge')">⚡ Thách Đấu</button>
+      <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')">🏆 Thành Tích</button>
+    </div>
+
+    <!-- Tab: Bài Học -->
+    <div id="tab-lessons" class="overflow-y-auto flex-1 custom-scrollbar">
+      <div id="menu-container"></div>
+    </div>
+
+    <!-- Tab: Thách Đấu -->
+    <div id="tab-challenge" class="hidden overflow-y-auto flex-1 custom-scrollbar p-3 flex flex-col gap-3">
+      <p class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Chế độ nâng cao</p>
+      <button onclick="startRandomChallenge()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow flex items-center gap-2 transition">
+        <i class="fa-solid fa-dice text-lg"></i>
+        <div class="text-left">
+          <div class="text-sm">🎲 Thách Đấu Ngẫu Nhiên</div>
+          <div class="text-xs font-normal opacity-80">Học ngẫu nhiên 1 khai cuộc · +30 XP</div>
         </div>
-    </header>
+      </button>
+      <button onclick="openFlashcard()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-lg shadow flex items-center gap-2 transition">
+        <i class="fa-solid fa-cards-blank text-lg"></i>
+        <div class="text-left">
+          <div class="text-sm">🃏 Nhận Diện Khai Cuộc</div>
+          <div class="text-xs font-normal opacity-80">Xem vị trí, đoán tên khai cuộc · +15 XP/câu</div>
+        </div>
+      </button>
+      <button onclick="startChainChallenge()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg shadow flex items-center gap-2 transition">
+        <i class="fa-solid fa-link text-lg"></i>
+        <div class="text-left">
+          <div class="text-sm">🔗 Liên Hoàn 3 Bài</div>
+          <div class="text-xs font-normal opacity-80">Hoàn thành 3 khai cuộc liên tiếp · +100 XP</div>
+        </div>
+      </button>
+      <!-- Chain progress indicator -->
+      <div id="chain-indicator" class="hidden bg-orange-50 border border-orange-200 rounded-lg p-3">
+        <p class="text-xs font-bold text-orange-700 mb-2">🔗 Liên Hoàn đang diễn ra</p>
+        <div class="flex gap-2 justify-center mb-2" id="chain-dots"></div>
+        <p id="chain-status-text" class="text-xs text-center text-orange-600 font-semibold"></p>
+        <button onclick="cancelChain()" class="mt-2 w-full text-xs text-slate-500 hover:text-red-500 transition">Hủy liên hoàn</button>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-3 text-xs text-slate-500 border border-slate-200">
+        <p class="font-semibold text-slate-700 mb-1">💡 Mẹo học tập:</p>
+        <p>Học mỗi ngày để duy trì chuỗi thành tích. Điểm XP tăng theo cấp độ, hãy cố gắng đạt 100% mỗi bài!</p>
+      </div>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 container mx-auto p-4 flex flex-col md:flex-row gap-6 overflow-hidden">
+    <!-- Tab: Thành Tích -->
+    <div id="tab-stats" class="hidden overflow-y-auto flex-1 custom-scrollbar p-3">
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="stat-card"><div class="stat-num" id="stat-xp">0</div><div class="stat-label">Tổng XP</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">🔥 Chuỗi ngày</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-completed">0</div><div class="stat-label">Bài hoàn thành</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-best">0%</div><div class="stat-label">Điểm cao nhất</div></div>
+      </div>
+      <!-- Level progress -->
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+        <div class="flex justify-between items-center mb-1">
+          <span id="stat-level-name" class="font-bold text-amber-800 text-sm">⚔️ Tân Binh</span>
+          <span id="stat-level-next" class="text-xs text-amber-600">0 / 150 XP</span>
+        </div>
+        <div class="xp-track" style="width:100%"><div id="stat-xp-bar" class="xp-fill" style="width:0%"></div></div>
+      </div>
+      <!-- Completed lessons list -->
+      <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Lịch sử bài học</p>
+      <div id="completed-lessons-list" class="flex flex-col gap-1">
+        <p class="text-xs text-slate-400 italic">Chưa hoàn thành bài nào.</p>
+      </div>
+      <button onclick="if(confirm('Xóa toàn bộ dữ liệu học?')){resetPlayerData();}" class="mt-3 w-full text-xs text-red-400 hover:text-red-600 transition border border-red-100 rounded py-1">🗑️ Đặt lại tiến độ</button>
+    </div>
+  </div>
 
-        <!-- Sidebar: Danh mục Accordion -->
-        <div class="w-full md:w-1/3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-[45vh] md:h-auto border border-slate-200">
-            <div class="bg-slate-100 p-3 border-b border-slate-200 flex justify-between items-center">
-                <h2 class="font-bold text-slate-800"><i class="fa-solid fa-list-ul mr-2"></i>Chọn Bài Học</h2>
-            </div>
-            <div class="overflow-y-auto flex-1 custom-scrollbar" id="menu-container">
-                <!-- Accordion Menu sinh bằng JS -->
-            </div>
+  <!-- Right Panel -->
+  <div class="w-full md:w-2/3 bg-white rounded-lg shadow-lg p-4 md:p-6 flex flex-col overflow-y-auto border border-slate-200 relative">
+    <div class="text-center mb-4">
+      <div class="inline-block bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full mb-2" id="opening-parent-name"></div>
+      <h2 id="opening-title" class="text-2xl font-bold text-slate-900 mb-2">Vui lòng chọn một nhánh</h2>
+      <p id="opening-desc" class="text-slate-600 min-h-[4rem] text-sm md:text-base bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8 items-center lg:items-start justify-center">
+      <!-- Board -->
+      <div class="w-full max-w-[420px] flex flex-col">
+        <div id="board" class="w-full shadow-lg rounded-sm overflow-hidden border-2 border-slate-700 relative"></div>
+        <div class="flex justify-between items-center mt-4 mb-1">
+          <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner relative flex-1 mr-4">
+            <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-amber-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width:0%"></div>
+          </div>
+          <div id="score-display" class="hidden font-extrabold text-sm text-indigo-700 whitespace-nowrap bg-indigo-100 px-3 py-1 rounded-md shadow-sm border border-indigo-200">
+            <i class="fa-solid fa-star text-amber-500 mr-1"></i>Điểm: <span id="score-text">0/0</span>
+          </div>
+        </div>
+        <div class="text-left text-xs font-bold text-slate-500 mb-2" id="progress-text">0 / 0 nước đi</div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex flex-col w-full max-w-[320px] gap-4">
+        <!-- Coach Tip Box -->
+        <div id="coach-tip-box">
+          <div class="coach-avatar">🎓</div>
+          <p id="coach-tip-text">Chọn một khai cuộc bên trái để bắt đầu học. HLV sẽ hướng dẫn bạn từng nước!</p>
         </div>
 
-        <!-- Right Panel: Bàn cờ và Thông tin -->
-        <div class="w-full md:w-2/3 bg-white rounded-lg shadow-lg p-4 md:p-6 flex flex-col overflow-y-auto border border-slate-200 relative">
-
-            <div class="text-center mb-4">
-                <div class="inline-block bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full mb-2" id="opening-parent-name"></div>
-                <h2 id="opening-title" class="text-2xl font-bold text-slate-900 mb-2">Vui lòng chọn một nhánh</h2>
-                <p id="opening-desc" class="text-slate-600 min-h-[4rem] text-sm md:text-base bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
-            </div>
-
-            <div class="flex flex-col lg:flex-row gap-8 items-center lg:items-start justify-center">
-                <!-- Board Container -->
-                <div class="w-full max-w-[420px] flex flex-col">
-                    <div id="board" class="w-full shadow-lg rounded-sm overflow-hidden border-2 border-slate-700 relative"></div>
-
-                    <!-- Progress Bar & Score -->
-                    <div class="flex justify-between items-center mt-4 mb-1">
-                        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner relative flex-1 mr-4">
-                            <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-amber-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-                        </div>
-                        <!-- Bảng Điểm -->
-                        <div id="score-display" class="hidden font-extrabold text-sm text-indigo-700 whitespace-nowrap bg-indigo-100 px-3 py-1 rounded-md shadow-sm border border-indigo-200 transition-all">
-                            <i class="fa-solid fa-star text-amber-500 mr-1"></i> Điểm: <span id="score-text">0/0</span>
-                        </div>
-                    </div>
-                    <div class="text-left text-xs font-bold text-slate-500 mb-2" id="progress-text">0 / 0 nước đi</div>
-                </div>
-
-                <!-- Controls & Info -->
-                <div class="flex flex-col w-full max-w-[320px] gap-4">
-
-                    <!-- Khung Lịch sử nước đi -->
-                    <div class="bg-slate-800 text-white p-4 rounded-lg shadow-inner relative">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="font-bold text-xs text-slate-400 uppercase tracking-wider">Lịch sử nước đi</h3>
-
-                            <!-- Nút chuyển chế độ THI (Exam Mode) -->
-                            <label class="inline-flex items-center cursor-pointer" id="exam-mode-wrapper" style="display: none;">
-                                <span class="mr-2 text-xs font-bold text-rose-400"><i class="fa-solid fa-eye-slash mr-1"></i>Thi đấu</span>
-                                <input type="checkbox" id="exam-toggle" class="sr-only peer">
-                                <div class="w-7 h-4 bg-slate-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-rose-500"></div>
-                            </label>
-                        </div>
-                        <div id="moves-history" class="font-mono text-lg flex flex-wrap gap-2 text-amber-300 min-h-[2rem]">
-                            <!-- Nước đi hiển thị ở đây -->
-                        </div>
-                    </div>
-
-                    <div class="mt-auto">
-
-                        <!-- Chế độ Thực hành Toggle -->
-                        <div class="bg-indigo-50 rounded-lg border border-indigo-200 p-3 flex justify-between items-center mb-3">
-                            <div class="font-bold text-indigo-900 text-sm"><i class="fa-solid fa-graduation-cap mr-2"></i>Chế Độ Học Bài</div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="practice-toggle" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                            </label>
-                        </div>
-
-                        <!-- Khung Phản Hồi Học Bài -->
-                        <div id="feedback-msg" class="hidden text-center text-sm font-bold p-3 rounded shadow-sm mb-3"></div>
-
-                        <!-- Các nút điều khiển Xem Cờ -->
-                        <div id="normal-controls" class="grid grid-cols-2 gap-2 mb-3">
-                            <button id="btn-next" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow-md flex items-center justify-center transition text-sm">
-                                <i class="fa-solid fa-step-forward mr-1"></i> Tới
-                            </button>
-                            <button id="btn-play" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded shadow-md flex items-center justify-center transition text-sm">
-                                <i class="fa-solid fa-play mr-1"></i> Chạy
-                            </button>
-                        </div>
-
-                        <!-- Các nút điều khiển Học Bài -->
-                        <button id="btn-hint" class="hidden w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded shadow flex items-center justify-center transition mb-3">
-                            <i class="fa-solid fa-lightbulb mr-2"></i> Xem Gợi Ý
-                        </button>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <button id="btn-flip" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 rounded shadow flex items-center justify-center transition text-sm">
-                                <i class="fa-solid fa-retweet mr-1"></i> Lật Cờ
-                            </button>
-                            <button id="btn-reset" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 rounded shadow flex items-center justify-center transition text-sm">
-                                <i class="fa-solid fa-rotate-left mr-1"></i> Xếp Lại
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+        <div class="bg-slate-800 text-white p-4 rounded-lg shadow-inner relative">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-xs text-slate-400 uppercase tracking-wider">Lịch sử nước đi</h3>
+            <label class="inline-flex items-center cursor-pointer" id="exam-mode-wrapper" style="display:none">
+              <span class="mr-2 text-xs font-bold text-rose-400"><i class="fa-solid fa-eye-slash mr-1"></i>Thi đấu</span>
+              <input type="checkbox" id="exam-toggle" class="sr-only peer">
+              <div class="w-7 h-4 bg-slate-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-rose-500"></div>
+            </label>
+          </div>
+          <div id="moves-history" class="font-mono text-lg flex flex-wrap gap-2 text-amber-300 min-h-[2rem]"></div>
         </div>
 
-    </main>
-
-    <!-- Scripts -->
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
-    <script>
-        // CƠ SỞ DỮ LIỆU KHAI CUỘC
-        const openingData = [
-            {
-                category: "1. Ván cờ Italia",
-                variations: [
-                    { name: "Giuoco Piano (Truyền thống)", type: "Cơ bản", desc: "Hai bên đều đưa Tượng lên c4, c5 ngắm vào điểm f7, f2. Trắng thường chơi c3 d3 để tạo thế trận chậm mà chắc.", moves: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "c3", "Nf6", "d3", "d6"] },
-                    { name: "Tấn công Greco (d4 Trung tâm)", type: "Trắng Tấn Công", desc: "Trắng dâng tốt d4 tạo đột phá trung tâm, chấp nhận thí tốt để mở toang cột và đường chéo tấn công Vua Đen cực kỳ ác liệt. Còn gọi là Giuoco Piano cánh tấn công.", moves: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "c3", "Nf6", "d4", "exd4", "cxd4", "Bb4+", "Nc3", "Nxe4", "O-O", "Bxc3", "d5", "Bf6", "Re1", "Ne7", "Rxe4", "d6"] },
-                    { name: "Fried Liver Attack", type: "Trắng Tấn Công", desc: "Khi Đen chơi Mã f6, Trắng lập tức nhảy Ng5 nhắm f7. Nếu Đen đi Nxd5 sai lầm, Trắng thí Mã vào f7 tạo bão cấp 12 lên Vua Đen.", moves: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5", "d5", "exd5", "Nxd5", "Nxf7", "Kxf7", "Qf3+", "Ke6", "Nc3"] },
-                    { name: "Phòng thủ Polerio (Na5)", type: "Đen Khắc Chế", desc: "Cách Đen phá giải chuẩn xác đòn Gan Chiên (Ng5). Đen thí 1 tốt bằng cách nhảy Na5 để đuổi Tượng Trắng, giành quyền chủ động.", moves: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5", "d5", "exd5", "Na5", "Bb5+", "c6", "dxc6", "bxc6", "Be2", "h6", "Nf3", "e4", "Ne5", "Bd6"] },
-                    { name: "Phản công Traxler", type: "Đen Khắc Chế", desc: "Đen đáp trả Ng5 bằng việc 'bỏ mặc f7', lên Tượng Bc5. Nếu Trắng ăn f7, Đen thí ngược Bxf2+ và tung đòn chiếu hết cực độc.", moves: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5", "Bc5", "Nxf7", "Bxf2+", "Kxf2", "Nxe4+", "Kg1", "Qh4", "g3", "Nxg3", "Nxh8", "Nd4"] },
-                    { name: "Bẫy Blackburne Shilling", type: "Đen Giăng Bẫy", desc: "Đen dụ Trắng ăn tốt e5 bằng cách đi Mã d4. Nếu Trắng 'mắc mưu' Nxe5??, Đen tung Hậu Qg5 và giăng lưới chiếu hết chỉ sau 7 nước.", moves: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4", "Nxe5", "Qg5", "Nxf7", "Qxg2", "Rf1", "Qxe4+", "Be2", "Nf3#"] }
-                ]
-            },
-            {
-                category: "2. Ván cờ Tây Ban Nha (Ruy Lopez)",
-                variations: [
-                    { name: "Phòng thủ Morphy (Chính thống)", type: "Cơ bản", desc: "Cách phổ biến nhất của Đen: Đẩy tốt a6 hỏi tội Tượng b5 của Trắng. Đây là đường lối dẫn đến thế trận chiến lược cực kỳ sâu sắc.", moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "d6", "c3", "O-O", "h3"] },
-                    { name: "Biến Đổi Quân (Exchange)", type: "Trắng Khắc Chế", desc: "Trắng chủ động ăn Bxc6, làm hỏng cấu trúc tốt cánh Hậu của Đen. Đổi lại, Đen có cặp Tượng. Huyền thoại Bobby Fischer rất thích biến này.", moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Bxc6", "dxc6", "O-O", "f6", "d4", "exd4", "Nxd4", "c5", "Nb3", "Qxd1", "Rxd1"] },
-                    { name: "Phòng thủ Berlin", type: "Đen Khắc Chế", desc: "Bức tường Berlin! Đen ép Trắng đổi Hậu sớm và đưa về cờ tàn siêu vững chắc mà các Đại Kiện Tướng rất sợ phải đối mặt.", moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "Nf6", "O-O", "Nxe4", "d4", "Nd6", "Bxc6", "dxc6", "dxe5", "Nf5", "Qxd8+", "Kxd8"] },
-                    { name: "Gambit Marshall", type: "Đen Tấn Công", desc: "Đen chủ động thí tốt d5 để đổi lấy đòn tấn công hủy diệt vào cánh Vua Trắng. Kiện tướng thế giới thường phải học thuộc lòng cách đỡ đòn này.", moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "O-O", "c3", "d5", "exd5", "Nxd5", "Nxe5", "Nxe5", "Rxe5", "c6"] },
-                    { name: "Phòng thủ Schliemann", type: "Đen Tấn Công", desc: "Đòn đánh cực gắt và rủi ro cao từ Đen: đẩy f5 ngay lập tức để phá vỡ trung tâm, kéo Trắng vào một cuộc chiến tay đôi đẫm máu.", moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "f5", "Nc3", "fxe4", "Nxe4", "d5", "Nxe5", "dxe4", "Nxc6", "Qg5", "Qe2", "Nf6"] },
-                    { name: "Bẫy Con Thuyền Noah", type: "Đen Giăng Bẫy", desc: "Một cái bẫy kinh điển! Trắng ham ăn tốt d4 bằng Hậu. Đen lập tức đẩy tốt c5 c4 nhốt chết Tượng Trắng ở b3 không đường thoát.", moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "d6", "d4", "b5", "Bb3", "Nxd4", "Nxd4", "exd4", "Qxd4", "c5", "Qd5", "Be6", "Qc6+", "Bd7", "Qd5", "c4"] }
-                ]
-            },
-            {
-                category: "3. Phòng thủ Sicilia",
-                variations: [
-                    { name: "Biến Najdorf", type: "Cơ bản", desc: "Một trong những khai cuộc sắc bén và phức tạp nhất. Đen đi a6 để ngăn Trắng đưa Tượng/Mã vào b5, chuẩn bị dọn đường phản công cánh Hậu.", moves: ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6", "Bg5", "e6", "f4", "Be7"] },
-                    { name: "Biến Dragon (Con Rồng)", type: "Đen Tấn Công", desc: "Đen Fianchetto Tượng lên g7 (hình dáng giống đuôi rồng). Tạo ra sức ép cực lớn lên đường chéo dài, dẫn đến thế cờ đôi công nảy lửa.", moves: ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "g6", "Be3", "Bg7", "f3", "O-O", "Qd2", "Nc6", "O-O-O"] },
-                    { name: "Biến Sveshnikov (Pelikan)", type: "Đen Phản Công", desc: "Đen chủ động đẩy e5 đuổi Mã Trắng, chấp nhận để lại lỗ hổng ở d5. Bù lại, Đen có thế trận cực kỳ chủ động và linh hoạt ở hai cánh.", moves: ["e4", "c5", "Nf3", "Nc6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "e5", "Ndb5", "d6", "Bg5", "a6", "Na3", "b5", "Nd5", "Be7", "Bxf6", "Bxf6", "c3"] },
-                    { name: "Biến Alapin (c3)", type: "Trắng Khắc Chế", desc: "Cách Trắng né tránh lý thuyết phức tạp của Sicilia. Trắng đẩy c3 chuẩn bị d4, xây dựng trung tâm vững chắc, đưa ván cờ về thế trận chậm rãi hơn.", moves: ["e4", "c5", "c3", "Nf6", "e5", "Nd5", "d4", "cxd4", "Nf3", "e6", "cxd4", "d6", "Bc4", "Nb6", "Bb3"] },
-                    { name: "Smith-Morra Gambit", type: "Trắng Tấn Công", desc: "Trắng táo bạo thí luôn 1 Tốt ở c3 để đổi lấy tốc độ dàn quân thần tốc. Nếu Đen phòng thủ không khéo, sẽ bị bóp nghẹt không thở nổi từ rất sớm.", moves: ["e4", "c5", "d4", "cxd4", "c3", "dxc3", "Nxc3", "Nc6", "Nf3", "d6", "Bc4", "e6", "O-O", "Nf6", "Qe2"] },
-                    { name: "Bẫy Siberian", type: "Đen Giăng Bẫy", desc: "Nằm trong nhánh Smith-Morra Gambit. Đen lén lút đưa Mã lên g4. Nếu Trắng chủ quan đuổi Mã bằng h3??, Đen tung đòn Nd4 hy sinh Mã để chiếu hết siêu đẹp!", moves: ["e4", "c5", "d4", "cxd4", "c3", "dxc3", "Nxc3", "Nc6", "Nf3", "e6", "Bc4", "Qc7", "O-O", "Nf6", "Qe2", "Ng4", "h3", "Nd4", "Nxd4", "Qh2#"] },
-                    { name: "Bẫy Bắt Hậu (Biến Dragon-Sozin)", type: "Trắng Giăng Bẫy", desc: "Trắng đưa Tượng lên c4 (biến Sozin) nhắm vào f7. Khi Đen theo hướng Dragon với g6, Trắng tung đòn Nxc6 rồi e5, thí Tượng Bxf7+ chiếu Vua để bắt sống Hậu Đen ở d8.", moves: ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "Nc6", "Bc4", "g6", "Nxc6", "bxc6", "e5", "dxe5", "Bxf7+", "Kxf7", "Qxd8"] }
-                ]
-            },
-            {
-                category: "4. Phòng thủ Pháp",
-                variations: [
-                    { name: "Biến Đổi Quân (Exchange)", type: "Cơ bản", desc: "Lối chơi đơn giản, hòa hoãn nhất của Trắng. Dẫn đến thế cờ đối xứng, an toàn, thường thấy ở các giải đấu cấp cơ sở.", moves: ["e4", "e6", "d4", "d5", "exd5", "exd5", "Bd3", "Bd6", "Nf3", "Ne7", "O-O", "O-O"] },
-                    { name: "Biến Tiến Tới (Advance)", type: "Đen Phản Công", desc: "Trắng đóng sập trung tâm bằng e5, chia cắt bàn cờ. Đen lập tức tấn công vào gốc rễ cấu trúc tốt Trắng bằng c5 và Qb6.", moves: ["e4", "e6", "d4", "d5", "e5", "c5", "c3", "Nc6", "Nf3", "Qb6", "a3", "c4"] },
-                    { name: "Biến Tarrasch", type: "Cơ bản", desc: "Trắng dùng Nd2 để tránh bị ghim Bb4 (như biến Winawer). Thế cờ uyển chuyển, linh hoạt và cực kỳ an toàn cho phe Trắng.", moves: ["e4", "e6", "d4", "d5", "Nd2", "Nf6", "e5", "Nfd7", "Bd3", "c5", "c3", "Nc6", "Ne2", "cxd4", "cxd4", "f6"] },
-                    { name: "Biến Winawer", type: "Đen Phản Công", desc: "Sắc bén và phức tạp nhất! Đen ghim và ăn Mã c3, làm hỏng cấu trúc tốt Trắng, nhưng Trắng bù lại bằng cặp Tượng và không gian tấn công.", moves: ["e4", "e6", "d4", "d5", "Nc3", "Bb4", "e5", "c5", "a3", "Bxc3+", "bxc3", "Ne7", "Qg4"] },
-                    { name: "Biến Cổ Điển (Classical)", type: "Cơ bản", desc: "Lối chơi căng thẳng truyền thống. Trắng ghim Mã f6 bằng Bg5, Đen phá ghim bằng Be7, sẵn sàng cho một cuộc chiến dàn trận dài hơi.", moves: ["e4", "e6", "d4", "d5", "Nc3", "Nf6", "Bg5", "Be7", "e5", "Nfd7", "Bxe7", "Qxe7", "f4"] },
-                    { name: "Biến Rubinstein", type: "Đen Khắc Chế", desc: "Đen chủ động giải phóng áp lực trung tâm bằng cách ăn dxe4. Thế cờ trở nên siêu vững chắc, không rủi ro cho Đen.", moves: ["e4", "e6", "d4", "d5", "Nc3", "dxe4", "Nxe4", "Nd7", "Nf3", "Ngf6", "Nxf6+", "Nxf6", "Bd3", "Be7", "O-O", "O-O"] },
-                    { name: "Bẫy Milner-Barry", type: "Trắng Giăng Bẫy", desc: "Trắng thí tốt d4 để mở cột và giành ưu thế phát triển. Nếu Đen ham ăn tốt, Trắng có đòn bẫy bắt Hậu hoặc bao vây Vua cực hay.", moves: ["e4", "e6", "d4", "d5", "e5", "c5", "c3", "Nc6", "Nf3", "Qb6", "Bd3", "cxd4", "cxd4", "Bd7", "O-O", "Nxd4", "Nxd4", "Qxd4", "Nc3", "Qxe5", "Re1"] },
-                    { name: "Đòn Alekhine-Chatard", type: "Trắng Tấn Công", desc: "Đòn thí tốt h4 cực gắt của Trắng trong biến Cổ điển. Trắng hi sinh tốt để mở toang cột h nhắm thẳng vào Vua Đen.", moves: ["e4", "e6", "d4", "d5", "Nc3", "Nf6", "Bg5", "Be7", "e5", "Nfd7", "h4", "Bxg5", "hxg5", "Qxg5", "Nh3", "Qe7", "Nf4", "a6", "Qg4"] }
-                ]
-            },
-            {
-                category: "5. Phòng thủ Caro-Kann",
-                variations: [
-                    { name: "Biến Cổ điển (Classical)", type: "Cơ bản", desc: "Rất vững chắc. Đen đổi tốt ở d4 rồi đưa Tượng lên f5. Đây là cách giải quyết Tượng Trắng c8 hiệu quả hơn hẳn so với Phòng thủ Pháp.", moves: ["e4", "c6", "d4", "d5", "Nc3", "dxe4", "Nxe4", "Bf5", "Ng3", "Bg6", "h4", "h6", "Nf3", "Nd7", "h5", "Bh7", "Bd3"] },
-                    { name: "Biến Tiến Tới (Advance)", type: "Trắng Tấn Công", desc: "Trắng đóng sập trung tâm bằng e5 và phát triển dồn ép. Đen thường đáp trả bằng cách đưa Tượng ra ngoài chuỗi tốt (Bf5) trước khi đẩy e6.", moves: ["e4", "c6", "d4", "d5", "e5", "Bf5", "Nc3", "e6", "g4", "Bg6", "Nge2", "c5", "h4", "h6"] },
-                    { name: "Tấn Công Panov-Botvinnik", type: "Trắng Tấn Công", desc: "Trắng chủ động đổi tốt ở d5 rồi đẩy c4, đưa ván cờ về thế trận Tốt d4 cô lập (IQP) nhưng bù lại có sức ép tấn công cực lớn.", moves: ["e4", "c6", "d4", "d5", "exd5", "cxd5", "c4", "Nf6", "Nc3", "Nc6", "Nf3", "Bg4", "cxd5", "Nxd5", "Qb3"] },
-                    { name: "Biến Hai Mã (Two Knights)", type: "Cơ bản", desc: "Trắng phát triển hai Mã nhanh chóng thay vì chiếm d4. Nếu Đen đi Bg4, Trắng thường chơi h3 ép Đen phải đổi Tượng lấy Mã.", moves: ["e4", "c6", "Nc3", "d5", "Nf3", "Bg4", "h3", "Bxf3", "Qxf3", "e6", "d3", "Nf6", "g3"] },
-                    { name: "Biến Fantasy (f3)", type: "Trắng Khắc Chế", desc: "Một đòn dị của Trắng nhằm giữ vững trung tâm d4, e4 bằng mọi giá. Khai cuộc này đưa trận đấu vào những cuộc chiến đẫm máu phi truyền thống.", moves: ["e4", "c6", "d4", "d5", "f3", "dxe4", "fxe4", "e5", "Nf3", "Bg4", "Bc4", "Nd7", "O-O", "Ngf6", "c3"] },
-                    { name: "Bẫy Chiếu Hết Tartakower", type: "Trắng Giăng Bẫy", desc: "Trắng lùi Hậu Qe2. Nếu Đen mất cảnh giác đi Ngf6??, Trắng phi Mã Nd6 chiếu hết ngay tại chỗ do tốt e7 của Đen bị ghim!", moves: ["e4", "c6", "d4", "d5", "Nc3", "dxe4", "Nxe4", "Nd7", "Qe2", "Ngf6", "Nd6#"] },
-                    { name: "Bẫy Thí Mã (Caro-Kann Trap)", type: "Trắng Giăng Bẫy", desc: "Trắng giăng bẫy với Ng5 nhắm vào f7. Khi Đen chơi h6 đuổi Mã, Trắng bất ngờ thí Nxf7 để kéo Vua Đen ra và nghiền nát.", moves: ["e4", "c6", "d4", "d5", "Nc3", "dxe4", "Nxe4", "Nd7", "Bc4", "Ngf6", "Ng5", "e6", "Qe2", "h6", "Nxf7", "Kxf7", "Qxe6+", "Kg6", "Bd3+"] }
-                ]
-            },
-            {
-                category: "6. Khai cuộc Hậu (QG)",
-                variations: [
-                    { name: "Gambit Hậu Từ chối (QGD)", type: "Cơ bản", desc: "Đen từ chối ăn tốt c4, thay vào đó đi e6 bảo vệ vững chắc d5. Ván cờ mang đậm tính định vị, yêu cầu kỹ năng dàn quân sâu sắc.", moves: ["d4", "d5", "c4", "e6", "Nc3", "Nf6", "Bg5", "Be7", "e3", "O-O", "Nf3", "h6", "Bh4", "b6"] },
-                    { name: "Gambit Hậu Chấp nhận (QGA)", type: "Đen Khắc Chế", desc: "Đen ăn ngay c4. Mục tiêu không phải là giữ tốt này, mà là bắt Trắng tốn thời gian lấy lại tốt, tạo cơ hội cho Đen phát triển c5 phá trung tâm.", moves: ["d4", "d5", "c4", "dxc4", "Nf3", "Nf6", "e3", "e6", "Bxc4", "c5", "O-O", "a6", "Qe2", "b5", "Bb3", "Bb7"] },
-                    { name: "Phòng thủ Tarrasch", type: "Đen Phản Công", desc: "Đen chủ động đi c5 cực sớm để quyết đấu giành trung tâm. Đen chấp nhận bị Tốt cô lập ở d5 để có thế trận tự do cho các quân.", moves: ["d4", "d5", "c4", "e6", "Nc3", "c5", "cxd5", "exd5", "Nf3", "Nc6", "g3", "Nf6", "Bg2", "Be7", "O-O", "O-O"] },
-                    { name: "Biến Cambridge Springs", type: "Đen Tấn Công", desc: "Đen tung Hậu ra a5, vừa tránh đòn ghim Bg5 của Trắng, vừa tạo sức ép ngược lên cánh Hậu và quân Mã c3.", moves: ["d4", "d5", "c4", "e6", "Nc3", "Nf6", "Bg5", "Nbd7", "e3", "c6", "Nf3", "Qa5", "Nd2", "Bb4", "Qc2", "O-O"] },
-                    { name: "Phản Công Albin (Countergambit)", type: "Đen Tấn Công", desc: "Đen đáp trả c4 bằng cách thí ngược tốt e5. Nếu Trắng ăn, Đen đẩy tốt xuống d4 như một 'cái gai' cắm chặt vào cổ họng Trắng.", moves: ["d4", "d5", "c4", "e5", "dxe5", "d4", "Nf3", "Nc6", "g3", "Nge7", "Bg2", "Ng6", "O-O", "Ngxe5", "Nxe5", "Nxe5"] },
-                    { name: "Bẫy Lasker (Siêu Kinh Điển)", type: "Đen Giăng Bẫy", desc: "Nằm trong Phản công Albin. Trắng muốn phá tốt d4 bằng e3 nhưng mắc bẫy cực độc. Đen phong cấp thành Mã chiếu (fxg1=N+) để buộc Vua Trắng di chuyển.", moves: ["d4", "d5", "c4", "e5", "dxe5", "d4", "e3", "Bb4+", "Bd2", "dxe3", "Bxb4", "exf2+", "Ke2", "fxg1=N+", "Rxg1", "Bg4+"] },
-                    { name: "Bẫy Voi (Elephant Trap)", type: "Đen Giăng Bẫy", desc: "Trong QGD, Đen ngụy trang cạm bẫy bằng cách dụ Trắng ăn tốt d5. Khi Trắng Nxd5??, Đen thí Hậu Nxd5! và bắt lại Hậu Trắng bằng Bb4+.", moves: ["d4", "d5", "c4", "e6", "Nc3", "Nf6", "Bg5", "Nbd7", "cxd5", "exd5", "Nxd5", "Nxd5", "Bxd8", "Bb4+", "Qd2", "Bxd2+", "Kxd2", "Kxd8"] }
-                ]
-            },
-            {
-                category: "7. Khai cuộc Bốn Mã",
-                variations: [
-                    { name: "Biến Tây Ban Nha", type: "Cơ bản", desc: "Hai bên đều ra 2 Mã, sau đó Trắng đưa Tượng b5, Đen đáp Bb4. Rất an toàn, hoàn hảo cho người mới học chiến lược.", moves: ["e4", "e5", "Nf3", "Nc6", "Nc3", "Nf6", "Bb5", "Bb4", "O-O", "O-O", "d3", "d6"] },
-                    { name: "Biến Scotland (Scotch 4 Knights)", type: "Cơ bản", desc: "Trắng phá vỡ trung tâm sớm bằng d4. Đen đổi tốt và trận đấu dẫn đến cấu trúc mở, năng động cho cả hai bên.", moves: ["e4", "e5", "Nf3", "Nc6", "Nc3", "Nf6", "d4", "exd4", "Nxd4", "Bb4", "Nxc6", "bxc6", "Bd3", "d5", "exd5", "cxd5"] },
-                    { name: "Gambit Halloween", type: "Trắng Tấn Công", desc: "Một đòn tâm lý cực mạnh: Trắng chủ động thí Mã ngay nước thứ 4 (Nxe5) để xua đuổi Mã Đen, chiếm toàn bộ trung tâm bằng tốt d4, e5.", moves: ["e4", "e5", "Nf3", "Nc6", "Nc3", "Nf6", "Nxe5", "Nxe5", "d4", "Nc6", "d5", "Ne5", "f4", "Ng6", "e5", "Ng8", "d6", "cxd6"] }
-                ]
-            },
-            {
-                category: "8. Phòng thủ Ấn Độ Vua (KID)",
-                variations: [
-                    { name: "Biến Cổ điển (Classical)", type: "Cơ bản", desc: "Đen nhường trung tâm để Trắng xây dựng chuỗi tốt mạnh, sau đó Đen sẽ phản công dữ dội vào trung tâm bằng e5 hoặc c5.", moves: ["d4", "Nf6", "c4", "g6", "Nc3", "Bg7", "e4", "d6", "Nf3", "O-O", "Be2", "e5", "O-O", "Nc6", "d5", "Ne7", "Ne1", "Nd7"] },
-                    { name: "Biến Mar del Plata", type: "Đen Tấn Công", desc: "Nhánh tấn công nổi tiếng nhất của Đen. Trung tâm hoàn toàn đóng kín, Đen dồn toàn bộ binh lực càn quét cánh Vua, Trắng phản công cánh Hậu.", moves: ["d4", "Nf6", "c4", "g6", "Nc3", "Bg7", "e4", "d6", "Nf3", "O-O", "Be2", "e5", "O-O", "Nc6", "d5", "Ne7", "Nd2", "a5", "a3", "Nd7", "b4", "f5"] },
-                    { name: "Biến Sämisch", type: "Trắng Khắc Chế", desc: "Trắng đẩy f3 cực kì chắc chắn, khóa chặt trung tâm và chuẩn bị nhập thành dài, sau đó tấn công vũ bão vào g7 của Đen.", moves: ["d4", "Nf6", "c4", "g6", "Nc3", "Bg7", "e4", "d6", "f3", "O-O", "Be3", "e5", "d5", "c6", "Qd2", "cxd5", "cxd5", "a6"] },
-                    { name: "Tấn công Bốn Tốt (Four Pawns)", type: "Trắng Tấn Công", desc: "Trắng dựng lên một 'bức tường' khổng lồ với 4 tốt c4, d4, e4, f4 để bóp nghẹt Đen. Đen phải dùng c5 bẻ gãy tường này thật nhanh.", moves: ["d4", "Nf6", "c4", "g6", "Nc3", "Bg7", "e4", "d6", "f4", "O-O", "Nf3", "c5", "d5", "e6", "Be2", "exd5", "cxd5"] },
-                    { name: "Biến Averbakh", type: "Trắng Khắc Chế", desc: "Trắng đưa Tượng lên e3 và Hậu lên d2 theo phong cách Averbakh, chuẩn bị nhập thành dài. Thế cờ rất căng thẳng, Trắng khống chế không gian và sẵn sàng tấn công cả hai cánh.", moves: ["d4", "Nf6", "c4", "g6", "Nc3", "Bg7", "e4", "d6", "Be2", "O-O", "Bg5", "c5", "d5", "h6", "Bh4", "e6", "Nf3"] }
-                ]
-            },
-            {
-                category: "9. Khai cuộc Anh (English)",
-                variations: [
-                    { name: "Biến Đối Xứng (Symmetrical)", type: "Cơ bản", desc: "Khai cuộc siêu mềm dẻo. Trắng đánh c4 kiểm soát d5, Đen đáp lại c5 kiểm soát d4. Thế cờ từ tốn, không đụng độ sớm.", moves: ["c4", "c5", "Nc3", "Nc6", "g3", "g6", "Bg2", "Bg7", "e3", "e6", "Nge2", "Nge7", "O-O", "O-O", "d4", "cxd4"] },
-                    { name: "Biến Đảo Ngược (Reversed Sicilian)", type: "Đen Phản Công", desc: "Đen đánh e5. Tình huống này giống hệt Phòng thủ Sicilia nhưng Đen được đi trước, tạo ra thế trận phản công sắc nét.", moves: ["c4", "e5", "Nc3", "Nf6", "Nf3", "Nc6", "g3", "Bb4", "Bg2", "O-O", "O-O", "e4", "Ne1", "Bxc3", "dxc3", "h6"] },
-                    { name: "Phòng thủ Nhím (Hedgehog)", type: "Đen Khắc Chế", desc: "Đen xếp tốt ở hàng 6 (a6, b6, d6, e6) như những cái gai nhím. Rất thụ động nhưng cực kỳ khó chọc thủng, rình rập phản công bằng b5 hoặc d5.", moves: ["c4", "c5", "Nf3", "Nf6", "Nc3", "e6", "g3", "b6", "Bg2", "Bb7", "O-O", "Be7", "d4", "cxd4", "Qxd4", "d6", "b3", "a6", "Rd1", "Nbd7"] },
-                    { name: "Bẫy Bellon Gambit", type: "Đen Giăng Bẫy", desc: "Một đòn thí Tốt táo bạo của Đen (b5) để phá rối nhịp độ của Trắng, tạo ra các bẫy rập khó lường ngay từ đầu.", moves: ["c4", "e5", "Nc3", "Nf6", "Nf3", "e4", "Ng5", "b5", "cxb5", "h6", "Nh3", "d5", "d4", "a6", "bxa6", "Nxa6"] }
-                ]
-            },
-            {
-                category: "10. Phòng thủ Slav",
-                variations: [
-                    { name: "Biến Cổ điển (Classical)", type: "Cơ bản", desc: "Đen dùng c6 bảo vệ d5 (khác QGD dùng e6), điều này giúp Tượng c8 của Đen không bị kẹt, tạo thế cờ cực kỳ vững chãi.", moves: ["d4", "d5", "c4", "c6", "Nf3", "Nf6", "Nc3", "dxc4", "a4", "Bf5", "e3", "e6", "Bxc4", "Bb4", "O-O", "O-O"] },
-                    { name: "Biến Chebanenko (a6)", type: "Đen Phản Công", desc: "Đen đi a6 rất lạ mắt! Mục đích là kiểm soát b5, chuẩn bị b5 phản công hoặc bớt đi áp lực từ các đòn ghim của Trắng.", moves: ["d4", "d5", "c4", "c6", "Nc3", "Nf6", "Nf3", "a6", "c5", "Nbd7", "Bf4", "Nh5", "Bd2", "Nhf6", "h3", "g6"] },
-                    { name: "Biến Đổi Quân (Exchange Slav)", type: "Trắng Khắc Chế", desc: "Trắng đổi Tốt ở d5. Cấu trúc Tốt hoàn toàn đối xứng. Thường dẫn đến những ván cờ tàn hòa hoãn, rất an toàn cho Trắng.", moves: ["d4", "d5", "c4", "c6", "cxd5", "cxd5", "Nc3", "Nf6", "Nf3", "Nc6", "Bf4", "Bf5", "e3", "e6", "Bd3", "Bxd3", "Qxd3", "Bd6"] },
-                    { name: "Gambit Slav (Winawer)", type: "Đen Tấn Công", desc: "Đen chủ động tấn công trung tâm ngay bằng e5! Chấp nhận thí tốt để tạo ra một cuộc hỗn chiến vô cùng phức tạp.", moves: ["d4", "d5", "c4", "c6", "Nc3", "e5", "dxe5", "d4", "Ne4", "Qa5+", "Bd2", "Qxe5", "Ng3", "Nf6", "Nf3", "Qd6"] }
-                ]
-            },
-            {
-                category: "11. Gambit Vua (King's Gambit)",
-                variations: [
-                    { name: "Gambit Vua Chấp nhận", type: "Trắng Tấn Công", desc: "Khai cuộc rực lửa nhất thế kỷ 19! Trắng thí tốt f4 ngay nước 2 để mở cột f, tấn công tàn bạo vào cánh Vua Đen.", moves: ["e4", "e5", "f4", "exf4", "Nf3", "g5", "h4", "g4", "Ne5", "Nf6", "Bc4", "d5", "exd5", "Bd6", "d4"] },
-                    { name: "Gambit Vua Từ chối", type: "Đen Khắc Chế", desc: "Đen không thèm ăn tốt f4 mà đi Bc5, nhắm thẳng vào đường chéo yếu nhất của Trắng, khiến Trắng không thể nhập thành.", moves: ["e4", "e5", "f4", "Bc5", "Nf3", "d6", "c3", "Nf6", "d4", "exd4", "cxd4", "Bb6", "Nc3", "O-O"] },
-                    { name: "Gambit Muzio (Siêu Thí Quân)", type: "Trắng Giăng Bẫy", desc: "Trắng 'điên rồ' không thèm chạy Mã mà nhập thành O-O, hy sinh luôn Mã f3 để tổng tấn công vào điểm yếu f7 của Đen.", moves: ["e4", "e5", "f4", "exf4", "Nf3", "g5", "Bc4", "g4", "O-O", "gxf3", "Qxf3", "Qf6", "e5", "Qxe5", "Bxf7+", "Kxf7", "d4", "Qxd4+", "Be3", "Qf6", "Nc3"] }
-                ]
-            },
-            {
-                category: "12. Cạm Bẫy Tử Thần (Must Know)",
-                variations: [
-                    { name: "Bẫy Légal (Thí Hậu Khét Tiếng)", type: "Trắng Giăng Bẫy", desc: "Trắng dụ Đen ghim Mã bằng Tượng. Sau đó bất ngờ nhảy Mã ăn tốt, mặc kệ Đen ăn Hậu, rồi tung 2 nước chiếu hết nghệ thuật.", moves: ["e4", "e5", "Nf3", "d6", "Bc4", "Bg4", "Nc3", "h6", "Nxe5", "Bxd1", "Bxf7+", "Ke7", "Nd5#"] },
-                    { name: "Bẫy Englund Gambit", type: "Đen Giăng Bẫy", desc: "Đen thí Tốt e5 quấy rối đầu trận. Trắng ra Tượng đuổi Hậu nhưng sập bẫy giăng sẵn, kết cục là Đen chiếu hết ngay nước thứ 8.", moves: ["d4", "e5", "dxe5", "Nc6", "Nf3", "Qe7", "Bf4", "Qb4+", "Bd2", "Qxb2", "Bc3", "Bb4", "Qd2", "Bxc3", "Qxc3", "Qc1#"] },
-                    { name: "Bẫy Tennison (Bắt Hậu)", type: "Trắng Giăng Bẫy", desc: "Trắng thí tốt dụ Đen đuổi Mã d4, sau đó tung một đòn hi sinh Mã f7 để mở đường cho Tượng chiếu Vua, bắt sống Hậu Đen.", moves: ["Nf3", "d5", "e4", "dxe4", "Ng5", "Nf6", "d3", "exd3", "Bxd3", "h6", "Nxf7", "Kxf7", "Bg6+", "Kxg6", "Qxd8"] },
-                    { name: "Bẫy Câu Cá (Fishing Pole)", type: "Đen Giăng Bẫy", desc: "Đen thả mồi nhử bằng quân Mã Ng4. Nếu Trắng tham ăn bằng h3?? hxg4, cột h mở toang và Hậu Đen sẽ tràn xuống chiếu hết.", moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "Nf6", "O-O", "Ng4", "h3", "h5", "hxg4", "hxg4", "Ne1", "Qh4", "f3", "g3"] }
-                ]
-            },
-            // ==================== BÀI HỌC BỔ SUNG ====================
-            {
-                category: "13. Phòng thủ Petrov",
-                variations: [
-                    { name: "Biến Chính (Classical Defense)", type: "Cơ bản", desc: "Đen đáp lại Nf3 bằng Nf6, không phòng thủ thụ động mà phản công ngay vào e4. Sau khi đổi quân, thế cờ cân bằng và vững chắc — lựa chọn yêu thích của nhiều Đại Kiện tướng muốn hòa.", moves: ["e4", "e5", "Nf3", "Nf6", "Nxe5", "d6", "Nd3", "Nxe4", "d4", "d5", "Bd3", "Nc6", "O-O", "Be7", "Re1"] },
-                    { name: "Tấn công Cổ điển (Qe2)", type: "Trắng Tấn Công", desc: "Trắng chơi Qe2 ép buộc Đen cũng phải đưa Hậu ra Qe7, sau đó Nf4 khống chế d5. Lối đánh chủ động hơn, không để Đen hòa dễ dàng.", moves: ["e4", "e5", "Nf3", "Nf6", "Nxe5", "d6", "Nd3", "Nxe4", "Qe2", "Qe7", "Nf4", "Nf6", "d4", "d5", "Nc3"] },
-                    { name: "Gambit Cochrane (Thí Mã f7)", type: "Trắng Tấn Công", desc: "Đòn thí Mã cực kỳ táo bạo: Trắng nhảy Nxf7 ngay nước thứ 4 để kéo Vua Đen ra giữa bàn! Biến cờ độc đáo, thường khiến Đen bị bất ngờ và phạm sai lầm.", moves: ["e4", "e5", "Nf3", "Nf6", "Nxe5", "d6", "Nxf7", "Kxf7", "d4", "Nc6", "Bc4+", "Be6", "Bxe6+", "Kxe6", "c4"] }
-                ]
-            },
-            {
-                category: "14. Nimzo-Ấn Độ (Nimzo-Indian)",
-                variations: [
-                    { name: "Biến Rubinstein (e3)", type: "Cơ bản", desc: "Lối chơi thực dụng và vững chắc nhất của Trắng. Trắng đi e3, không lo bị đôi tốt, tập trung phát triển quân và duy trì trung tâm d4 vững chắc.", moves: ["d4", "Nf6", "c4", "e6", "Nc3", "Bb4", "e3", "O-O", "Bd3", "d5", "Nf3", "c5", "O-O", "Nc6", "a3", "Bxc3", "bxc3"] },
-                    { name: "Biến Cổ điển (Qc2)", type: "Trắng Khắc Chế", desc: "Trắng đi Qc2 để giữ lại cặp Tượng và kiểm soát e4. Đây là biến sắc bén nhất, được Kasparov và Carlsen ưa dùng để đấu tranh giành lợi thế từ đầu.", moves: ["d4", "Nf6", "c4", "e6", "Nc3", "Bb4", "Qc2", "O-O", "a3", "Bxc3+", "Qxc3", "b6", "Bg5", "Bb7", "e3", "d6"] },
-                    { name: "Biến Sämisch (a3 cưỡng bức)", type: "Trắng Khắc Chế", desc: "Trắng ngay lập tức ép Đen phải đổi Tượng bằng a3. Sau đó đẩy f3 xây dựng trung tâm sắt đá. Tuy bị đôi tốt nhưng Trắng có không gian và sức tấn công rất mạnh.", moves: ["d4", "Nf6", "c4", "e6", "Nc3", "Bb4", "a3", "Bxc3+", "bxc3", "O-O", "f3", "d5", "cxd5", "exd5", "e3", "c5"] }
-                ]
-            },
-            {
-                category: "15. Phòng thủ Grünfeld",
-                variations: [
-                    { name: "Biến Đổi Quân (Exchange)", type: "Cơ bản", desc: "Trắng đổi tốt d5 rồi chiếm toàn bộ trung tâm bằng c4, d4, e4. Đen phản công bằng Tượng g7 cực mạnh trên đường chéo dài, nhắm thẳng vào khối tốt trung tâm của Trắng.", moves: ["d4", "Nf6", "c4", "g6", "Nc3", "d5", "cxd5", "Nxd5", "e4", "Nxc3", "bxc3", "Bg7", "Nf3", "c5", "Be3", "Qa5", "Qd2"] },
-                    { name: "Hệ thống Nga (Qb3)", type: "Trắng Tấn Công", desc: "Trắng chơi Qb3 sớm để gây áp lực kép lên d5 và b7. Thế cờ cực kỳ sắc bén và phức tạp, đây là biến phổ biến nhất ở cấp độ Kiện tướng và Đại Kiện tướng.", moves: ["d4", "Nf6", "c4", "g6", "Nc3", "d5", "Nf3", "Bg7", "Qb3", "dxc4", "Qxc4", "O-O", "e4", "Na6", "Be2", "c5"] },
-                    { name: "Neo-Grünfeld (g3)", type: "Trắng Khắc Chế", desc: "Trắng phát triển Tượng lên g2 theo hướng Fianchetto, tránh những biến phức tạp trong Biến Đổi Quân. Thế cờ mềm dẻo và nguy hiểm về lâu dài.", moves: ["d4", "Nf6", "c4", "g6", "g3", "d5", "Bg2", "Bg7", "Nf3", "O-O", "O-O", "dxc4", "Na3", "c3", "bxc3", "c5"] }
-                ]
-            },
-            {
-                category: "16. Khai cuộc Scotland (Scotch Game)",
-                variations: [
-                    { name: "Biến Chính (Schmidt)", type: "Cơ bản", desc: "Sau khi Trắng đẩy d4 phá trung tâm và thu hồi Mã d4, Đen chơi Nf6 tấn công tốt e4. Trắng đẩy e5 đuổi Mã. Thế cờ năng động và tự do, được Kasparov ưa dùng.", moves: ["e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4", "Nf6", "Nxc6", "bxc6", "e5", "Qe7", "Qe2", "Nd5", "c4", "Ba6"] },
-                    { name: "Gambit Scotland (Bc4)", type: "Trắng Tấn Công", desc: "Thay vì thu hồi tốt d4 bằng Mã, Trắng lên Tượng Bc4 uy hiếp f7. Lối đánh chiến thuật cao độ, thường dẫn đến tổng tấn công cánh Vua Đen cực kỳ sắc bén.", moves: ["e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Bc4", "Nf6", "O-O", "Nxe4", "Re1", "d5", "Bxd5", "Qxd5", "Nc3"] },
-                    { name: "Gambit Goering (c3)", type: "Trắng Tấn Công", desc: "Trắng thí thêm một tốt nữa bằng c3 để đổi lấy ưu thế phát triển áp đảo. Nếu Đen không biết cách chống, sẽ bị chiều hết rất nhanh trong vòng 20 nước.", moves: ["e4", "e5", "Nf3", "Nc6", "d4", "exd4", "c3", "dxc3", "Nxc3", "Bc5", "Bc4", "d6", "O-O", "Nf6", "Qb3"] }
-                ]
-            },
-            {
-                category: "17. Phòng thủ Hậu Ấn Độ (Queen's Indian)",
-                variations: [
-                    { name: "Biến Cổ điển (g3 Fianchetto)", type: "Cơ bản", desc: "Đen dùng b6 và Bb7 để kiểm soát trung tâm bằng quân thay vì tốt. Trắng thường phát triển Tượng theo hướng Fianchetto (g3, Bg2). Thế cờ chiến lược sâu sắc, thường thấy ở cấp độ cao.", moves: ["d4", "Nf6", "c4", "e6", "Nf3", "b6", "g3", "Bb7", "Bg2", "Be7", "O-O", "O-O", "Nc3", "Ne4", "Qc2", "Nxc3"] },
-                    { name: "Hệ thống Petrosian (a3)", type: "Trắng Khắc Chế", desc: "Trắng đẩy a3 sớm để ngăn Đen đưa Tượng lên b4 ghim quân. Cựu vô địch thế giới Petrosian rất ưa lối này để kiểm soát không gian và chờ cơ hội tấn công.", moves: ["d4", "Nf6", "c4", "e6", "Nf3", "b6", "a3", "Bb7", "Nc3", "d5", "cxd5", "exd5", "Bg5", "Be7", "e3", "O-O"] },
-                    { name: "Biến Kasparov (Nc3 sớm)", type: "Trắng Tấn Công", desc: "Trắng đưa Mã lên c3 thay vì Nf3, duy trì lựa chọn đẩy e4 trung tâm. Đây là lối chơi năng động, tạo ra thế trận rất phức tạp và không đối xứng.", moves: ["d4", "Nf6", "c4", "e6", "Nc3", "Bb4", "Qb3", "Qe7", "Bg5", "h6", "Bh4", "g5", "Bg3", "Ne4", "Nd2", "Nxg3", "hxg3"] }
-                ]
-            },
-            {
-                category: "18. Phòng thủ Pirc / Hiện Đại",
-                variations: [
-                    { name: "Biến Cổ điển (Classical)", type: "Cơ bản", desc: "Đen nhường trung tâm hoàn toàn cho Trắng, xây dựng thế trận Fianchetto với Tượng g7 cực mạnh trên đường chéo dài. Rất linh hoạt và khó đoán, phù hợp với người thích phản công chiến lược.", moves: ["e4", "d6", "d4", "Nf6", "Nc3", "g6", "Nf3", "Bg7", "Be2", "O-O", "O-O", "c6", "a4", "Nbd7"] },
-                    { name: "Tấn công Áo (Austrian Attack)", type: "Trắng Tấn Công", desc: "Trắng đẩy f4 sớm, xây dựng khối trung tâm 3 tốt đồ sộ (d4, e4, f4) và chuẩn bị tấn công cánh Vua dữ dội. Đây là biến hung hăng và nguy hiểm nhất để chống lại Pirc.", moves: ["e4", "d6", "d4", "Nf6", "Nc3", "g6", "f4", "Bg7", "Nf3", "O-O", "Be2", "c5", "dxc5", "Qa5", "O-O"] },
-                    { name: "Tấn công 150 (Be3 + Qd2)", type: "Trắng Tấn Công", desc: "Trắng chơi Be3 và Qd2, chuẩn bị nhập thành dài và tấn công vũ bão theo phong cách 'lột mặt' Vua Đen bằng g4-h4-h5. Tên '150' xuất phát từ thang điểm xếp hạng cũ của Anh.", moves: ["e4", "d6", "d4", "Nf6", "Nc3", "g6", "Be3", "Bg7", "Qd2", "c6", "f3", "b5", "O-O-O", "Nd7", "h4", "Nb6"] },
-                    { name: "Phòng thủ Hiện Đại (Modern Defense)", type: "Đen Phản Công", desc: "Đen chơi g6 và Bg7 ngay mà không đẩy Nf6, giữ lại thêm lựa chọn linh hoạt hơn. Thường chuyển thành Pirc hoặc King's Indian tùy theo Trắng đi gì.", moves: ["e4", "g6", "d4", "Bg7", "Nc3", "d6", "Nf3", "a6", "Be2", "b5", "O-O", "Bb7", "Re1", "Nd7", "Bf1", "e5"] }
-                ]
-            }
-        ];
-
-        // --- BIẾN ĐIỂM SỐ ---
-        let currentScore = 0;
-        let maxScore = 0;
-        let movePoints = 10; // Điểm nhận được cho mỗi bước đi (tối đa 10)
-
-        let board = null;
-        let game = new Chess();
-        let currentOpening = null;
-        let currentMoveIndex = 0;
-        let playInterval = null;
-
-        let isPracticeMode = false;
-        let isExamMode = false;
-
-        // Khởi tạo menu Accordion
-        function initMenu() {
-            const container = document.getElementById('menu-container');
-
-            openingData.forEach((cat, catIndex) => {
-                const catDiv = document.createElement('div');
-                catDiv.className = 'border-b border-slate-200';
-
-                const catHeader = document.createElement('div');
-                catHeader.className = 'category-header p-3 font-semibold text-slate-800 flex justify-between items-center';
-                catHeader.innerHTML = `<span>${cat.category}</span> <i class="fa-solid fa-chevron-down category-icon text-slate-400 text-sm"></i>`;
-
-                const varList = document.createElement('div');
-                varList.className = 'variation-list bg-slate-50 border-t border-slate-100';
-
-                cat.variations.forEach((op, varIndex) => {
-                    const btn = document.createElement('div');
-                    btn.className = `variation-btn p-3 pl-8 text-sm cursor-pointer flex flex-col`;
-
-                    let tagHtml = '';
-                    if (op.type.includes("Trắng")) tagHtml = `<span class="tag-white">${op.type}</span>`;
-                    else if (op.type.includes("Đen")) tagHtml = `<span class="tag-black">${op.type}</span>`;
-                    else tagHtml = `<span class="tag-basic">${op.type}</span>`;
-
-                    btn.innerHTML = `<div class="font-medium mb-1">${op.name}</div><div>${tagHtml}</div>`;
-                    btn.onclick = () => selectVariation(catIndex, varIndex, catDiv, btn);
-                    varList.appendChild(btn);
-                });
-
-                catDiv.appendChild(catHeader);
-                catDiv.appendChild(varList);
-
-                catHeader.onclick = () => {
-                    document.querySelectorAll('#menu-container > div').forEach(d => {
-                        if (d !== catDiv) d.classList.remove('category-open');
-                    });
-                    catDiv.classList.toggle('category-open');
-                };
-
-                container.appendChild(catDiv);
-            });
-        }
-
-        function selectVariation(catIndex, varIndex, catDiv, btnEl) {
-            document.querySelectorAll('.variation-btn').forEach(b => b.classList.remove('active'));
-            btnEl.classList.add('active');
-            catDiv.classList.add('category-open');
-
-            stopAutoPlay();
-            currentOpening = openingData[catIndex].variations[varIndex];
-
-            document.getElementById('opening-parent-name').innerText = openingData[catIndex].category;
-            document.getElementById('opening-title').innerText = currentOpening.name;
-            document.getElementById('opening-desc').innerText = currentOpening.desc;
-
-            if (currentOpening.type.includes("Đen")) board.orientation('black');
-            else board.orientation('white');
-
-            resetCurrentBoard();
-        }
-
-        // --- CÁC HÀM ĐIỀU KHIỂN XEM CỜ ---
-        function nextMove() {
-            if (!currentOpening) return;
-            if (currentMoveIndex < currentOpening.moves.length) {
-                game.move(currentOpening.moves[currentMoveIndex]);
-                board.position(game.fen());
-                currentMoveIndex++;
-                updateMovesHistory();
-                updateButtons();
-                updateProgressBar();
-            } else {
-                stopAutoPlay();
-            }
-        }
-
-        function toggleAutoPlay() {
-            if (!currentOpening) return;
-            const btnPlay = document.getElementById('btn-play');
-
-            if (playInterval) {
-                stopAutoPlay();
-            } else {
-                if (currentMoveIndex >= currentOpening.moves.length) {
-                    resetCurrentBoard();
-                }
-                btnPlay.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> Dừng';
-                btnPlay.classList.replace('bg-emerald-500', 'bg-rose-500');
-                btnPlay.classList.replace('hover:bg-emerald-600', 'hover:bg-rose-600');
-                playInterval = setInterval(nextMove, 1200);
-            }
-        }
-
-        function stopAutoPlay() {
-            if (playInterval) {
-                clearInterval(playInterval);
-                playInterval = null;
-            }
-            const btnPlay = document.getElementById('btn-play');
-            if(btnPlay) {
-                btnPlay.innerHTML = '<i class="fa-solid fa-play mr-1"></i> Chạy';
-                btnPlay.classList.replace('bg-rose-500', 'bg-emerald-500');
-                btnPlay.classList.replace('hover:bg-rose-600', 'hover:bg-emerald-600');
-            }
-        }
-
-        function resetCurrentBoard() {
-            if (!currentOpening) return;
-            stopAutoPlay();
-            game.reset();
-            board.position(game.fen());
-
-            currentMoveIndex = 0;
-            currentScore = 0;
-            movePoints = 10;
-            maxScore = currentOpening.moves.length * 10;
-
-            updateMovesHistory();
-            updateButtons();
-            updateProgressBar();
-            updateScoreUI();
-
-            if (isPracticeMode) {
-                updateFeedbackTurn();
-            }
-        }
-
-        function flipBoard() {
-            board.flip();
-        }
-
-        // --- CÁC HÀM ĐIỀU KHIỂN HỌC BÀI, THI ĐẤU & CHẤM ĐIỂM ---
-        function togglePracticeModeUI() {
-            const normalControls = document.getElementById('normal-controls');
-            const feedback = document.getElementById('feedback-msg');
-            const btnHint = document.getElementById('btn-hint');
-            const examWrapper = document.getElementById('exam-mode-wrapper');
-
-            if (isPracticeMode) {
-                normalControls.style.display = 'none';
-                feedback.classList.remove('hidden');
-                btnHint.classList.remove('hidden');
-                btnHint.classList.add('flex');
-                examWrapper.style.display = 'inline-flex';
-                stopAutoPlay();
-                updateFeedbackTurn();
-            } else {
-                normalControls.style.display = 'grid';
-                feedback.classList.add('hidden');
-                btnHint.classList.add('hidden');
-                btnHint.classList.remove('flex');
-                examWrapper.style.display = 'none';
-
-                document.getElementById('exam-toggle').checked = false;
-                toggleExamMode(false);
-                stopAutoPlay();
-            }
-            updateScoreUI();
-        }
-
-        function toggleExamMode(isExam) {
-            isExamMode = isExam;
-            const historyDiv = document.getElementById('moves-history');
-            const btnHint = document.getElementById('btn-hint');
-
-            if (isExam) {
-                historyDiv.classList.add('blur-text');
-                btnHint.disabled = true;
-                btnHint.classList.add('opacity-50', 'cursor-not-allowed');
-                btnHint.innerHTML = '<i class="fa-solid fa-lock mr-2"></i> Gợi ý bị khóa (Đang Thi)';
-            } else {
-                historyDiv.classList.remove('blur-text');
-                btnHint.disabled = false;
-                btnHint.classList.remove('opacity-50', 'cursor-not-allowed');
-                btnHint.innerHTML = '<i class="fa-solid fa-lightbulb mr-2"></i> Xem Gợi Ý';
-            }
-        }
-
-        function showFeedback(msg, type) {
-            const el = document.getElementById('feedback-msg');
-            el.innerHTML = msg;
-            el.className = 'text-center text-sm font-bold p-3 rounded shadow-sm mb-3 transition-all ';
-            if (type === 'error') {
-                el.classList.add('bg-rose-100', 'text-rose-700', 'border', 'border-rose-300');
-            } else if (type === 'success') {
-                el.classList.add('bg-emerald-100', 'text-emerald-800', 'border', 'border-emerald-300');
-            } else {
-                el.classList.add('bg-indigo-100', 'text-indigo-800', 'border', 'border-indigo-300');
-            }
-        }
-
-        function updateScoreUI() {
-            const displayEl = document.getElementById('score-display');
-            if (isPracticeMode) {
-                displayEl.classList.remove('hidden');
-                document.getElementById('score-text').innerText = `${currentScore}/${maxScore}`;
-            } else {
-                displayEl.classList.add('hidden');
-            }
-        }
-
-        function updateFeedbackTurn() {
-            if(!currentOpening) return;
-            if (currentMoveIndex >= currentOpening.moves.length) {
-                // Tính % để xếp loại
-                let percent = maxScore > 0 ? Math.round((currentScore / maxScore) * 100) : 0;
-                let grade = "";
-
-                if (percent === 100) grade = "🏆 HOÀN HẢO!";
-                else if (percent >= 80) grade = "🌟 XUẤT SẮC!";
-                else if (percent >= 50) grade = "👍 TỐT!";
-                else grade = "💪 CẦN CỐ GẮNG THÊM!";
-
-                if (isExamMode) {
-                    showFeedback(`${grade}<br>Bạn đã thi xong với điểm số: <span class='text-lg'>${currentScore}/${maxScore}</span>`, "success");
-                } else {
-                    showFeedback(`${grade}<br>Bạn đạt <span class='text-lg'>${currentScore}/${maxScore}</span> điểm (${percent}%).`, "success");
-                }
-                return;
-            }
-            const color = (currentMoveIndex % 2 === 0) ? "Trắng" : "Đen";
-            showFeedback(`👉 Đến lượt ${color} đi. Kéo thả quân cờ!`, "info");
-        }
-
-        // Sự kiện khi Kéo & Thả quân cờ
-        function onDragStart (source, piece, position, orientation) {
-            if (!isPracticeMode) return false;
-            if (game.game_over()) return false;
-
-            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-                return false;
-            }
-            if (!currentOpening || currentMoveIndex >= currentOpening.moves.length) return false;
-        }
-
-        function onDrop (source, target) {
-            if (!isPracticeMode || !currentOpening) return 'snapback';
-
-            let expectedMoveSAN = currentOpening.moves[currentMoveIndex];
-
-            let attempt = game.move({
-                from: source,
-                to: target,
-                promotion: 'q'
-            });
-
-            if (attempt === null) return 'snapback';
-
-            let attemptSanClean = attempt.san.replace(/[+#]/g, '');
-            let expectedSanClean = expectedMoveSAN.replace(/[+#]/g, '');
-
-            if (attemptSanClean !== expectedSanClean) {
-                game.undo();
-                // Xử lý Trừ điểm khi đi sai
-                movePoints = Math.max(0, movePoints - 3);
-                showFeedback(`❌ Sai rồi! Kéo lại nhé.<br><span class="text-xs text-rose-500">(Bị trừ 3 điểm cho nước này)</span>`, "error");
-                return 'snapback';
-            }
-
-            // Đúng
-            currentScore += movePoints;
-            movePoints = 10; // Reset điểm 10 cho nước đi tiếp theo
-
-            currentMoveIndex++;
-            updateMovesHistory();
-            updateButtons();
-            updateProgressBar();
-            updateScoreUI();
-
-            updateFeedbackTurn();
-        }
-
-        function onSnapEnd () {
-            board.position(game.fen());
-        }
-
-        // --- CÁC HÀM CẬP NHẬT UI ---
-        function updateButtons() {
-            const btnNext = document.getElementById('btn-next');
-            if (!currentOpening || currentMoveIndex >= currentOpening.moves.length) {
-                btnNext.disabled = true;
-                btnNext.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                btnNext.disabled = false;
-                btnNext.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        function updateProgressBar() {
-            if (!currentOpening) return;
-            const total = currentOpening.moves.length;
-            const current = currentMoveIndex;
-            const percent = (current / total) * 100;
-
-            document.getElementById('progress-bar').style.width = `${percent}%`;
-            document.getElementById('progress-text').innerText = `${current} / ${total} nước đi`;
-        }
-
-        function updateMovesHistory() {
-            const container = document.getElementById('moves-history');
-            container.innerHTML = '';
-
-            if (!currentOpening) return;
-
-            let moveNumber = 1;
-            for (let i = 0; i < currentOpening.moves.length; i++) {
-                if (i % 2 === 0) {
-                    const numSpan = document.createElement('span');
-                    numSpan.className = 'text-slate-500 font-bold ml-1';
-                    numSpan.innerText = `${moveNumber}.`;
-                    container.appendChild(numSpan);
-                    moveNumber++;
-                }
-
-                const moveSpan = document.createElement('span');
-                moveSpan.innerText = currentOpening.moves[i];
-
-                if (i < currentMoveIndex) {
-                    moveSpan.className = 'text-slate-900 font-bold bg-amber-400 px-1 rounded shadow-sm';
-                } else {
-                    moveSpan.className = 'text-slate-500';
-                }
-
-                container.appendChild(moveSpan);
-            }
-        }
-
-        // --- KHỞI TẠO TRANG ---
-        $(document).ready(function() {
-            var config = {
-                draggable: true,
-                position: 'start',
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-                showNotation: true,
-                onDragStart: onDragStart,
-                onDrop: onDrop,
-                onSnapEnd: onSnapEnd
-            };
-            board = Chessboard('board', config);
-
-            // Nút điều khiển
-            document.getElementById('btn-next').addEventListener('click', nextMove);
-            document.getElementById('btn-play').addEventListener('click', toggleAutoPlay);
-            document.getElementById('btn-reset').addEventListener('click', resetCurrentBoard);
-            document.getElementById('btn-flip').addEventListener('click', flipBoard);
-
-            // Công tắc
-            document.getElementById('practice-toggle').addEventListener('change', function(e) {
-                isPracticeMode = e.target.checked;
-                togglePracticeModeUI();
-                resetCurrentBoard();
-            });
-
-            document.getElementById('exam-toggle').addEventListener('change', function(e) {
-                toggleExamMode(e.target.checked);
-            });
-
-            // Nút Gợi ý
-            document.getElementById('btn-hint').addEventListener('click', function() {
-                if(!isPracticeMode || !currentOpening || isExamMode) return;
-                if(currentMoveIndex < currentOpening.moves.length) {
-                    // Phạt điểm khi dùng quyền trợ giúp
-                    movePoints = Math.max(0, movePoints - 5);
-                    showFeedback(`💡 Gợi ý: Kéo <b>${currentOpening.moves[currentMoveIndex]}</b><br><span class="text-xs text-emerald-600">(Bị trừ 5 điểm cho nước này)</span>`, "success");
-                }
-            });
-
-            $(window).resize(function() {
-                board.resize();
-            });
-
-            initMenu();
-
-            const firstCat = document.querySelector('#menu-container > div');
-            firstCat.classList.add('category-open');
-            const firstVarBtn = firstCat.querySelector('.variation-btn');
-            selectVariation(0, 0, firstCat, firstVarBtn);
-        });
-    </script>
+        <div class="mt-auto">
+          <div class="bg-indigo-50 rounded-lg border border-indigo-200 p-3 flex justify-between items-center mb-3">
+            <div class="font-bold text-indigo-900 text-sm"><i class="fa-solid fa-graduation-cap mr-2"></i>Chế Độ Học Bài</div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="practice-toggle" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+          <div id="feedback-msg" class="hidden text-center text-sm font-bold p-3 rounded shadow-sm mb-3"></div>
+          <div id="normal-controls" class="grid grid-cols-2 gap-2 mb-3">
+            <button id="btn-next" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow-md flex items-center justify-center transition text-sm">
+              <i class="fa-solid fa-step-forward mr-1"></i>Tới
+            </button>
+            <button id="btn-play" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded shadow-md flex items-center justify-center transition text-sm">
+              <i class="fa-solid fa-play mr-1"></i>Chạy
+            </button>
+          </div>
+          <button id="btn-hint" class="hidden w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded shadow flex items-center justify-center transition mb-3">
+            <i class="fa-solid fa-lightbulb mr-2"></i>Xem Gợi Ý
+          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btn-flip" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 rounded shadow flex items-center justify-center transition text-sm">
+              <i class="fa-solid fa-retweet mr-1"></i>Lật Cờ
+            </button>
+            <button id="btn-reset" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 rounded shadow flex items-center justify-center transition text-sm">
+              <i class="fa-solid fa-rotate-left mr-1"></i>Xếp Lại
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Flashcard Modal -->
+<div id="flashcard-modal">
+  <div class="fc-card">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="text-lg font-bold text-slate-800">🃏 Nhận Diện Khai Cuộc</h2>
+      <div class="flex items-center gap-3">
+        <span id="fc-score" class="text-sm font-bold text-indigo-700 bg-indigo-100 px-2 py-1 rounded">0/0 đúng</span>
+        <button onclick="closeFlashcard()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">✕</button>
+      </div>
+    </div>
+    <p class="text-sm text-slate-500 mb-3 text-center">Quan sát vị trí cờ dưới đây và chọn tên khai cuộc đúng:</p>
+    <div id="flashcard-board" class="mx-auto mb-4" style="width:280px;height:280px"></div>
+    <p class="text-center font-bold text-slate-700 mb-3 text-sm">Đây là khai cuộc nào?</p>
+    <div id="fc-answers" class="grid grid-cols-2 gap-2 mb-4"></div>
+    <div id="fc-result" class="hidden text-center text-sm font-bold p-3 rounded mb-3"></div>
+    <div class="flex gap-2">
+      <button id="fc-next-btn" onclick="nextFlashcard()" class="hidden flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded transition">Câu tiếp theo →</button>
+      <button onclick="closeFlashcard()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded transition">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+// ===================== DỮ LIỆU KHAI CUỘC =====================
+const openingData = [
+  { category:"1. Ván cờ Italia", variations:[
+    { name:"Giuoco Piano (Truyền thống)", type:"Cơ bản", desc:"Hai bên đều đưa Tượng lên c4, c5 ngắm vào điểm f7, f2. Trắng thường chơi c3 d3 để tạo thế trận chậm mà chắc.", moves:["e4","e5","Nf3","Nc6","Bc4","Bc5","c3","Nf6","d3","d6"] },
+    { name:"Tấn công Greco (d4 Trung tâm)", type:"Trắng Tấn Công", desc:"Trắng dâng tốt d4 tạo đột phá trung tâm, chấp nhận thí tốt để mở toang cột và đường chéo tấn công Vua Đen cực kỳ ác liệt.", moves:["e4","e5","Nf3","Nc6","Bc4","Bc5","c3","Nf6","d4","exd4","cxd4","Bb4+","Nc3","Nxe4","O-O","Bxc3","d5","Bf6","Re1","Ne7","Rxe4","d6"] },
+    { name:"Fried Liver Attack", type:"Trắng Tấn Công", desc:"Khi Đen chơi Mã f6, Trắng lập tức nhảy Ng5 nhắm f7. Nếu Đen đi Nxd5 sai lầm, Trắng thí Mã vào f7 tạo bão cấp 12 lên Vua Đen.", moves:["e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5","d5","exd5","Nxd5","Nxf7","Kxf7","Qf3+","Ke6","Nc3"] },
+    { name:"Phòng thủ Polerio (Na5)", type:"Đen Khắc Chế", desc:"Cách Đen phá giải chuẩn xác đòn Gan Chiên. Đen thí 1 tốt bằng cách nhảy Na5 để đuổi Tượng Trắng, giành quyền chủ động.", moves:["e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5","d5","exd5","Na5","Bb5+","c6","dxc6","bxc6","Be2","h6","Nf3","e4","Ne5","Bd6"] },
+    { name:"Phản công Traxler", type:"Đen Khắc Chế", desc:"Đen đáp trả Ng5 bằng việc 'bỏ mặc f7', lên Tượng Bc5. Nếu Trắng ăn f7, Đen thí ngược Bxf2+ và tung đòn chiếu hết cực độc.", moves:["e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5","Bc5","Nxf7","Bxf2+","Kxf2","Nxe4+","Kg1","Qh4","g3","Nxg3","Nxh8","Nd4"] },
+    { name:"Bẫy Blackburne Shilling", type:"Đen Giăng Bẫy", desc:"Đen dụ Trắng ăn tốt e5 bằng cách đi Mã d4. Nếu Trắng 'mắc mưu' Nxe5??, Đen tung Hậu Qg5 và giăng lưới chiếu hết chỉ sau 7 nước.", moves:["e4","e5","Nf3","Nc6","Bc4","Nd4","Nxe5","Qg5","Nxf7","Qxg2","Rf1","Qxe4+","Be2","Nf3#"] }
+  ]},
+  { category:"2. Ván cờ Tây Ban Nha (Ruy Lopez)", variations:[
+    { name:"Phòng thủ Morphy (Chính thống)", type:"Cơ bản", desc:"Cách phổ biến nhất của Đen: Đẩy tốt a6 hỏi tội Tượng b5 của Trắng. Đây là đường lối dẫn đến thế trận chiến lược cực kỳ sâu sắc.", moves:["e4","e5","Nf3","Nc6","Bb5","a6","Ba4","Nf6","O-O","Be7","Re1","b5","Bb3","d6","c3","O-O","h3"] },
+    { name:"Biến Đổi Quân (Exchange)", type:"Trắng Khắc Chế", desc:"Trắng chủ động ăn Bxc6, làm hỏng cấu trúc tốt cánh Hậu của Đen. Bobby Fischer rất thích biến này.", moves:["e4","e5","Nf3","Nc6","Bb5","a6","Bxc6","dxc6","O-O","f6","d4","exd4","Nxd4","c5","Nb3","Qxd1","Rxd1"] },
+    { name:"Phòng thủ Berlin", type:"Đen Khắc Chế", desc:"Bức tường Berlin! Đen ép Trắng đổi Hậu sớm và đưa về cờ tàn siêu vững chắc.", moves:["e4","e5","Nf3","Nc6","Bb5","Nf6","O-O","Nxe4","d4","Nd6","Bxc6","dxc6","dxe5","Nf5","Qxd8+","Kxd8"] },
+    { name:"Gambit Marshall", type:"Đen Tấn Công", desc:"Đen chủ động thí tốt d5 để đổi lấy đòn tấn công hủy diệt vào cánh Vua Trắng.", moves:["e4","e5","Nf3","Nc6","Bb5","a6","Ba4","Nf6","O-O","Be7","Re1","b5","Bb3","O-O","c3","d5","exd5","Nxd5","Nxe5","Nxe5","Rxe5","c6"] },
+    { name:"Phòng thủ Schliemann", type:"Đen Tấn Công", desc:"Đòn đánh cực gắt: đẩy f5 ngay lập tức để phá vỡ trung tâm, kéo Trắng vào cuộc chiến đẫm máu.", moves:["e4","e5","Nf3","Nc6","Bb5","f5","Nc3","fxe4","Nxe4","d5","Nxe5","dxe4","Nxc6","Qg5","Qe2","Nf6"] },
+    { name:"Bẫy Con Thuyền Noah", type:"Đen Giăng Bẫy", desc:"Trắng ham ăn tốt d4 bằng Hậu. Đen lập tức đẩy tốt c5 c4 nhốt chết Tượng Trắng ở b3 không đường thoát.", moves:["e4","e5","Nf3","Nc6","Bb5","a6","Ba4","d6","d4","b5","Bb3","Nxd4","Nxd4","exd4","Qxd4","c5","Qd5","Be6","Qc6+","Bd7","Qd5","c4"] }
+  ]},
+  { category:"3. Phòng thủ Sicilia", variations:[
+    { name:"Biến Najdorf", type:"Cơ bản", desc:"Một trong những khai cuộc sắc bén và phức tạp nhất. Đen đi a6 để ngăn Trắng đưa Tượng/Mã vào b5.", moves:["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","a6","Bg5","e6","f4","Be7"] },
+    { name:"Biến Dragon (Con Rồng)", type:"Đen Tấn Công", desc:"Đen Fianchetto Tượng lên g7 (hình dáng giống đuôi rồng). Tạo sức ép cực lớn lên đường chéo dài.", moves:["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","g6","Be3","Bg7","f3","O-O","Qd2","Nc6","O-O-O"] },
+    { name:"Biến Sveshnikov (Pelikan)", type:"Đen Phản Công", desc:"Đen chủ động đẩy e5 đuổi Mã Trắng, chấp nhận lỗ hổng ở d5 để đổi lấy thế trận chủ động.", moves:["e4","c5","Nf3","Nc6","d4","cxd4","Nxd4","Nf6","Nc3","e5","Ndb5","d6","Bg5","a6","Na3","b5","Nd5","Be7","Bxf6","Bxf6","c3"] },
+    { name:"Biến Alapin (c3)", type:"Trắng Khắc Chế", desc:"Cách Trắng né tránh lý thuyết phức tạp của Sicilia. Trắng đẩy c3 chuẩn bị d4.", moves:["e4","c5","c3","Nf6","e5","Nd5","d4","cxd4","Nf3","e6","cxd4","d6","Bc4","Nb6","Bb3"] },
+    { name:"Smith-Morra Gambit", type:"Trắng Tấn Công", desc:"Trắng táo bạo thí tốt c3 để đổi lấy tốc độ dàn quân thần tốc.", moves:["e4","c5","d4","cxd4","c3","dxc3","Nxc3","Nc6","Nf3","d6","Bc4","e6","O-O","Nf6","Qe2"] },
+    { name:"Bẫy Siberian", type:"Đen Giăng Bẫy", desc:"Trong Smith-Morra, Đen lén đưa Mã lên g4. Nếu Trắng chủ quan h3??, Đen tung Nd4 chiếu hết siêu đẹp!", moves:["e4","c5","d4","cxd4","c3","dxc3","Nxc3","Nc6","Nf3","e6","Bc4","Qc7","O-O","Nf6","Qe2","Ng4","h3","Nd4","Nxd4","Qh2#"] },
+    { name:"Bẫy Bắt Hậu (Dragon-Sozin)", type:"Trắng Giăng Bẫy", desc:"Trắng đưa Tượng lên c4. Khi Đen theo hướng Dragon với g6, Trắng thí Tượng Bxf7+ chiếu Vua để bắt sống Hậu Đen.", moves:["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","Nc6","Bc4","g6","Nxc6","bxc6","e5","dxe5","Bxf7+","Kxf7","Qxd8"] }
+  ]},
+  { category:"4. Phòng thủ Pháp", variations:[
+    { name:"Biến Đổi Quân (Exchange)", type:"Cơ bản", desc:"Lối chơi đơn giản, hòa hoãn nhất của Trắng. Dẫn đến thế cờ đối xứng, an toàn.", moves:["e4","e6","d4","d5","exd5","exd5","Bd3","Bd6","Nf3","Ne7","O-O","O-O"] },
+    { name:"Biến Tiến Tới (Advance)", type:"Đen Phản Công", desc:"Trắng đóng sập trung tâm bằng e5. Đen lập tức tấn công vào gốc rễ cấu trúc tốt Trắng bằng c5 và Qb6.", moves:["e4","e6","d4","d5","e5","c5","c3","Nc6","Nf3","Qb6","a3","c4"] },
+    { name:"Biến Tarrasch", type:"Cơ bản", desc:"Trắng dùng Nd2 để tránh bị ghim Bb4. Thế cờ uyển chuyển và an toàn cho phe Trắng.", moves:["e4","e6","d4","d5","Nd2","Nf6","e5","Nfd7","Bd3","c5","c3","Nc6","Ne2","cxd4","cxd4","f6"] },
+    { name:"Biến Winawer", type:"Đen Phản Công", desc:"Sắc bén nhất! Đen ghim và ăn Mã c3, làm hỏng cấu trúc tốt Trắng.", moves:["e4","e6","d4","d5","Nc3","Bb4","e5","c5","a3","Bxc3+","bxc3","Ne7","Qg4"] },
+    { name:"Biến Cổ Điển (Classical)", type:"Cơ bản", desc:"Trắng ghim Mã f6 bằng Bg5, Đen phá ghim bằng Be7.", moves:["e4","e6","d4","d5","Nc3","Nf6","Bg5","Be7","e5","Nfd7","Bxe7","Qxe7","f4"] },
+    { name:"Biến Rubinstein", type:"Đen Khắc Chế", desc:"Đen chủ động giải phóng áp lực trung tâm bằng cách ăn dxe4. Thế cờ siêu vững chắc.", moves:["e4","e6","d4","d5","Nc3","dxe4","Nxe4","Nd7","Nf3","Ngf6","Nxf6+","Nxf6","Bd3","Be7","O-O","O-O"] },
+    { name:"Bẫy Milner-Barry", type:"Trắng Giăng Bẫy", desc:"Trắng thí tốt d4 để mở cột và giành ưu thế phát triển. Nếu Đen ham ăn tốt, Trắng bắt Hậu hoặc bao vây Vua.", moves:["e4","e6","d4","d5","e5","c5","c3","Nc6","Nf3","Qb6","Bd3","cxd4","cxd4","Bd7","O-O","Nxd4","Nxd4","Qxd4","Nc3","Qxe5","Re1"] },
+    { name:"Đòn Alekhine-Chatard", type:"Trắng Tấn Công", desc:"Đòn thí tốt h4 cực gắt trong biến Cổ điển. Trắng mở toang cột h nhắm thẳng vào Vua Đen.", moves:["e4","e6","d4","d5","Nc3","Nf6","Bg5","Be7","e5","Nfd7","h4","Bxg5","hxg5","Qxg5","Nh3","Qe7","Nf4","a6","Qg4"] }
+  ]},
+  { category:"5. Phòng thủ Caro-Kann", variations:[
+    { name:"Biến Cổ điển (Classical)", type:"Cơ bản", desc:"Rất vững chắc. Đen đổi tốt ở d4 rồi đưa Tượng lên f5.", moves:["e4","c6","d4","d5","Nc3","dxe4","Nxe4","Bf5","Ng3","Bg6","h4","h6","Nf3","Nd7","h5","Bh7","Bd3"] },
+    { name:"Biến Tiến Tới (Advance)", type:"Trắng Tấn Công", desc:"Trắng đóng sập trung tâm bằng e5 và phát triển dồn ép.", moves:["e4","c6","d4","d5","e5","Bf5","Nc3","e6","g4","Bg6","Nge2","c5","h4","h6"] },
+    { name:"Tấn Công Panov-Botvinnik", type:"Trắng Tấn Công", desc:"Trắng đổi tốt ở d5 rồi đẩy c4, đưa ván cờ về thế trận IQP với sức ép tấn công lớn.", moves:["e4","c6","d4","d5","exd5","cxd5","c4","Nf6","Nc3","Nc6","Nf3","Bg4","cxd5","Nxd5","Qb3"] },
+    { name:"Biến Hai Mã (Two Knights)", type:"Cơ bản", desc:"Trắng phát triển hai Mã nhanh chóng. Nếu Đen đi Bg4, Trắng thường chơi h3.", moves:["e4","c6","Nc3","d5","Nf3","Bg4","h3","Bxf3","Qxf3","e6","d3","Nf6","g3"] },
+    { name:"Biến Fantasy (f3)", type:"Trắng Khắc Chế", desc:"Đòn dị của Trắng nhằm giữ vững trung tâm d4, e4 bằng mọi giá.", moves:["e4","c6","d4","d5","f3","dxe4","fxe4","e5","Nf3","Bg4","Bc4","Nd7","O-O","Ngf6","c3"] },
+    { name:"Bẫy Chiếu Hết Tartakower", type:"Trắng Giăng Bẫy", desc:"Trắng lùi Hậu Qe2. Nếu Đen mất cảnh giác đi Ngf6??, Trắng phi Mã Nd6 chiếu hết!", moves:["e4","c6","d4","d5","Nc3","dxe4","Nxe4","Nd7","Qe2","Ngf6","Nd6#"] },
+    { name:"Bẫy Thí Mã (Caro-Kann Trap)", type:"Trắng Giăng Bẫy", desc:"Trắng giăng bẫy với Ng5 nhắm vào f7. Khi Đen chơi h6, Trắng thí Nxf7 kéo Vua Đen ra.", moves:["e4","c6","d4","d5","Nc3","dxe4","Nxe4","Nd7","Bc4","Ngf6","Ng5","e6","Qe2","h6","Nxf7","Kxf7","Qxe6+","Kg6","Bd3+"] }
+  ]},
+  { category:"6. Khai cuộc Hậu (QG)", variations:[
+    { name:"Gambit Hậu Từ chối (QGD)", type:"Cơ bản", desc:"Đen từ chối ăn tốt c4, đi e6 bảo vệ d5. Ván cờ mang tính định vị, yêu cầu kỹ năng dàn quân sâu sắc.", moves:["d4","d5","c4","e6","Nc3","Nf6","Bg5","Be7","e3","O-O","Nf3","h6","Bh4","b6"] },
+    { name:"Gambit Hậu Chấp nhận (QGA)", type:"Đen Khắc Chế", desc:"Đen ăn ngay c4. Mục tiêu là bắt Trắng tốn thời gian lấy lại tốt để Đen phát triển c5 phá trung tâm.", moves:["d4","d5","c4","dxc4","Nf3","Nf6","e3","e6","Bxc4","c5","O-O","a6","Qe2","b5","Bb3","Bb7"] },
+    { name:"Phòng thủ Tarrasch", type:"Đen Phản Công", desc:"Đen chủ động đi c5 cực sớm để quyết đấu giành trung tâm, chấp nhận Tốt cô lập ở d5.", moves:["d4","d5","c4","e6","Nc3","c5","cxd5","exd5","Nf3","Nc6","g3","Nf6","Bg2","Be7","O-O","O-O"] },
+    { name:"Biến Cambridge Springs", type:"Đen Tấn Công", desc:"Đen tung Hậu ra a5, vừa tránh ghim Bg5 vừa tạo sức ép lên cánh Hậu và Mã c3.", moves:["d4","d5","c4","e6","Nc3","Nf6","Bg5","Nbd7","e3","c6","Nf3","Qa5","Nd2","Bb4","Qc2","O-O"] },
+    { name:"Phản Công Albin (Countergambit)", type:"Đen Tấn Công", desc:"Đen thí tốt e5 để đẩy d4 như một 'cái gai' cắm chặt vào cổ họng Trắng.", moves:["d4","d5","c4","e5","dxe5","d4","Nf3","Nc6","g3","Nge7","Bg2","Ng6","O-O","Ngxe5","Nxe5","Nxe5"] },
+    { name:"Bẫy Lasker (Siêu Kinh Điển)", type:"Đen Giăng Bẫy", desc:"Trong Phản công Albin: Đen phong cấp thành Mã chiếu (fxg1=N+) để buộc Vua Trắng di chuyển.", moves:["d4","d5","c4","e5","dxe5","d4","e3","Bb4+","Bd2","dxe3","Bxb4","exf2+","Ke2","fxg1=N+","Rxg1","Bg4+"] },
+    { name:"Bẫy Voi (Elephant Trap)", type:"Đen Giăng Bẫy", desc:"Trong QGD, Đen dụ Trắng ăn tốt d5. Khi Trắng Nxd5??, Đen thí Hậu Nxd5! và bắt lại Hậu Trắng bằng Bb4+.", moves:["d4","d5","c4","e6","Nc3","Nf6","Bg5","Nbd7","cxd5","exd5","Nxd5","Nxd5","Bxd8","Bb4+","Qd2","Bxd2+","Kxd2","Kxd8"] }
+  ]},
+  { category:"7. Khai cuộc Bốn Mã", variations:[
+    { name:"Biến Tây Ban Nha", type:"Cơ bản", desc:"Hai bên đều ra 2 Mã, Trắng đưa Tượng b5, Đen đáp Bb4. Rất an toàn, hoàn hảo cho người mới.", moves:["e4","e5","Nf3","Nc6","Nc3","Nf6","Bb5","Bb4","O-O","O-O","d3","d6"] },
+    { name:"Biến Scotland (Scotch 4 Knights)", type:"Cơ bản", desc:"Trắng phá vỡ trung tâm sớm bằng d4. Đen đổi tốt và trận đấu dẫn đến cấu trúc mở, năng động.", moves:["e4","e5","Nf3","Nc6","Nc3","Nf6","d4","exd4","Nxd4","Bb4","Nxc6","bxc6","Bd3","d5","exd5","cxd5"] },
+    { name:"Gambit Halloween", type:"Trắng Tấn Công", desc:"Trắng chủ động thí Mã ngay nước thứ 4 để xua đuổi Mã Đen, chiếm toàn bộ trung tâm.", moves:["e4","e5","Nf3","Nc6","Nc3","Nf6","Nxe5","Nxe5","d4","Nc6","d5","Ne5","f4","Ng6","e5","Ng8","d6","cxd6"] }
+  ]},
+  { category:"8. Phòng thủ Ấn Độ Vua (KID)", variations:[
+    { name:"Biến Cổ điển (Classical)", type:"Cơ bản", desc:"Đen nhường trung tâm để Trắng xây chuỗi tốt, sau đó phản công dữ dội bằng e5 hoặc c5.", moves:["d4","Nf6","c4","g6","Nc3","Bg7","e4","d6","Nf3","O-O","Be2","e5","O-O","Nc6","d5","Ne7","Ne1","Nd7"] },
+    { name:"Biến Mar del Plata", type:"Đen Tấn Công", desc:"Trung tâm đóng kín, Đen dồn toàn bộ binh lực càn quét cánh Vua, Trắng phản công cánh Hậu.", moves:["d4","Nf6","c4","g6","Nc3","Bg7","e4","d6","Nf3","O-O","Be2","e5","O-O","Nc6","d5","Ne7","Nd2","a5","a3","Nd7","b4","f5"] },
+    { name:"Biến Sämisch", type:"Trắng Khắc Chế", desc:"Trắng đẩy f3 cực chắc chắn, khóa trung tâm và chuẩn bị tấn công vũ bão vào g7 của Đen.", moves:["d4","Nf6","c4","g6","Nc3","Bg7","e4","d6","f3","O-O","Be3","e5","d5","c6","Qd2","cxd5","cxd5","a6"] },
+    { name:"Tấn công Bốn Tốt (Four Pawns)", type:"Trắng Tấn Công", desc:"Trắng dựng 'bức tường' với 4 tốt c4, d4, e4, f4 để bóp nghẹt Đen.", moves:["d4","Nf6","c4","g6","Nc3","Bg7","e4","d6","f4","O-O","Nf3","c5","d5","e6","Be2","exd5","cxd5"] },
+    { name:"Biến Averbakh", type:"Trắng Khắc Chế", desc:"Trắng đưa Tượng lên e3 và Hậu lên d2, chuẩn bị nhập thành dài tấn công cả hai cánh.", moves:["d4","Nf6","c4","g6","Nc3","Bg7","e4","d6","Be2","O-O","Bg5","c5","d5","h6","Bh4","e6","Nf3"] }
+  ]},
+  { category:"9. Khai cuộc Anh (English)", variations:[
+    { name:"Biến Đối Xứng (Symmetrical)", type:"Cơ bản", desc:"Khai cuộc siêu mềm dẻo. Trắng đánh c4 kiểm soát d5, Đen đáp lại c5 kiểm soát d4.", moves:["c4","c5","Nc3","Nc6","g3","g6","Bg2","Bg7","e3","e6","Nge2","Nge7","O-O","O-O","d4","cxd4"] },
+    { name:"Biến Đảo Ngược (Reversed Sicilian)", type:"Đen Phản Công", desc:"Đen đánh e5, giống hệt Phòng thủ Sicilia nhưng Đen được đi trước.", moves:["c4","e5","Nc3","Nf6","Nf3","Nc6","g3","Bb4","Bg2","O-O","O-O","e4","Ne1","Bxc3","dxc3","h6"] },
+    { name:"Phòng thủ Nhím (Hedgehog)", type:"Đen Khắc Chế", desc:"Đen xếp tốt ở hàng 6 như những cái gai nhím. Rất khó chọc thủng, rình rập phản công bằng b5 hoặc d5.", moves:["c4","c5","Nf3","Nf6","Nc3","e6","g3","b6","Bg2","Bb7","O-O","Be7","d4","cxd4","Qxd4","d6","b3","a6","Rd1","Nbd7"] },
+    { name:"Bẫy Bellon Gambit", type:"Đen Giăng Bẫy", desc:"Đòn thí Tốt táo bạo của Đen (b5) để phá rối nhịp độ của Trắng.", moves:["c4","e5","Nc3","Nf6","Nf3","e4","Ng5","b5","cxb5","h6","Nh3","d5","d4","a6","bxa6","Nxa6"] }
+  ]},
+  { category:"10. Phòng thủ Slav", variations:[
+    { name:"Biến Cổ điển (Classical)", type:"Cơ bản", desc:"Đen dùng c6 bảo vệ d5, giúp Tượng c8 không bị kẹt, tạo thế cờ vững chãi.", moves:["d4","d5","c4","c6","Nf3","Nf6","Nc3","dxc4","a4","Bf5","e3","e6","Bxc4","Bb4","O-O","O-O"] },
+    { name:"Biến Chebanenko (a6)", type:"Đen Phản Công", desc:"Đen đi a6 kiểm soát b5, chuẩn bị b5 phản công hoặc bớt áp lực từ các đòn ghim của Trắng.", moves:["d4","d5","c4","c6","Nc3","Nf6","Nf3","a6","c5","Nbd7","Bf4","Nh5","Bd2","Nhf6","h3","g6"] },
+    { name:"Biến Đổi Quân (Exchange Slav)", type:"Trắng Khắc Chế", desc:"Trắng đổi Tốt ở d5. Cấu trúc Tốt đối xứng, dẫn đến ván cờ tàn hòa hoãn, an toàn.", moves:["d4","d5","c4","c6","cxd5","cxd5","Nc3","Nf6","Nf3","Nc6","Bf4","Bf5","e3","e6","Bd3","Bxd3","Qxd3","Bd6"] },
+    { name:"Gambit Slav (e5)", type:"Đen Tấn Công", desc:"Đen tấn công trung tâm ngay bằng e5! Chấp nhận thí tốt để tạo hỗn chiến phức tạp.", moves:["d4","d5","c4","c6","Nc3","e5","dxe5","d4","Ne4","Qa5+","Bd2","Qxe5","Ng3","Nf6","Nf3","Qd6"] }
+  ]},
+  { category:"11. Gambit Vua (King's Gambit)", variations:[
+    { name:"Gambit Vua Chấp nhận", type:"Trắng Tấn Công", desc:"Khai cuộc rực lửa nhất thế kỷ 19! Trắng thí tốt f4 để mở cột f, tấn công tàn bạo vào cánh Vua Đen.", moves:["e4","e5","f4","exf4","Nf3","g5","h4","g4","Ne5","Nf6","Bc4","d5","exd5","Bd6","d4"] },
+    { name:"Gambit Vua Từ chối", type:"Đen Khắc Chế", desc:"Đen không ăn tốt f4 mà đi Bc5, nhắm thẳng vào đường chéo yếu nhất của Trắng.", moves:["e4","e5","f4","Bc5","Nf3","d6","c3","Nf6","d4","exd4","cxd4","Bb6","Nc3","O-O"] },
+    { name:"Gambit Muzio (Siêu Thí Quân)", type:"Trắng Giăng Bẫy", desc:"Trắng nhập thành O-O, hy sinh Mã f3 để tổng tấn công vào điểm yếu f7 của Đen.", moves:["e4","e5","f4","exf4","Nf3","g5","Bc4","g4","O-O","gxf3","Qxf3","Qf6","e5","Qxe5","Bxf7+","Kxf7","d4","Qxd4+","Be3","Qf6","Nc3"] }
+  ]},
+  { category:"12. Cạm Bẫy Tử Thần (Must Know)", variations:[
+    { name:"Bẫy Légal (Thí Hậu Khét Tiếng)", type:"Trắng Giăng Bẫy", desc:"Trắng dụ Đen ghim Mã bằng Tượng. Sau đó Mã ăn tốt, mặc kệ Đen ăn Hậu, rồi tung 2 nước chiếu hết nghệ thuật.", moves:["e4","e5","Nf3","d6","Bc4","Bg4","Nc3","h6","Nxe5","Bxd1","Bxf7+","Ke7","Nd5#"] },
+    { name:"Bẫy Englund Gambit", type:"Đen Giăng Bẫy", desc:"Đen thí Tốt e5 quấy rối đầu trận. Trắng sập bẫy giăng sẵn, Đen chiếu hết ngay nước thứ 8.", moves:["d4","e5","dxe5","Nc6","Nf3","Qe7","Bf4","Qb4+","Bd2","Qxb2","Bc3","Bb4","Qd2","Bxc3","Qxc3","Qc1#"] },
+    { name:"Bẫy Tennison (Bắt Hậu)", type:"Trắng Giăng Bẫy", desc:"Trắng thí tốt dụ Đen, rồi thí Mã f7 mở đường cho Tượng chiếu Vua, bắt sống Hậu Đen.", moves:["Nf3","d5","e4","dxe4","Ng5","Nf6","d3","exd3","Bxd3","h6","Nxf7","Kxf7","Bg6+","Kxg6","Qxd8"] },
+    { name:"Bẫy Câu Cá (Fishing Pole)", type:"Đen Giăng Bẫy", desc:"Đen thả mồi nhử bằng quân Mã Ng4. Nếu Trắng tham ăn bằng h3?? hxg4, cột h mở toang và Hậu Đen tràn xuống chiếu hết.", moves:["e4","e5","Nf3","Nc6","Bb5","Nf6","O-O","Ng4","h3","h5","hxg4","hxg4","Ne1","Qh4","f3","g3"] }
+  ]},
+  { category:"13. Phòng thủ Petrov", variations:[
+    { name:"Biến Chính (Classical Defense)", type:"Cơ bản", desc:"Đen đáp lại Nf3 bằng Nf6, phản công ngay vào e4. Sau khi đổi quân, thế cờ cân bằng — lựa chọn yêu thích của nhiều ĐKT muốn hòa.", moves:["e4","e5","Nf3","Nf6","Nxe5","d6","Nd3","Nxe4","d4","d5","Bd3","Nc6","O-O","Be7","Re1"] },
+    { name:"Tấn công Cổ điển (Qe2)", type:"Trắng Tấn Công", desc:"Trắng chơi Qe2 ép Đen phải đưa Hậu ra Qe7, sau đó Nf4 khống chế d5. Lối đánh chủ động, không để Đen hòa dễ dàng.", moves:["e4","e5","Nf3","Nf6","Nxe5","d6","Nd3","Nxe4","Qe2","Qe7","Nf4","Nf6","d4","d5","Nc3"] },
+    { name:"Gambit Cochrane (Thí Mã f7)", type:"Trắng Tấn Công", desc:"Đòn thí Mã táo bạo: Trắng nhảy Nxf7 ngay nước thứ 4 để kéo Vua Đen ra giữa bàn!", moves:["e4","e5","Nf3","Nf6","Nxe5","d6","Nxf7","Kxf7","d4","Nc6","Bc4+","Be6","Bxe6+","Kxe6","c4"] }
+  ]},
+  { category:"14. Nimzo-Ấn Độ (Nimzo-Indian)", variations:[
+    { name:"Biến Rubinstein (e3)", type:"Cơ bản", desc:"Lối chơi thực dụng và vững chắc nhất của Trắng. Trắng đi e3, tập trung phát triển quân và duy trì trung tâm d4.", moves:["d4","Nf6","c4","e6","Nc3","Bb4","e3","O-O","Bd3","d5","Nf3","c5","O-O","Nc6","a3","Bxc3","bxc3"] },
+    { name:"Biến Cổ điển (Qc2)", type:"Trắng Khắc Chế", desc:"Trắng đi Qc2 để giữ cặp Tượng và kiểm soát e4. Được Kasparov và Carlsen ưa dùng.", moves:["d4","Nf6","c4","e6","Nc3","Bb4","Qc2","O-O","a3","Bxc3+","Qxc3","b6","Bg5","Bb7","e3","d6"] },
+    { name:"Biến Sämisch (a3 cưỡng bức)", type:"Trắng Khắc Chế", desc:"Trắng ép Đen đổi Tượng bằng a3, sau đó đẩy f3 xây dựng trung tâm sắt đá.", moves:["d4","Nf6","c4","e6","Nc3","Bb4","a3","Bxc3+","bxc3","O-O","f3","d5","cxd5","exd5","e3","c5"] }
+  ]},
+  { category:"15. Phòng thủ Grünfeld", variations:[
+    { name:"Biến Đổi Quân (Exchange)", type:"Cơ bản", desc:"Trắng đổi tốt d5 rồi chiếm toàn bộ trung tâm c4-d4-e4. Đen phản công bằng Tượng g7 nhắm vào khối tốt Trắng.", moves:["d4","Nf6","c4","g6","Nc3","d5","cxd5","Nxd5","e4","Nxc3","bxc3","Bg7","Nf3","c5","Be3","Qa5","Qd2"] },
+    { name:"Hệ thống Nga (Qb3)", type:"Trắng Tấn Công", desc:"Trắng chơi Qb3 sớm để gây áp lực kép lên d5 và b7. Biến phổ biến nhất ở cấp ĐKT.", moves:["d4","Nf6","c4","g6","Nc3","d5","Nf3","Bg7","Qb3","dxc4","Qxc4","O-O","e4","Na6","Be2","c5"] },
+    { name:"Neo-Grünfeld (g3)", type:"Trắng Khắc Chế", desc:"Trắng phát triển Tượng lên g2 theo hướng Fianchetto, tránh những biến phức tạp trong Biến Đổi Quân.", moves:["d4","Nf6","c4","g6","g3","d5","Bg2","Bg7","Nf3","O-O","O-O","dxc4","Na3","c3","bxc3","c5"] }
+  ]},
+  { category:"16. Khai cuộc Scotland (Scotch Game)", variations:[
+    { name:"Biến Chính (Schmidt)", type:"Cơ bản", desc:"Sau khi Trắng thu hồi Mã d4, Đen chơi Nf6 tấn công tốt e4. Trắng đẩy e5 đuổi Mã. Thế cờ năng động, Kasparov ưa dùng.", moves:["e4","e5","Nf3","Nc6","d4","exd4","Nxd4","Nf6","Nxc6","bxc6","e5","Qe7","Qe2","Nd5","c4","Ba6"] },
+    { name:"Gambit Scotland (Bc4)", type:"Trắng Tấn Công", desc:"Trắng lên Tượng Bc4 uy hiếp f7 thay vì thu hồi tốt. Lối đánh chiến thuật cao độ dẫn đến tổng tấn công.", moves:["e4","e5","Nf3","Nc6","d4","exd4","Bc4","Nf6","O-O","Nxe4","Re1","d5","Bxd5","Qxd5","Nc3"] },
+    { name:"Gambit Goering (c3)", type:"Trắng Tấn Công", desc:"Trắng thí thêm một tốt bằng c3 để đổi lấy ưu thế phát triển áp đảo. Nguy hiểm cho người không biết cách chống.", moves:["e4","e5","Nf3","Nc6","d4","exd4","c3","dxc3","Nxc3","Bc5","Bc4","d6","O-O","Nf6","Qb3"] }
+  ]},
+  { category:"17. Phòng thủ Hậu Ấn Độ (Queen's Indian)", variations:[
+    { name:"Biến Cổ điển (g3 Fianchetto)", type:"Cơ bản", desc:"Đen dùng b6 và Bb7 để kiểm soát trung tâm bằng quân. Thế cờ chiến lược sâu sắc, thường thấy ở cấp độ cao.", moves:["d4","Nf6","c4","e6","Nf3","b6","g3","Bb7","Bg2","Be7","O-O","O-O","Nc3","Ne4","Qc2","Nxc3"] },
+    { name:"Hệ thống Petrosian (a3)", type:"Trắng Khắc Chế", desc:"Trắng đẩy a3 sớm để ngăn Đen đưa Tượng lên b4. Petrosian rất ưa lối này.", moves:["d4","Nf6","c4","e6","Nf3","b6","a3","Bb7","Nc3","d5","cxd5","exd5","Bg5","Be7","e3","O-O"] },
+    { name:"Biến Kasparov (Nc3 sớm)", type:"Trắng Tấn Công", desc:"Trắng đưa Mã lên c3 thay vì Nf3, duy trì lựa chọn đẩy e4. Lối chơi năng động, tạo thế trận phức tạp.", moves:["d4","Nf6","c4","e6","Nc3","Bb4","Qb3","Qe7","Bg5","h6","Bh4","g5","Bg3","Ne4","Nd2","Nxg3","hxg3"] }
+  ]},
+  { category:"18. Phòng thủ Pirc / Hiện Đại", variations:[
+    { name:"Biến Cổ điển (Classical)", type:"Cơ bản", desc:"Đen nhường trung tâm hoàn toàn, xây dựng Fianchetto với Tượng g7. Rất linh hoạt và khó đoán.", moves:["e4","d6","d4","Nf6","Nc3","g6","Nf3","Bg7","Be2","O-O","O-O","c6","a4","Nbd7"] },
+    { name:"Tấn công Áo (Austrian Attack)", type:"Trắng Tấn Công", desc:"Trắng đẩy f4 sớm, xây khối trung tâm 3 tốt (d4, e4, f4) và tấn công cánh Vua dữ dội.", moves:["e4","d6","d4","Nf6","Nc3","g6","f4","Bg7","Nf3","O-O","Be2","c5","dxc5","Qa5","O-O"] },
+    { name:"Tấn công 150 (Be3 + Qd2)", type:"Trắng Tấn Công", desc:"Trắng chơi Be3 và Qd2, chuẩn bị nhập thành dài tấn công vũ bão theo phong cách 'lột mặt' Vua Đen.", moves:["e4","d6","d4","Nf6","Nc3","g6","Be3","Bg7","Qd2","c6","f3","b5","O-O-O","Nd7","h4","Nb6"] },
+    { name:"Phòng thủ Hiện Đại (Modern Defense)", type:"Đen Phản Công", desc:"Đen chơi g6 và Bg7 ngay mà không đẩy Nf6, giữ lại thêm lựa chọn linh hoạt hơn.", moves:["e4","g6","d4","Bg7","Nc3","d6","Nf3","a6","Be2","b5","O-O","Bb7","Re1","Nd7","Bf1","e5"] }
+  ]}
+];
+
+// ===================== HỆ THỐNG CẤP ĐỘ & XP =====================
+const LEVELS = [
+  { xp:0,    name:"Tân Binh",        icon:"⚔️" },
+  { xp:150,  name:"Học Viên",        icon:"📖" },
+  { xp:400,  name:"Kỳ Thủ",          icon:"♟️" },
+  { xp:900,  name:"Kiện Tướng",      icon:"🎖️" },
+  { xp:1800, name:"Đại Kiện Tướng", icon:"👑" },
+  { xp:3500, name:"Kỳ Vương",        icon:"🌟" }
+];
+
+function getLevel(xp) {
+  let lv = 0;
+  for (let i = 0; i < LEVELS.length; i++) { if (xp >= LEVELS[i].xp) lv = i; }
+  return lv;
+}
+
+// ===================== DỮ LIỆU NGƯỜI CHƠI (localStorage) =====================
+const STORAGE_KEY = "covua_player";
+let playerData = { xp:0, level:0, streak:0, lastPlayDate:"", completedLessons:{}, chainQueue:[], chainProgress:0, chainActive:false };
+
+function loadPlayerData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) playerData = Object.assign(playerData, JSON.parse(saved));
+  } catch(e) {}
+  checkStreak();
+  refreshHeaderStats();
+}
+
+function savePlayerData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(playerData)); } catch(e) {}
+}
+
+function resetPlayerData() {
+  playerData = { xp:0, level:0, streak:0, lastPlayDate:"", completedLessons:{}, chainQueue:[], chainProgress:0, chainActive:false };
+  savePlayerData();
+  refreshHeaderStats();
+  refreshStatsPanel();
+  showToast("🗑️ Đã đặt lại toàn bộ tiến độ.", "toast-xp");
+}
+
+function checkStreak() {
+  const today = new Date().toDateString();
+  if (!playerData.lastPlayDate) { playerData.lastPlayDate = today; playerData.streak = 1; }
+  else if (playerData.lastPlayDate !== today) {
+    const last = new Date(playerData.lastPlayDate);
+    const diff = Math.round((new Date(today) - last) / 86400000);
+    playerData.streak = diff === 1 ? (playerData.streak + 1) : 1;
+    playerData.lastPlayDate = today;
+    savePlayerData();
+  }
+}
+
+function awardXP(amount, reason) {
+  if (amount <= 0) return;
+  const oldLevel = getLevel(playerData.xp);
+  playerData.xp += amount;
+  const newLevel = getLevel(playerData.xp);
+  playerData.level = newLevel;
+  savePlayerData();
+  showToast(`+${amount} XP — ${reason}`, "toast-xp");
+  if (newLevel > oldLevel) {
+    setTimeout(() => showToast(`🎉 Lên cấp! Bạn đạt ${LEVELS[newLevel].icon} ${LEVELS[newLevel].name}!`, "toast-level"), 800);
+  }
+  refreshHeaderStats();
+  refreshStatsPanel();
+}
+
+function awardLessonXP(lessonKey, percent, lessonName) {
+  let xpEarned = 10;
+  let reasons = ["Hoàn thành bài học"];
+  if (percent >= 50) { xpEarned += 15; reasons.push("≥50%"); }
+  if (percent >= 80) { xpEarned += 25; reasons.push("≥80%"); }
+  if (percent === 100) { xpEarned += 50; reasons.push("Hoàn hảo!"); }
+  const isFirst = !playerData.completedLessons[lessonKey];
+  if (isFirst) { xpEarned += 20; reasons.push("Lần đầu!"); }
+  const streakBonus = Math.min(playerData.streak * 5, 25);
+  if (streakBonus > 0) { xpEarned += streakBonus; reasons.push(`🔥 Chuỗi ${playerData.streak} ngày`); }
+
+  const prev = playerData.completedLessons[lessonKey];
+  if (!prev || prev.best < percent) {
+    playerData.completedLessons[lessonKey] = { best: percent, name: lessonName, ts: Date.now() };
+  }
+  savePlayerData();
+  awardXP(xpEarned, reasons.join(", "));
+
+  // chain mode check
+  if (playerData.chainActive) advanceChain();
+}
+
+function refreshHeaderStats() {
+  const lv = getLevel(playerData.xp);
+  const lvData = LEVELS[lv];
+  const nextXP = lv < LEVELS.length - 1 ? LEVELS[lv + 1].xp : playerData.xp;
+  const prevXP = lvData.xp;
+  const pct = lv < LEVELS.length - 1 ? Math.round(((playerData.xp - prevXP) / (nextXP - prevXP)) * 100) : 100;
+
+  const badge = document.getElementById('level-badge-el');
+  if (badge) badge.textContent = `${lvData.icon} ${lvData.name}`;
+  const fill = document.getElementById('xp-fill-el');
+  if (fill) fill.style.width = pct + '%';
+  const xpText = document.getElementById('xp-text-el');
+  if (xpText) xpText.textContent = lv < LEVELS.length - 1 ? `${playerData.xp} / ${nextXP} XP` : `${playerData.xp} XP (MAX)`;
+  const streakEl = document.getElementById('streak-el');
+  if (streakEl) streakEl.textContent = `🔥 ${playerData.streak} ngày`;
+  const compEl = document.getElementById('header-completed-el');
+  if (compEl) compEl.textContent = `✅ ${Object.keys(playerData.completedLessons).length} bài`;
+}
+
+function refreshStatsPanel() {
+  const lv = getLevel(playerData.xp);
+  const lvData = LEVELS[lv];
+  const nextXP = lv < LEVELS.length - 1 ? LEVELS[lv + 1].xp : playerData.xp;
+  const pct = lv < LEVELS.length - 1 ? Math.round(((playerData.xp - lvData.xp) / (nextXP - lvData.xp)) * 100) : 100;
+  const completed = playerData.completedLessons;
+  const keys = Object.keys(completed);
+  const bestPct = keys.length ? Math.max(...keys.map(k => completed[k].best)) : 0;
+
+  document.getElementById('stat-xp').textContent = playerData.xp;
+  document.getElementById('stat-streak').textContent = playerData.streak;
+  document.getElementById('stat-completed').textContent = keys.length;
+  document.getElementById('stat-best').textContent = bestPct + '%';
+  document.getElementById('stat-level-name').textContent = `${lvData.icon} ${lvData.name}`;
+  document.getElementById('stat-level-next').textContent = lv < LEVELS.length - 1 ? `${playerData.xp} / ${nextXP} XP` : 'ĐÃ ĐẠT TỐI ĐA';
+  document.getElementById('stat-xp-bar').style.width = pct + '%';
+
+  const list = document.getElementById('completed-lessons-list');
+  if (!keys.length) { list.innerHTML = '<p class="text-xs text-slate-400 italic">Chưa hoàn thành bài nào.</p>'; return; }
+  const sorted = keys.sort((a, b) => (completed[b].ts || 0) - (completed[a].ts || 0));
+  list.innerHTML = sorted.map(k => {
+    const d = completed[k];
+    const color = d.best === 100 ? '#059669' : d.best >= 80 ? '#2563eb' : d.best >= 50 ? '#d97706' : '#dc2626';
+    return `<div class="lesson-row completed"><span class="text-slate-700 font-medium">${d.name||k}</span><span class="font-bold text-xs" style="color:${color}">${d.best}%</span></div>`;
+  }).join('');
+}
+
+// ===================== TAB SYSTEM =====================
+function switchTab(tab) {
+  ['lessons','challenge','stats'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'stats') refreshStatsPanel();
+}
+
+// ===================== TOAST SYSTEM =====================
+function showToast(msg, cls) {
+  const container = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${cls||'toast-xp'}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => { t.style.animation = 'fadeOut .4s ease forwards'; setTimeout(() => t.remove(), 400); }, 2500);
+}
+
+// ===================== TRẠNG THÁI BÀN CỜ CHÍNH =====================
+let board = null, game = new Chess(), currentOpening = null, currentMoveIndex = 0, playInterval = null;
+let isPracticeMode = false, isExamMode = false;
+let currentCatIndex = -1, currentVarIndex = -1;
+let isRandomChallenge = false;
+
+// ===================== CHỈ DẪN HUẤN LUYỆN VIÊN =====================
+// Tips riêng cho những nước đi quan trọng / bẫy / thí quân
+const COACH_TIPS = {
+  // ===== Italia: Giuoco Piano =====
+  "0_0": [
+    "Trắng đẩy tốt e4 — chiếm ngay hai ô trung tâm d5 và f5! Đây là nước khai cuộc số 1 trong lịch sử cờ vua.",
+    "Đen đáp e5 — tranh quyền kiểm soát trung tâm đối xứng. Hai bên ngang nhau, ván cờ thực sự bắt đầu!",
+    "Mã f3 ra quân hướng trung tâm và đe dọa tốt e5 của Đen. Nhớ nguyên tắc vàng: Mã ra trước Tượng!",
+    "Mã c6 bảo vệ tốt e5, phát triển quân đúng chỗ. Đen tuân thủ nguyên tắc: quân bảo vệ lẫn nhau!",
+    "Tượng c4 — 'Tượng sát thủ f7'! Nhắm thẳng điểm yếu f7 của Đen, chỉ có Vua đơn độc bảo vệ. Đây là linh hồn của Ván cờ Italia!",
+    "Tượng c5 đối mặt Tượng c4 — Đen cũng nhắm f2 của Trắng! Cặp Tượng soi vào nhau tạo thế cờ cực kỳ căng thẳng.",
+    "c3 — Trắng kiên nhẫn chuẩn bị d4! Đây là kế hoạch dài hơi theo phong cách Italia truyền thống.",
+    "Mã f6 tấn công tốt e4 — Đen phát triển quân và tạo áp lực ngay lập tức. Hai bên đều mạnh, ai sai trước sẽ thua!",
+    "d3 — Trắng chọn thế trận chắc chắn, kiên nhẫn, không vội. Chuẩn bị Be3, Nbd2 để triển khai toàn bộ binh lực.",
+    "d6 — Đen cũng củng cố thế trận. Trận chiến trung cuộc căng thẳng đang ở phía trước — cả hai bên đều sẵn sàng!"
+  ],
+  // ===== Italia: Tấn công Greco =====
+  "0_1": [
+    "Trắng đẩy e4 — mở đầu tích cực nhất!","Đen đáp e5 — tranh trung tâm.","Mã f3 — phát triển, đe dọa e5.","Mã c6 — bảo vệ e5.",
+    "Tượng c4 — nhắm f7, chuẩn bị Greco!","Tượng c5 — Đen đáp cân bằng.","c3 — Trắng chuẩn bị đòn d4 quyết định!","Mã f6 — Đen phát triển, tấn công e4.",
+    "⚡ d4! — Đây là đòn đột phá! Trắng tung tốt ra giữa bàn cờ, chấp nhận thí để mở toang trung tâm. Tấn công Greco thực sự bắt đầu!",
+    "Đen ăn exd4 — không thể từ chối. Nhưng đây chính là điều Trắng mong đợi!",
+    "cxd4 — Trắng mở cột c, giải phóng Tượng c4 hoàn toàn. Trung tâm Trắng cực mạnh!",
+    "⚡ Bb4+ — Đen chiếu, cố phá nhịp Trắng. Nhưng Trắng đã tính trước điều này!",
+    "Mã c3 chặn chiếu mà không cần di chuyển Vua — Trắng tiếp tục phát triển! Đây là bí quyết của Greco.",
+    "Đen ăn Nxe4 — tưởng là thắng quân tốt e4, nhưng đây là bước đi vào bẫy!",
+    "O-O! Nhập thành — Trắng bảo vệ Vua và chuẩn bị Re1 tấn công Mã e4. Đòn phản công sắc bén!",
+    "Bxc3 — Đen ăn Mã c3, lấy quân nhưng giúp Trắng mở cột b tăng sức tấn công.",
+    "d5! — Trắng đẩy tốt quyết định, đuổi Tượng Đen và chiếm trung tâm tuyệt đối. Thế cờ rất mạnh!",
+    "Tượng lùi Bf6 — Đen cố cầm cự nhưng vị trí rất chật hẹp.",
+    "Re1 — Xe chiếm cột e mở! Áp lực lên Mã e4 của Đen là tối đa.",
+    "Mã phải rút Ne7 — hậu quả của việc ăn tốt vội vàng. Vị trí Đen rất khó khăn.",
+    "Rxe4! — Xe lấy Mã! Trắng thắng quân, bù cho tốt đã thí. Ưu thế vật chất quyết định!",
+    "d6 — Đen cố cầm cự. Bài học: đừng ăn quân vội trong khai cuộc khi chưa phát triển xong!"
+  ],
+  // ===== Italia: Fried Liver =====
+  "0_2": [
+    "e4 — mở đầu mạnh mẽ!","e5 — tranh trung tâm.","Nf3 — phát triển, đe dọa e5.","Nc6 — bảo vệ e5.",
+    "Tượng c4 — nhắm f7!",
+    "🎯 Mã f6 — Đen phát triển nhưng vô tình mở ra cơ hội cho Fried Liver! Nếu Đen thay vào đó đi d6, Trắng sẽ khó hơn nhiều.",
+    "Ng5! — Mã nhảy g5 nhắm thẳng f7 yếu nhất của Đen! Đây là tín hiệu của Fried Liver. Vua Đen đang trong nguy hiểm!",
+    "d5 — Đen phải chơi d5 để đẩy Mã Trắng. Đây là câu trả lời đúng nhất, nhưng Trắng đã tính trước!",
+    "exd5 — Trắng ăn tốt d5. Mã g5 vẫn đang nhắm f7!",
+    "⚠️ Nxd5?! — Đen mắc bẫy! Đúng hơn phải đi Na5 đẩy Tượng. Nxd5 là sai lầm nghiêm trọng!",
+    "🔥 Nxf7!! — THẦN KỲ! Trắng thí Mã vào f7, kéo Vua Đen ra giữa bàn cờ! Đây là đòn hy sinh nổi tiếng nhất Ván cờ Italia!",
+    "Kxf7 — Vua Đen buộc phải ăn Mã. Bây giờ Vua bị lộ hoàn toàn giữa bàn cờ, không thể nhập thành nữa!",
+    "Qf3+! — Hậu chiếu, đẩy Vua Đen tiếp tục lộ diện. Trắng tấn công dồn dập!",
+    "Ke6 — Vua Đen phải chạy, nhưng mỗi nước đi đều nguy hiểm hơn.",
+    "Nc3 — Mã c3 vào trận, thêm áp lực. Vua Đen hoàn toàn bị bao vây — bài học: không để Vua bị lộ!"
+  ],
+  // ===== Italia: Phòng thủ Polerio =====
+  "0_3": [
+    "e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5 — Mã nhảy g5, đe dọa f7!",
+    "d5 — Đen đáp đúng nhất, tấn công Tượng c4 và Mã g5 cùng lúc!",
+    "exd5 — Trắng ăn tốt d5. Bây giờ Mã g5 vẫn nguy hiểm!",
+    "✅ Na5! — Đây là cách phá giải thông minh của Polerio! Đen thí 1 tốt để đuổi Tượng c4 ra khỏi vị trí tấn công.",
+    "Bb5+ — Trắng chiếu để kiếm thêm thời gian. Nhưng Đen đã tính trước!",
+    "c6! — Chặn chiếu và tấn công Tượng b5. Đen chơi cực kỳ chính xác!",
+    "dxc6 — Trắng ăn tốt c6.","bxc6 — Đen ăn lại, mở cột b cho Xe.",
+    "Be2 — Tượng phải lùi, Đen đã đuổi thành công!",
+    "h6! — Đen đuổi Mã g5. Đây là nước rất quan trọng!",
+    "Nf3 — Mã phải rút lui xấu hổ.",
+    "e4 — Đen phản công trung tâm! Ưu thế thế trận về phía Đen.",
+    "Ne5 — Trắng cố cầm cự.","Bd6 — Đen phát triển Tượng chủ động. Thế cờ tốt cho Đen!"
+  ],
+  // ===== Italia: Traxler Counter =====
+  "0_4": [
+    "e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5 — Đòn tấn công f7!",
+    "🔥 Bc5!! — Đây chính là Phản công Traxler! Đen 'bỏ mặc f7', lên Tượng như không có chuyện gì. Đây là đòn cờ siêu sắc và táo bạo!",
+    "Nxf7 — Trắng ăn f7, tưởng là thắng. Nhưng đây là bẫy!",
+    "🎯 Bxf2+!! — Đen thí Tượng vào f2! Chiếu Vua Trắng và bắt đầu cuộc phản công tàn bạo. Thiên tài Traxler!",
+    "Kxf2 — Vua Trắng buộc phải ăn Tượng, lộ ra giữa bàn cờ.",
+    "Nxe4+! — Đen chiếu bằng Mã! Vua Trắng bị đuổi tiếp.",
+    "Kg1 — Vua Trắng phải chạy về nhà.","Qh4 — Hậu Đen nhảy vào tấn công ngay!",
+    "g3 — Trắng cố chặn Hậu.","Nxg3! — Mã ăn g3, tạo ra mối đe dọa chiếu hết!",
+    "Nxh8 — Trắng ăn Xe, nhưng Vua Trắng vẫn đang nguy ngập.",
+    "Nd4 — Mã Đen chiếm vị trí trung tâm hoàn hảo. Thế trận Đen rất nguy hiểm cho Trắng. Traxler chứng minh: phòng thủ tốt nhất đôi khi là tấn công!"
+  ],
+  // ===== Italia: Bẫy Blackburne Shilling =====
+  "0_5": [
+    "e4","e5","Nf3","Nc6","Bc4",
+    "🎣 Nd4?! — Đen đặt bẫy! Mã nhảy d4 trông như sai vì chỉ có một Mã mà đi tốn công. Nhưng đây là 'mồi nhử' tinh vi!",
+    "⚠️ Nxe5? — Trắng ăn tốt e5, sập bẫy! Đúng hơn phải đi Nxd4. Đây là sai lầm mang tính quyết định!",
+    "🎯 Qg5! — Hậu Đen nhảy vào! Tấn công cùng lúc Mã e5 và tốt g2. Trắng không thể đối phó hết!",
+    "Nxf7 — Trắng cố cứu Mã bằng cách ăn f7, nhưng quá muộn.",
+    "Qxg2 — Hậu Đen ăn tốt g2, chiếm cột g và đe dọa Xe h1!",
+    "Rf1 — Trắng cố cứu Xe.","Qxe4+ — Đen chiếu, lấy thêm tốt.",
+    "Be2 — Trắng cố chặn.","🏆 Nf3# — CHIẾU HẾT! Mã Đen chiếu hết chỉ sau 10 nước! Bẫy Blackburne Shilling kinh điển thành công!"
+  ],
+  // ===== Ruy Lopez: Morphy =====
+  "1_0": [
+    "e4 — khai cuộc mạnh nhất của Trắng!","e5 — đáp lại chủ động.","Nf3 — phát triển, đe dọa e5.","Nc6 — bảo vệ e5.",
+    "Bb5 — Tượng Ruy Lopez! Không phải tấn công ngay mà áp lực gián tiếp lên Mã c6 bảo vệ e5.",
+    "a6! — Đen hỏi tội Tượng b5: 'Ăn hay lui?' Nước a6 là nước hỏi cực thông minh!",
+    "Ba4 — Tượng lui về a4, duy trì áp lực. Ruy Lopez nổi tiếng vì sức ép gián tiếp dài hơi!",
+    "Nf6 — Đen phát triển Mã và tấn công e4. Đây là Biến Morphy cổ điển nhất!",
+    "O-O! — Nhập thành ngắn! Vua an toàn, Xe f1 vào cuộc chiến. Nguyên tắc vàng: nhập thành sớm!",
+    "Be7 — Đen phát triển Tượng, chuẩn bị nhập thành.","Re1 — Xe e1 hỗ trợ tốt e4.","b5 — Đen đẩy b5 đuổi Tượng a4.",
+    "Bb3 — Tượng lui về vị trí tốt, vẫn duy trì áp lực chéo lên f7!","d6 — Đen củng cố tốt e5.","c3 — Trắng chuẩn bị d4.",
+    "O-O — Đen nhập thành. Cả hai Vua đều an toàn, trận chiến trung cuộc thực sự bắt đầu!",
+    "h3 — Trắng đuổi Tượng c8 (ngăn Bg4 ghim Mã f3). Sự tinh tế của Ruy Lopez — từng nước đi đều có lý do sâu xa!"
+  ],
+  // ===== Ruy Lopez: Berlin =====
+  "1_2": [
+    "e4","e5","Nf3","Nc6","Bb5",
+    "Nf6 — Biến Berlin! Đen tấn công tốt e4 thay vì đi a6. Đây là 'Bức tường Berlin' phòng thủ siêu vững chắc!",
+    "O-O — Trắng nhập thành, chấp nhận thí tốt e4 tạm thời.","Nxe4 — Đen ăn tốt e4!",
+    "d4 — Trắng đáp d4, chuẩn bị lấy lại tốt.","Nd6 — Mã phải lùi.",
+    "Bxc6 — Trắng đổi Tượng lấy Mã, tạo tốt đôi cho Đen nhưng đổi lấy cặp Tượng.",
+    "dxc6 — Đen ăn lại. Tốt đôi c6-c7 trông yếu nhưng thực ra rất vững!","dxe5 — Trắng đẩy e5 đuổi Mã.",
+    "Nf5 — Mã đến vị trí tốt.","Qxd8+ — Đổi Hậu! Đây là kế hoạch của Berlin — ép Trắng vào cờ tàn có lợi cho Đen!",
+    "Kxd8 — Vua Đen ăn Hậu. Vua vào trung tâm sớm — điểm mạnh của tàn cuộc Berlin!"
+  ],
+  // ===== Ruy Lopez: Marshall Gambit =====
+  "1_3": [
+    "e4","e5","Nf3","Nc6","Bb5","a6","Ba4","Nf6","O-O","Be7","Re1","b5","Bb3","O-O","c3",
+    "🔥 d5!! — Gambit Marshall! Đen thí tốt để đổi lấy đòn tấn công hủy diệt vào cánh Vua Trắng. Frank Marshall phát minh năm 1918!",
+    "exd5 — Trắng ăn tốt d5. Bẫy đã được giăng!","Nxd5 — Đen ăn lại bằng Mã.",
+    "Nxe5 — Trắng tiếp tục ăn tốt e5.","Nxe5 — Đen ăn Mã e5.","Rxe5 — Xe ăn Mã e5.",
+    "c6 — Đen chuẩn bị tấn công dữ dội vào cánh Vua Trắng đã nhập thành!"
+  ],
+  // ===== Sicilia: Bẫy Siberian =====
+  "2_5": [
+    "e4","c5","d4","cxd4","c3","dxc3","Nxc3","Nc6","Nf3","e6","Bc4","Qc7","O-O","Nf6","Qe2",
+    "🎣 Ng4! — Mã nhảy g4! Đây là con mồi của Bẫy Siberian. Trắng tưởng đây là sai lầm vì Mã có thể bị đuổi bằng h3!",
+    "⚠️ h3? — Trắng mắc bẫy! Đúng hơn phải đi h3 thì cần tính kỹ hơn hoặc chơi d3.",
+    "🔥 Nd4!! — Mã nhảy vào d4! Chiếu hết hoặc thắng Hậu. Trắng không thể cứu được — bẫy Siberian hoàn hảo!",
+    "Nxd4 — Trắng phải ăn Mã.","🏆 Qh2# — CHIẾU HẾT! Đây là kết quả của bẫy Siberian kỳ diệu!"
+  ],
+  // ===== Sicilia: Bẫy Dragon-Sozin =====
+  "2_6": [
+    "e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","Nc6",
+    "Bc4 — Trắng đưa Tượng lên c4 nhắm f7, đồng thời giăng bẫy!",
+    "g6 — Đen theo hướng Dragon, fianchetto Tượng lên g7. Nhưng đây là sai lầm trong biến này!",
+    "Nxc6! — Trắng đổi Mã! Phá cấu trúc tốt Đen và chuẩn bị đòn thí Tượng.",
+    "bxc6 — Đen ăn lại bằng tốt.","e5! — Trắng đẩy e5, tạo thêm áp lực và mở đường cho Tượng c4.",
+    "dxe5 — Đen ăn tốt e5.","🔥 Bxf7+!! — Trắng thí Tượng vào f7! Kéo Vua Đen ra khỏi vị trí an toàn!",
+    "Kxf7 — Vua phải ăn.","🎯 Qxd8 — Trắng bắt sống Hậu Đen! Đây là kết quả của đòn thí Tượng thông minh. Luôn cảnh giác Bxf7+ trong Sicilia!"
+  ],
+  // ===== Phòng thủ Pháp: Bẫy Milner-Barry =====
+  "3_6": [
+    "e4","e6","d4","d5","e5","c5","c3","Nc6","Nf3","Qb6",
+    "Bd3 — Trắng phát triển Tượng, chuẩn bị nhập thành.","cxd4 — Đen ăn tốt d4.",
+    "cxd4 — Trắng ăn lại. Cột c mở!","Bd7 — Đen phát triển Tượng.",
+    "O-O! — Nhập thành, Trắng sẵn sàng tấn công!",
+    "🎣 Nxd4? — Đen mắc bẫy! Ăn tốt d4 là sai lầm nghiêm trọng trong Milner-Barry!",
+    "Nxd4 — Trắng đổi Mã.","Qxd4 — Đen ăn Mã.","Nc3! — Mã c3 tấn công Hậu d4!",
+    "Qxe5 — Đen ăn tốt e5.","Re1 — Xe chiếm cột e mở! Hậu Đen bị tấn công dữ dội, không thể thoát!"
+  ],
+  // ===== Caro-Kann: Chiếu Hết Tartakower =====
+  "4_5": [
+    "e4","c6","d4","d5","Nc3","dxe4","Nxe4","Nd7","Qe2 — Hậu ra vị trí đặc biệt, trông vô hại nhưng giăng bẫy tinh vi!",
+    "⚠️ Ngf6? — Đen mắc bẫy! Đây là sai lầm nghiêm trọng. Đen tưởng phát triển Mã là bình thường, nhưng...",
+    "🏆 Nd6# — CHIẾU HẾT! Mã Trắng nhảy vào d6, chiếu hết ngay lập tức! Không thể chặn được. Đây là một trong những pha chiếu hết ngắn nhất trong lịch sử!"
+  ],
+  // ===== QG: Bẫy Voi =====
+  "5_6": [
+    "d4","d5","c4","e6","Nc3","Nf6","Bg5","Nbd7",
+    "cxd5! — Trắng đổi tốt d5. Đây là cái bẫy bắt đầu! Trắng muốn Đen ăn lại bằng exd5.",
+    "exd5 — Đen ăn lại bằng tốt. Đây là điều Trắng muốn!",
+    "🎣 Nxd5?? — Trắng mắc bẫy to! Mã ăn tốt d5 là sai lầm nghiêm trọng. Đúng hơn phải đi Nxd5 bằng cách khác.",
+    "🔥 Nxd5! — Đen thí Hậu! Mã ăn Mã d5. Trắng phải ăn Hậu!",
+    "Bxd8 — Trắng ăn Hậu.","🎯 Bb4+! — Đen chiếu bằng Tượng! Trắng không thể chặn với quân nào mà không mất vật chất.",
+    "Qd2 — Trắng dùng Hậu chặn.","Bxd2+ — Đen ăn Hậu bằng Tượng, chiếu Vua!","Kxd2 — Vua ăn Tượng.",
+    "Kxd8 — Đen ăn Tượng d8 lấy lại. Kết quả: Đen thắng Mã so với Tượng nhỏ. Hãy nhớ Bẫy Con Voi này!"
+  ],
+  // ===== KG: Muzio Gambit =====
+  "10_2": [
+    "e4","e5","f4 — Gambit Vua! Trắng thí tốt f4 để mở cột f tấn công.","exf4 — Đen ăn tốt f4, chấp nhận gambit.",
+    "Nf3 — Trắng phát triển.","g5 — Đen giữ tốt f4 bằng g5.","Bc4 — Tượng ra nhắm f7!","g4 — Đen đẩy g4 đuổi Mã.",
+    "🔥 O-O!! — Gambit Muzio! Trắng nhập thành, hy sinh Mã f3 cho g4 ăn. Đây là gambit táo bạo nhất trong lịch sử cờ vua!",
+    "gxf3 — Đen ăn Mã f3. Trắng mất quân nhưng cột g và f mở toang!",
+    "Qxf3 — Hậu Trắng vào cột f, đe dọa f7 cực kỳ nguy hiểm!","Qf6 — Đen cố phòng thủ f7.",
+    "e5! — Trắng đẩy e5 mở thêm đường tấn công!","Qxe5 — Đen ăn tốt e5 bằng Hậu.",
+    "🎯 Bxf7+!! — Thí Tượng vào f7! Kéo Vua Đen ra! Đây là kết hợp của nhiều hy sinh — Muzio không ngại thí cả đống quân!",
+    "Kxf7 — Vua phải ăn.","d4! — Trắng tạo thêm áp lực dồn dập.","Qxd4+ — Đen ăn tốt d4 chiếu.",
+    "Be3 — Trắng chặn chiếu.","Qf6 — Đen cố phòng thủ. Trắng có đòn tấn công mạnh mẽ nhờ thí quân táo bạo!","Nc3 — thêm quân vào tấn công!"
+  ],
+  // ===== Must Know: Bẫy Legal =====
+  "11_0": [
+    "e4 — Trắng mở đầu.","e5 — Đen đáp lại.","Nf3 — Phát triển Mã.","d6 — Đen củng cố e5.","Bc4 — Tượng ra nhắm f7.",
+    "🎣 Bg4 — Đen ghim Mã f3 với Tượng! Tưởng như đang thắng thế, nhưng đây là bước vào bẫy Legal tử thần!",
+    "Nc3 — Mã c3 ra quân bình thường...","h6 — Đen hỏi tội Tượng, tưởng Trắng phải đi Bxf6.",
+    "🔥 Nxe5!! — THẦN KỲ! Trắng thí Hậu! Mã ăn tốt e5 bất chấp Tượng đang ghim Mã f3. Đây là bẫy Legal kinh điển năm 1750!",
+    "Bxd1? — Đen ăn Hậu — tưởng mình đang thắng to! Nhưng đây là kết thúc của Đen.",
+    "🎯 Bxf7+! — Tượng chiếu Vua Đen!","Ke7 — Vua phải chạy.","🏆 Nd5# — CHIẾU HẾT NGHỆ THUẬT! Mã nhảy d5, chiếu hết không thể chặn! Đây là pha chiếu hết đẹp nhất trong lịch sử 300 năm cờ vua!"
+  ],
+  // ===== Must Know: Bẫy Englund Gambit =====
+  "11_1": [
+    "d4 — Trắng mở đầu kiểu Hậu.",
+    "🎣 e5! — Đen thí tốt ngay lập tức! Englund Gambit bắt đầu. Đây là bẫy cực hiếm gặp ở khai cuộc Hậu!",
+    "dxe5 — Trắng ăn tốt e5.","Nc6 — Đen phát triển Mã, áp lực vào e5.","Nf3 — Trắng phát triển.",
+    "Qe7 — Hậu Đen ra vị trí đặc biệt, đồng thời nhắm vào điểm yếu...","Bf4 — Tượng Trắng ra.",
+    "🎣 Qb4+! — Đen chiếu, ép Trắng đi Bd2 hoặc Qd2. Bẫy đang được giăng!",
+    "Bd2 — Trắng chặn chiếu.","Qxb2 — Đen ăn tốt b2, chiếm cột b!","Bc3 — Trắng cố bẫy Hậu Đen!",
+    "Bb4! — Tượng Đen ghim Mã c3.","Qd2 — Trắng cố dàn xếp.","Bxc3 — Đen ăn Mã.",
+    "Qxc3 — Trắng ăn Tượng.","🏆 Qc1# — CHIẾU HẾT! Hậu Đen chẻ vào c1, chiếu hết ngay! Kỳ diệu — Hậu Đen ăn tốt b2 rồi kết thúc ván cờ hoàn hảo!"
+  ],
+  // ===== Must Know: Bẫy Tennison =====
+  "11_2": [
+    "Nf3 — Mã f3 ra trước khi đẩy tốt — nước đi linh hoạt!","d5 — Đen chiếm trung tâm.",
+    "e4! — Trắng tấn công tốt d5, bắt đầu Tennison Gambit!","dxe4 — Đen ăn tốt e4.",
+    "Ng5! — Mã nhảy g5 nhắm f7! Đây là đòn tấn công chủ chốt của Tennison!","Nf6 — Đen phát triển Mã.",
+    "d3! — Trắng mở trung tâm, tạo đường cho Tượng.","exd3 — Đen ăn tốt d3.",
+    "Bxd3! — Tượng chiếm vị trí mạnh d3, nhắm h7!","h6 — Đen đuổi Mã g5.",
+    "🔥 Nxf7! — Thí Mã vào f7! Kéo Vua Đen ra!","Kxf7 — Vua phải ăn.",
+    "Bg6+! — Tượng chiếu! Vua Đen bị đuổi.","Kxg6 — Vua ăn Tượng.",
+    "🏆 Qxd8 — Trắng bắt sống Hậu Đen! Đây là kết quả của chuỗi thí quân thông minh trong Tennison Gambit!"
+  ],
+  // ===== Must Know: Fishing Pole =====
+  "11_3": [
+    "e4","e5","Nf3","Nc6","Bb5","Nf6","O-O",
+    "🎣 Ng4! — Con mồi câu cá! Mã nhảy g4 trông như sai lầm vì Mã không có tương lai ở đó. Nhưng đây là bẫy tinh vi!",
+    "⚠️ h3? — Trắng cắn câu! Đúng hơn phải đuổi Mã bằng Re1 hoặc d4. h3 là sai lầm chết người!",
+    "🔥 h5!! — Đen đẩy h5 tiếp! Cột h bắt đầu mở. Trắng không thể ngăn cơn lũ sắp đổ xuống!",
+    "hxg4 — Trắng ăn Mã g4.","hxg4 — Tốt Đen ăn lại, cột h mở TOANG!",
+    "Ne1 — Trắng cố phòng thủ.","Qh4! — Hậu Đen nhảy vào cột h, đe dọa chiếu hết!",
+    "f3 — Trắng cố chặn.","g3 — Đen đẩy g3! Chuẩn bị chiếu hết trên cột h. Cái giá của h3?? là toàn bộ cánh Vua sụp đổ!"
+  ],
+  // ===== Grünfeld: Exchange =====
+  "14_0": [
+    "d4","Nf6","c4","g6","Nc3",
+    "d5! — Đen thách Trắng! Nước d5 là linh hồn của Grünfeld — Đen sẵn sàng nhường trung tâm để phản công về sau!",
+    "cxd5 — Trắng ăn tốt d5.","Nxd5 — Đen ăn lại bằng Mã.","e4! — Trắng chiếm trung tâm RẤT lớn!",
+    "Nxc3 — Đen đổi Mã.","bxc3 — Trắng ăn lại, có cặp tốt mạnh c3-d4-e4!",
+    "Bg7 — Tượng g7 của Đen nhắm thẳng vào khối tốt Trắng! Đây là vũ khí phản công chính!",
+    "Nf3","c5 — Đen tấn công trung tâm Trắng ngay!","Be3","Qa5 — Hậu Đen áp lực vào c3.","Qd2 — Trắng bảo vệ."
+  ],
+  // ===== Scotland: Goering Gambit =====
+  "15_2": [
+    "e4","e5","Nf3","Nc6","d4 — Đột phá trung tâm Scotland!","exd4 — Đen ăn tốt d4.",
+    "🔥 c3! — Gambit Goering! Trắng thí thêm tốt thứ hai! Đây là đòn táo bạo nhất trong Khai cuộc Scotland!",
+    "dxc3 — Đen ăn tốt c3. Trắng thí 2 tốt để đổi lấy ưu thế phát triển áp đảo!",
+    "Nxc3 — Trắng phát triển Mã, đổi lại 2 tốt. Binh lực phát triển nhanh hơn Đen nhiều!",
+    "Bc5 — Đen phát triển Tượng.","Bc4 — Tượng Trắng nhắm f7!","d6 — Đen cố thủ.","O-O! — Nhập thành, Trắng sẵn sàng tấn công dữ dội!",
+    "Nf6 — Đen phát triển.","Qb3! — Hậu Trắng tấn công f7 VÀ b7 cùng lúc! Đen không thể phòng thủ hết!"
+  ]
+};
+
+function generateCoachTip(san, moveIdx, catIdx, varIdx) {
+  if (!san) return '';
+  const isWhite = moveIdx % 2 === 0;
+  const side = isWhite ? 'Trắng' : 'Đen';
+  const oppSide = isWhite ? 'Đen' : 'Trắng';
+  const moveNum = Math.floor(moveIdx / 2) + 1;
+
+  // Castling
+  if (san === 'O-O') return `✅ Nước ${moveNum}: ${side} nhập thành ngắn! Vua được bảo vệ an toàn sau dãy tốt, Xe vào cuộc chiến. Nhập thành sớm là nguyên tắc vàng khai cuộc!`;
+  if (san === 'O-O-O') return `✅ Nước ${moveNum}: ${side} nhập thành dài! Vua trú ẩn cánh Hậu, Xe d chiếm cột trung tâm. Thường đi kèm tấn công vũ bão vào cánh Vua đối phương!`;
+
+  // Checkmate
+  if (san.endsWith('#')) return `🏆 CHIẾU HẾT! Ván cờ kết thúc hoàn hảo! Hãy ghi nhớ toàn bộ trình tự nước đi của bài học này thật kỹ!`;
+
+  // Check
+  if (san.includes('+')) return `⚡ Nước ${moveNum}: Chiếu! ${side} tấn công Vua ${oppSide} — đối phương buộc phải đối phó ngay, mất quyền chủ động!`;
+
+  // Promotion
+  if (san.includes('=')) return `🌟 Nước ${moveNum}: Phong cấp tốt thành Hậu! Đây là kết quả của chiến lược tốt xuất sắc được thực hiện hoàn hảo!`;
+
+  // Captures
+  if (san.includes('x')) {
+    const p = san[0];
+    if (p === p.toUpperCase() && p !== 'O') {
+      const pNames = {N:'Mã',B:'Tượng',R:'Xe',Q:'Hậu',K:'Vua'};
+      return `💥 Nước ${moveNum}: ${side} thu quân bằng ${pNames[p]||'quân'}! Hãy tính toán: trao đổi này có lợi không? Vật chất quan trọng, nhưng thế trận còn quan trọng hơn!`;
+    }
+    return `💥 Nước ${moveNum}: Tốt ăn tốt (${san})! Thay đổi cấu trúc bàn cờ, mở cột. Hãy nhìn xem cột nào vừa mở ra và ai lợi hơn!`;
+  }
+
+  // By piece type
+  const p = san[0];
+  if (p === 'N') {
+    if (moveIdx < 4) return `🐴 Nước ${moveNum}: ${side} phát triển Mã! Mã nên ra trước Tượng — đây là nguyên tắc quan trọng. Mã trung tâm kiểm soát nhiều ô nhất, Mã biên rất yếu!`;
+    return `🐴 Nước ${moveNum}: ${side} di chuyển Mã (${san}) — tìm vị trí tối ưu. Mã mạnh nhất khi ở trung tâm và được tốt bảo vệ!`;
+  }
+  if (p === 'B') {
+    if (moveIdx < 6) return `🔷 Nước ${moveNum}: ${side} phát triển Tượng! Mở đường chéo, chuẩn bị nhập thành. Tượng cần đường chéo dài và không gian rộng để phát huy tối đa!`;
+    return `🔷 Nước ${moveNum}: ${side} điều chỉnh Tượng (${san}) — tìm đường chéo hoạt động tốt nhất. Tượng trên đường chéo dài hướng vào Vua đối phương là cực kỳ nguy hiểm!`;
+  }
+  if (p === 'R') return `🏰 Nước ${moveNum}: Xe vào cuộc! Xe mạnh nhất trên cột mở và hàng 7. ${side} đang xây dựng áp lực dài hạn — đây thường là bước chuyển sang trung cuộc!`;
+  if (p === 'Q') {
+    if (moveIdx < 6) return `👑 Nước ${moveNum}: Hậu ra sớm — đây là ngoại lệ chiến thuật đặc biệt! Thường ra Hậu sớm rất nguy hiểm vì dễ bị đuổi. Hãy phân tích tại sao biến này là ngoại lệ!`;
+    return `👑 Nước ${moveNum}: ${side} di chuyển Hậu (${san}) — Hậu là quân mạnh nhất. Đảm bảo Hậu ở vị trí an toàn và đang tạo ra đe dọa thực sự!`;
+  }
+  if (p === 'K') return `🤴 Nước ${moveNum}: Vua di chuyển — trong khai cuộc thường là nước phòng thủ bắt buộc. Hãy học bài học: Vua yếu trong khai cuộc nhưng mạnh trong tàn cuộc!`;
+
+  // Pawn moves
+  if (moveIdx === 0) return `♟️ Nước 1: Trắng đẩy ${san} — chiếm trung tâm ngay lập tức! Kiểm soát các ô d4-d5-e4-e5 là mục tiêu số 1 của mọi khai cuộc cờ vua.`;
+  if (moveIdx === 1) return `♟️ Nước 1 của Đen: ${san} — câu trả lời chiến lược! Đen cũng tranh giành quyền kiểm soát trung tâm từ ngay nước đầu tiên.`;
+
+  const col = san[0];
+  const isCenter = col === 'd' || col === 'e';
+  if (moveIdx < 6) {
+    if (isCenter) return `♟️ Nước ${moveNum}: ${side} đẩy tốt trung tâm ${san}! Kiểm soát ô d4-d5-e4-e5 là nền tảng mọi khai cuộc. Tuyệt vời — đúng nguyên tắc!`;
+    return `♟️ Nước ${moveNum}: ${side} đẩy tốt cánh ${san} — tạo không gian cho quân phát triển hoặc chuẩn bị kế hoạch tấn công/phòng thủ cánh.`;
+  }
+  if (isCenter) return `♟️ Nước ${moveNum}: ${side} điều chỉnh tốt trung tâm (${san}) — củng cố trung tâm hoặc tạo áp lực mới. Hãy suy nghĩ: nước đi này mở ra kế hoạch gì?`;
+  return `♟️ Nước ${moveNum}: ${side} đẩy tốt ${san} — phần quan trọng trong kế hoạch dài hạn. Hãy luôn hỏi: nước đi này đang chuẩn bị cho điều gì tiếp theo?`;
+}
+
+function getCoachTip(moveIdx) {
+  const op = currentOpening;
+  if (!op) return '';
+  if (moveIdx < 0 || moveIdx >= op.moves.length) return '';
+  const key = currentCatIndex + '_' + currentVarIndex;
+  if (COACH_TIPS[key] && COACH_TIPS[key][moveIdx]) return COACH_TIPS[key][moveIdx];
+  return generateCoachTip(op.moves[moveIdx], moveIdx, currentCatIndex, currentVarIndex);
+}
+
+function showCoachTip(moveIdx) {
+  const box = document.getElementById('coach-tip-box');
+  const text = document.getElementById('coach-tip-text');
+  if (!box || !text || !currentOpening) return;
+  const isWhite = moveIdx % 2 === 0;
+  const side = isWhite ? 'Trắng' : 'Đen';
+  const moveNum = Math.floor(moveIdx / 2) + 1;
+  const san = currentOpening.moves[moveIdx];
+  if (!san) return;
+  const tipContent = getCoachTip(moveIdx);
+  text.innerHTML = `<span class="move-badge">Nước ${moveNum} · ${side}</span>${tipContent}`;
+  box.classList.remove('tip-new');
+  void box.offsetWidth; // trigger reflow for animation restart
+  box.classList.add('tip-new');
+}
+
+function showCoachIntro() {
+  const box = document.getElementById('coach-tip-box');
+  const text = document.getElementById('coach-tip-text');
+  if (!box || !text || !currentOpening) return;
+  const op = currentOpening;
+  const total = op.moves.length;
+  text.innerHTML = `<span class="move-badge">HLV</span>Bài học: <b>${op.name}</b> — ${total} nước đi. ${isPracticeMode ? 'Chế độ luyện tập: kéo thả quân cờ đúng vị trí!' : 'Nhấn <b>Tới</b> hoặc <b>Chạy</b> để xem từng nước đi có giải thích!'}`;
+  box.classList.remove('tip-new');
+  void box.offsetWidth;
+  box.classList.add('tip-new');
+}
+
+function showCoachComplete(percent) {
+  const text = document.getElementById('coach-tip-text');
+  if (!text) return;
+  const emoji = percent === 100 ? '🏆' : percent >= 80 ? '🌟' : percent >= 50 ? '👍' : '💪';
+  text.innerHTML = `<span class="move-badge">KẾT QUẢ</span>${emoji} Bạn hoàn thành <b>${currentOpening ? currentOpening.name : 'bài học'}</b> với ${percent}%! ${percent === 100 ? 'Xuất sắc! Bài học này đã được ghi nhớ hoàn toàn!' : 'Hãy thử lại để cải thiện điểm số và ghi nhớ sâu hơn!'}`;
+}
+
+function initMenu() {
+  const container = document.getElementById('menu-container');
+  openingData.forEach((cat, catIndex) => {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'border-b border-slate-200';
+    const catHeader = document.createElement('div');
+    catHeader.className = 'category-header p-3 font-semibold text-slate-800 flex justify-between items-center';
+    catHeader.innerHTML = `<span class="text-sm">${cat.category}</span><i class="fa-solid fa-chevron-down category-icon text-slate-400 text-sm"></i>`;
+    const varList = document.createElement('div');
+    varList.className = 'variation-list bg-slate-50 border-t border-slate-100';
+    cat.variations.forEach((op, varIndex) => {
+      const btn = document.createElement('div');
+      btn.className = 'variation-btn p-3 pl-8 text-sm cursor-pointer flex flex-col';
+      const key = catIndex + '_' + varIndex;
+      const done = playerData.completedLessons[key];
+      let tagHtml = op.type.includes("Trắng") ? `<span class="tag-white">${op.type}</span>` : op.type.includes("Đen") ? `<span class="tag-black">${op.type}</span>` : `<span class="tag-basic">${op.type}</span>`;
+      const doneTag = done ? `<span style="background:#d1fae5;color:#065f46;padding:2px 5px;border-radius:4px;font-size:.6rem;font-weight:bold">✅${done.best}%</span>` : '';
+      btn.innerHTML = `<div class="font-medium mb-1">${op.name}</div><div class="flex gap-1 flex-wrap">${tagHtml}${doneTag}</div>`;
+      btn.onclick = () => { currentCatIndex = catIndex; currentVarIndex = varIndex; selectVariation(catIndex, varIndex, catDiv, btn); };
+      varList.appendChild(btn);
+    });
+    catDiv.appendChild(catHeader);
+    catDiv.appendChild(varList);
+    catHeader.onclick = () => {
+      document.querySelectorAll('#menu-container > div').forEach(d => { if (d !== catDiv) d.classList.remove('category-open'); });
+      catDiv.classList.toggle('category-open');
+    };
+    container.appendChild(catDiv);
+  });
+}
+
+function selectVariation(catIndex, varIndex, catDiv, btnEl) {
+  document.querySelectorAll('.variation-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) { btnEl.classList.add('active'); catDiv.classList.add('category-open'); }
+  stopAutoPlay();
+  currentOpening = openingData[catIndex].variations[varIndex];
+  currentCatIndex = catIndex; currentVarIndex = varIndex;
+  document.getElementById('opening-parent-name').innerText = openingData[catIndex].category;
+  document.getElementById('opening-title').innerText = currentOpening.name;
+  document.getElementById('opening-desc').innerText = currentOpening.desc;
+  if (currentOpening.type.includes("Đen")) board.orientation('black');
+  else board.orientation('white');
+  resetCurrentBoard();
+  setTimeout(showCoachIntro, 50);
+}
+
+function nextMove() {
+  if (!currentOpening) return;
+  if (currentMoveIndex < currentOpening.moves.length) {
+    showCoachTip(currentMoveIndex);
+    game.move(currentOpening.moves[currentMoveIndex]);
+    board.position(game.fen()); currentMoveIndex++;
+    updateMovesHistory(); updateButtons(); updateProgressBar();
+  } else stopAutoPlay();
+}
+
+function toggleAutoPlay() {
+  if (!currentOpening) return;
+  const btnPlay = document.getElementById('btn-play');
+  if (playInterval) { stopAutoPlay(); return; }
+  if (currentMoveIndex >= currentOpening.moves.length) resetCurrentBoard();
+  btnPlay.innerHTML = '<i class="fa-solid fa-pause mr-1"></i>Dừng';
+  btnPlay.classList.replace('bg-emerald-500','bg-rose-500');
+  btnPlay.classList.replace('hover:bg-emerald-600','hover:bg-rose-600');
+  playInterval = setInterval(nextMove, 1200);
+}
+
+function stopAutoPlay() {
+  if (playInterval) { clearInterval(playInterval); playInterval = null; }
+  const btnPlay = document.getElementById('btn-play');
+  if (btnPlay) {
+    btnPlay.innerHTML = '<i class="fa-solid fa-play mr-1"></i>Chạy';
+    btnPlay.classList.replace('bg-rose-500','bg-emerald-500');
+    btnPlay.classList.replace('hover:bg-rose-600','hover:bg-emerald-600');
+  }
+}
+
+function resetCurrentBoard() {
+  if (!currentOpening) return;
+  stopAutoPlay();
+  game.reset(); board.position(game.fen());
+  currentMoveIndex = 0; currentScore = 0; movePoints = 10;
+  maxScore = currentOpening.moves.length * 10;
+  updateMovesHistory(); updateButtons(); updateProgressBar(); updateScoreUI();
+  if (isPracticeMode) updateFeedbackTurn();
+}
+
+function flipBoard() { board.flip(); }
+
+let currentScore = 0, maxScore = 0, movePoints = 10;
+
+function togglePracticeModeUI() {
+  const normalControls = document.getElementById('normal-controls');
+  const feedback = document.getElementById('feedback-msg');
+  const btnHint = document.getElementById('btn-hint');
+  const examWrapper = document.getElementById('exam-mode-wrapper');
+  if (isPracticeMode) {
+    normalControls.style.display = 'none';
+    feedback.classList.remove('hidden');
+    btnHint.classList.remove('hidden'); btnHint.classList.add('flex');
+    examWrapper.style.display = 'inline-flex';
+    stopAutoPlay(); updateFeedbackTurn();
+  } else {
+    normalControls.style.display = 'grid';
+    feedback.classList.add('hidden');
+    btnHint.classList.add('hidden'); btnHint.classList.remove('flex');
+    examWrapper.style.display = 'none';
+    document.getElementById('exam-toggle').checked = false;
+    toggleExamMode(false); stopAutoPlay();
+  }
+  updateScoreUI();
+}
+
+function toggleExamMode(isExam) {
+  isExamMode = isExam;
+  const historyDiv = document.getElementById('moves-history');
+  const btnHint = document.getElementById('btn-hint');
+  if (isExam) {
+    historyDiv.classList.add('blur-text');
+    btnHint.disabled = true; btnHint.classList.add('opacity-50','cursor-not-allowed');
+    btnHint.innerHTML = '<i class="fa-solid fa-lock mr-2"></i>Gợi ý bị khóa (Đang Thi)';
+  } else {
+    historyDiv.classList.remove('blur-text');
+    btnHint.disabled = false; btnHint.classList.remove('opacity-50','cursor-not-allowed');
+    btnHint.innerHTML = '<i class="fa-solid fa-lightbulb mr-2"></i>Xem Gợi Ý';
+  }
+}
+
+function showFeedback(msg, type) {
+  const el = document.getElementById('feedback-msg');
+  el.innerHTML = msg;
+  el.className = 'text-center text-sm font-bold p-3 rounded shadow-sm mb-3 transition-all ';
+  if (type === 'error') el.classList.add('bg-rose-100','text-rose-700','border','border-rose-300');
+  else if (type === 'success') el.classList.add('bg-emerald-100','text-emerald-800','border','border-emerald-300');
+  else el.classList.add('bg-indigo-100','text-indigo-800','border','border-indigo-300');
+}
+
+function updateScoreUI() {
+  const d = document.getElementById('score-display');
+  if (isPracticeMode) { d.classList.remove('hidden'); document.getElementById('score-text').innerText = `${currentScore}/${maxScore}`; }
+  else d.classList.add('hidden');
+}
+
+function updateFeedbackTurn() {
+  if (!currentOpening) return;
+  if (currentMoveIndex >= currentOpening.moves.length) {
+    let percent = maxScore > 0 ? Math.round((currentScore / maxScore) * 100) : 0;
+    let grade = percent === 100 ? "🏆 HOÀN HẢO!" : percent >= 80 ? "🌟 XUẤT SẮC!" : percent >= 50 ? "👍 TỐT!" : "💪 CẦN CỐ GẮNG THÊM!";
+    showFeedback(`${grade}<br>Bạn đạt <span class='text-lg'>${currentScore}/${maxScore}</span> điểm (${percent}%).`, "success");
+    showCoachComplete(percent);
+    // Award XP
+    if (currentCatIndex >= 0 && currentVarIndex >= 0) {
+      const key = currentCatIndex + '_' + currentVarIndex;
+      awardLessonXP(key, percent, currentOpening.name);
+      // refresh menu to show completion badge
+      document.getElementById('menu-container').innerHTML = '';
+      initMenu();
+    }
+    if (isRandomChallenge) { isRandomChallenge = false; awardXP(30, "Hoàn thành Thách Đấu Ngẫu Nhiên"); }
+    return;
+  }
+  const color = (currentMoveIndex % 2 === 0) ? "Trắng" : "Đen";
+  showFeedback(`👉 Đến lượt ${color} đi. Kéo thả quân cờ!`, "info");
+  // Show coach tip for next expected move in practice mode
+  if (isPracticeMode && currentMoveIndex < currentOpening.moves.length) {
+    const nextTip = getCoachTip(currentMoveIndex);
+    const text = document.getElementById('coach-tip-text');
+    const moveNum = Math.floor(currentMoveIndex / 2) + 1;
+    const side = (currentMoveIndex % 2 === 0) ? 'Trắng' : 'Đen';
+    if (text && !isExamMode) {
+      text.innerHTML = `<span class="move-badge">Nước ${moveNum} · ${side}</span>💡 ${nextTip}`;
+      const box = document.getElementById('coach-tip-box');
+      if (box) { box.classList.remove('tip-new'); void box.offsetWidth; box.classList.add('tip-new'); }
+    } else if (text && isExamMode) {
+      text.innerHTML = `<span class="move-badge">THI ĐẤU</span>🔒 Chế độ thi đấu — gợi ý HLV bị ẩn. Hãy tự suy nghĩ và kéo quân!`;
+    }
+  }
+}
+
+function onDragStart(source, piece) {
+  if (!isPracticeMode || game.game_over()) return false;
+  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) || (game.turn() === 'b' && piece.search(/^w/) !== -1)) return false;
+  if (!currentOpening || currentMoveIndex >= currentOpening.moves.length) return false;
+}
+
+function onDrop(source, target) {
+  if (!isPracticeMode || !currentOpening) return 'snapback';
+  let expectedSAN = currentOpening.moves[currentMoveIndex];
+  let attempt = game.move({ from: source, to: target, promotion: 'q' });
+  if (attempt === null) return 'snapback';
+  let clean = s => s.replace(/[+#]/g,'');
+  if (clean(attempt.san) !== clean(expectedSAN)) {
+    game.undo(); movePoints = Math.max(0, movePoints - 3);
+    const hint = getCoachTip(currentMoveIndex);
+    showFeedback(`❌ Sai rồi! Kéo lại nhé.<br><span class="text-xs text-rose-500">(Bị trừ 3 điểm cho nước này)</span>`, "error");
+    const text = document.getElementById('coach-tip-text');
+    if (text) text.innerHTML = `<span class="move-badge">GỢI Ý</span>💭 Suy nghĩ lại: ${hint}`;
+    return 'snapback';
+  }
+  showCoachTip(currentMoveIndex);
+  currentScore += movePoints; movePoints = 10; currentMoveIndex++;
+  updateMovesHistory(); updateButtons(); updateProgressBar(); updateScoreUI(); updateFeedbackTurn();
+}
+
+function onSnapEnd() { board.position(game.fen()); }
+
+function updateButtons() {
+  const btnNext = document.getElementById('btn-next');
+  const done = !currentOpening || currentMoveIndex >= currentOpening.moves.length;
+  btnNext.disabled = done;
+  btnNext.classList.toggle('opacity-50', done);
+  btnNext.classList.toggle('cursor-not-allowed', done);
+}
+
+function updateProgressBar() {
+  if (!currentOpening) return;
+  const pct = (currentMoveIndex / currentOpening.moves.length) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').innerText = `${currentMoveIndex} / ${currentOpening.moves.length} nước đi`;
+}
+
+function updateMovesHistory() {
+  const container = document.getElementById('moves-history');
+  container.innerHTML = '';
+  if (!currentOpening) return;
+  let mn = 1;
+  for (let i = 0; i < currentOpening.moves.length; i++) {
+    if (i % 2 === 0) { const s = document.createElement('span'); s.className='text-slate-500 font-bold ml-1'; s.innerText=`${mn}.`; container.appendChild(s); mn++; }
+    const ms = document.createElement('span');
+    ms.innerText = currentOpening.moves[i];
+    ms.className = i < currentMoveIndex ? 'text-slate-900 font-bold bg-amber-400 px-1 rounded shadow-sm' : 'text-slate-500';
+    container.appendChild(ms);
+  }
+}
+
+// ===================== RANDOM CHALLENGE =====================
+function startRandomChallenge() {
+  const ci = Math.floor(Math.random() * openingData.length);
+  const vi = Math.floor(Math.random() * openingData[ci].variations.length);
+  switchTab('lessons');
+  document.getElementById('practice-toggle').checked = true;
+  isPracticeMode = true;
+  togglePracticeModeUI();
+  const allCatDivs = document.querySelectorAll('#menu-container > div');
+  const catDiv = allCatDivs[ci];
+  const varBtns = catDiv ? catDiv.querySelectorAll('.variation-btn') : [];
+  const btn = varBtns[vi] || null;
+  currentCatIndex = ci; currentVarIndex = vi;
+  selectVariation(ci, vi, catDiv || document.createElement('div'), btn);
+  isRandomChallenge = true;
+  showToast("🎲 Thách Đấu Ngẫu Nhiên bắt đầu! Hoàn thành 100% để nhận +30 XP thêm.", "toast-chain");
+}
+
+// ===================== CHAIN MODE =====================
+function startChainChallenge() {
+  const all = [];
+  openingData.forEach((cat, ci) => cat.variations.forEach((_, vi) => all.push({ ci, vi })));
+  const shuffled = all.sort(() => Math.random() - 0.5).slice(0, 3);
+  playerData.chainQueue = shuffled;
+  playerData.chainProgress = 0;
+  playerData.chainActive = true;
+  savePlayerData();
+  updateChainUI();
+  loadChainLesson();
+  showToast("🔗 Liên Hoàn 3 Bài bắt đầu! Hoàn thành tất cả để nhận +100 XP!", "toast-chain");
+}
+
+function loadChainLesson() {
+  if (!playerData.chainActive || playerData.chainProgress >= playerData.chainQueue.length) return;
+  const { ci, vi } = playerData.chainQueue[playerData.chainProgress];
+  switchTab('challenge');
+  setTimeout(() => {
+    switchTab('lessons');
+    document.getElementById('practice-toggle').checked = true;
+    isPracticeMode = true;
+    togglePracticeModeUI();
+    const allCatDivs = document.querySelectorAll('#menu-container > div');
+    const catDiv = allCatDivs[ci];
+    const varBtns = catDiv ? catDiv.querySelectorAll('.variation-btn') : [];
+    selectVariation(ci, vi, catDiv || document.createElement('div'), varBtns[vi] || null);
+  }, 200);
+}
+
+function advanceChain() {
+  playerData.chainProgress++;
+  if (playerData.chainProgress >= playerData.chainQueue.length) {
+    playerData.chainActive = false;
+    savePlayerData();
+    updateChainUI();
+    awardXP(100, "Hoàn thành Liên Hoàn 3 Bài!");
+    showToast("🎉 Liên Hoàn 3 Bài hoàn thành! +100 XP!", "toast-level");
+  } else {
+    savePlayerData();
+    updateChainUI();
+    setTimeout(() => { loadChainLesson(); showToast(`🔗 Bài ${playerData.chainProgress + 1}/3 bắt đầu!`, "toast-chain"); }, 1500);
+  }
+}
+
+function cancelChain() {
+  playerData.chainActive = false; playerData.chainProgress = 0; playerData.chainQueue = [];
+  savePlayerData(); updateChainUI();
+  showToast("❌ Đã hủy Liên Hoàn.", "toast-xp");
+}
+
+function updateChainUI() {
+  const indicator = document.getElementById('chain-indicator');
+  const dots = document.getElementById('chain-dots');
+  const statusText = document.getElementById('chain-status-text');
+  if (!playerData.chainActive) { indicator.classList.add('hidden'); return; }
+  indicator.classList.remove('hidden');
+  dots.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 'chain-dot' + (i < playerData.chainProgress ? ' done' : i === playerData.chainProgress ? ' active' : '');
+    dots.appendChild(d);
+  }
+  const cur = playerData.chainQueue[playerData.chainProgress];
+  const lessonName = cur ? openingData[cur.ci].variations[cur.vi].name : '';
+  statusText.textContent = `Bài ${playerData.chainProgress + 1}/3: ${lessonName}`;
+}
+
+// ===================== FLASHCARD MODE =====================
+let fcBoard = null, fcGame = null, fcCorrect = 0, fcTotal = 0;
+let fcCurrentAnswer = '';
+
+function openFlashcard() {
+  fcCorrect = 0; fcTotal = 0;
+  document.getElementById('fc-score').textContent = '0/0 đúng';
+  document.getElementById('flashcard-modal').classList.add('open');
+  setTimeout(() => {
+    if (!fcBoard) {
+      fcGame = new Chess();
+      fcBoard = Chessboard('flashcard-board', {
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+        showNotation: false
+      });
+    }
+    nextFlashcard();
+  }, 100);
+}
+
+function closeFlashcard() {
+  document.getElementById('flashcard-modal').classList.remove('open');
+}
+
+function nextFlashcard() {
+  const ci = Math.floor(Math.random() * openingData.length);
+  const vi = Math.floor(Math.random() * openingData[ci].variations.length);
+  const op = openingData[ci].variations[vi];
+  fcCurrentAnswer = op.name;
+
+  fcGame = new Chess();
+  const stopAt = Math.min(op.moves.length, Math.max(4, Math.floor(op.moves.length * 0.6)));
+  for (let i = 0; i < stopAt; i++) { const r = fcGame.move(op.moves[i]); if (!r) break; }
+  fcBoard.position(fcGame.fen());
+
+  // 4 choices: 1 correct + 3 random wrong
+  const allNames = [];
+  openingData.forEach(cat => cat.variations.forEach(v => { if (v.name !== op.name) allNames.push(v.name); }));
+  const wrong = allNames.sort(() => Math.random() - 0.5).slice(0, 3);
+  const choices = [op.name, ...wrong].sort(() => Math.random() - 0.5);
+
+  const container = document.getElementById('fc-answers');
+  container.innerHTML = '';
+  choices.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'fc-answer-btn';
+    btn.textContent = name;
+    btn.onclick = () => answerFlashcard(name, btn);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('fc-result').classList.add('hidden');
+  document.getElementById('fc-next-btn').classList.add('hidden');
+}
+
+function answerFlashcard(chosen, btnEl) {
+  document.querySelectorAll('.fc-answer-btn').forEach(b => b.disabled = true);
+  fcTotal++;
+  const correct = chosen === fcCurrentAnswer;
+  if (correct) {
+    fcCorrect++;
+    btnEl.classList.add('correct');
+    awardXP(15, "Nhận diện khai cuộc đúng!");
+    document.getElementById('fc-result').className = 'text-center text-sm font-bold p-3 rounded mb-3 bg-emerald-100 text-emerald-800 border border-emerald-300';
+    document.getElementById('fc-result').innerHTML = `✅ Chính xác! <b>${fcCurrentAnswer}</b> — +15 XP`;
+  } else {
+    btnEl.classList.add('wrong');
+    document.querySelectorAll('.fc-answer-btn').forEach(b => { if (b.textContent === fcCurrentAnswer) b.classList.add('correct'); });
+    document.getElementById('fc-result').className = 'text-center text-sm font-bold p-3 rounded mb-3 bg-rose-100 text-rose-700 border border-rose-300';
+    document.getElementById('fc-result').innerHTML = `❌ Sai! Đáp án đúng: <b>${fcCurrentAnswer}</b>`;
+  }
+  document.getElementById('fc-result').classList.remove('hidden');
+  document.getElementById('fc-next-btn').classList.remove('hidden');
+  document.getElementById('fc-score').textContent = `${fcCorrect}/${fcTotal} đúng`;
+}
+
+// ===================== KHỞI TẠO =====================
+$(document).ready(function() {
+  loadPlayerData();
+
+  var config = {
+    draggable: true, position: 'start',
+    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+    showNotation: true,
+    onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd
+  };
+  board = Chessboard('board', config);
+
+  document.getElementById('btn-next').addEventListener('click', nextMove);
+  document.getElementById('btn-play').addEventListener('click', toggleAutoPlay);
+  document.getElementById('btn-reset').addEventListener('click', resetCurrentBoard);
+  document.getElementById('btn-flip').addEventListener('click', flipBoard);
+
+  document.getElementById('practice-toggle').addEventListener('change', function(e) {
+    isPracticeMode = e.target.checked;
+    togglePracticeModeUI(); resetCurrentBoard();
+  });
+  document.getElementById('exam-toggle').addEventListener('change', function(e) { toggleExamMode(e.target.checked); });
+  document.getElementById('btn-hint').addEventListener('click', function() {
+    if (!isPracticeMode || !currentOpening || isExamMode) return;
+    if (currentMoveIndex < currentOpening.moves.length) {
+      movePoints = Math.max(0, movePoints - 5);
+      showFeedback(`💡 Gợi ý: Kéo <b>${currentOpening.moves[currentMoveIndex]}</b><br><span class="text-xs text-emerald-600">(Bị trừ 5 điểm)</span>`, "success");
+    }
+  });
+
+  $(window).resize(function() { board.resize(); });
+
+  initMenu();
+  updateChainUI();
+
+  const firstCat = document.querySelector('#menu-container > div');
+  if (firstCat) {
+    firstCat.classList.add('category-open');
+    const firstBtn = firstCat.querySelector('.variation-btn');
+    currentCatIndex = 0; currentVarIndex = 0;
+    selectVariation(0, 0, firstCat, firstBtn);
+  }
+});
+</script>
 </body>
 </html>
