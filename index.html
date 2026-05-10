@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Đại Cẩm Nang Khai Cuộc Cờ Vua - Pro Version</title>
+<title>Học Cờ Vua Cùng Vũ Bình Minh</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -78,6 +78,35 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
 .move-badge{display:inline-block;background:#92400e;color:#fef3c7;font-size:.6rem;font-weight:800;padding:1px 5px;border-radius:4px;margin-right:4px;letter-spacing:.04em;vertical-align:middle}
 @keyframes tipPulse{0%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}70%{box-shadow:0 0 0 6px rgba(245,158,11,0)}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
 .tip-new{animation:tipPulse .6s ease}
+
+/* Mode switcher nav */
+.mode-nav{display:flex;background:#0f172a;border-bottom:3px solid #1e293b}
+.mode-btn{flex:1;padding:.55rem .5rem;font-size:.75rem;font-weight:800;color:#94a3b8;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .2s;letter-spacing:.02em}
+.mode-btn:hover{color:#e2e8f0;background:rgba(255,255,255,.05)}
+.mode-btn.active{color:#f59e0b;border-bottom-color:#f59e0b;background:rgba(245,158,11,.08)}
+
+/* Tactics puzzle cards */
+.puzzle-btn{padding:.6rem .75rem;border-left:3px solid transparent;cursor:pointer;font-size:.8rem;transition:all .2s;display:flex;flex-direction:column;gap:2px}
+.puzzle-btn:hover{background:#f8fafc;border-left-color:#cbd5e1}
+.puzzle-btn.active{background:#0f172a;color:white;border-left-color:#f59e0b}
+.tag-easy{background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-size:.6rem;font-weight:700}
+.tag-medium{background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:.6rem;font-weight:700}
+.tag-hard{background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-size:.6rem;font-weight:700}
+.tag-theme{background:#e0f2fe;color:#075985;padding:2px 6px;border-radius:4px;font-size:.6rem;font-weight:700}
+
+/* Tactics result */
+#tactics-result{display:none;padding:.75rem 1rem;border-radius:.5rem;font-size:.85rem;font-weight:700;text-align:center}
+#tactics-result.correct{background:#d1fae5;color:#065f46;border:1.5px solid #059669;display:block}
+#tactics-result.wrong{background:#fee2e2;color:#991b1b;border:1.5px solid #dc2626;display:block}
+.tactics-score-badge{display:inline-flex;align-items:center;gap:4px;background:#7c3aed;color:white;font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:999px}
+
+/* Endgame category headers */
+.eg-category-header{cursor:pointer;padding:.65rem .75rem;font-weight:700;font-size:.8rem;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center}
+.eg-category-header:hover{background:#f1f5f9}
+.eg-var-btn{padding:.5rem .75rem .5rem 1.5rem;font-size:.78rem;cursor:pointer;border-left:3px solid transparent;transition:all .2s}
+.eg-var-btn:hover{background:#f8fafc;border-left-color:#cbd5e1}
+.eg-var-btn.active{background:#0f172a;color:white;border-left-color:#10b981}
+.tag-endgame{background:#f0fdf4;color:#065f46;padding:2px 6px;border-radius:4px;font-size:.6rem;font-weight:700}
 </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col">
@@ -88,8 +117,8 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
     <div class="flex items-center gap-3">
       <img src="https://i.ibb.co/TqBJb9Tf/426a1f835d61.jpg" alt="Logo" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;flex-shrink:0">
       <div>
-        <h1 class="text-lg md:text-xl font-bold">Khai Cuộc Cờ Vua Pro</h1>
-        <p class="text-xs text-slate-400">Huấn luyện chuyên sâu: Lật bàn cờ, Thi đấu & Chấm điểm</p>
+        <h1 class="text-lg md:text-xl font-bold">Học Cờ Vua Cùng Vũ Bình Minh</h1>
+        <p class="text-xs text-slate-400">Khai cuộc · Chiến thuật · Tàn cuộc — Huấn luyện toàn diện</p>
       </div>
     </div>
     <!-- Stats bar -->
@@ -104,6 +133,13 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
     </div>
   </div>
 </header>
+
+<!-- Mode Nav -->
+<nav class="mode-nav">
+  <button class="mode-btn active" id="mode-btn-opening" onclick="switchMode('opening')">📖 Khai Cuộc</button>
+  <button class="mode-btn" id="mode-btn-tactics" onclick="switchMode('tactics')">⚔️ Chiến Thuật</button>
+  <button class="mode-btn" id="mode-btn-endgame" onclick="switchMode('endgame')">🏁 Tàn Cuộc</button>
+</nav>
 
 <!-- Main Content -->
 <main class="flex-1 container mx-auto p-4 flex flex-col md:flex-row gap-6 overflow-hidden">
@@ -157,6 +193,27 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
         <p class="font-semibold text-slate-700 mb-1">💡 Mẹo học tập:</p>
         <p>Học mỗi ngày để duy trì chuỗi thành tích. Điểm XP tăng theo cấp độ, hãy cố gắng đạt 100% mỗi bài!</p>
       </div>
+    </div>
+
+    <!-- Panel: Chiến Thuật (hidden by default) -->
+    <div id="panel-tactics" class="hidden overflow-y-auto flex-1 custom-scrollbar flex flex-col">
+      <div class="p-3 bg-purple-50 border-b border-purple-100">
+        <p class="text-xs font-bold text-purple-700 uppercase tracking-wide mb-1">⚔️ Bài Tập Chiến Thuật</p>
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-purple-600">Kéo thả quân cờ để giải câu đố</p>
+          <span id="tactics-score-display" class="tactics-score-badge">0 / 0 đúng</span>
+        </div>
+      </div>
+      <div id="tactics-menu" class="flex-1"></div>
+    </div>
+
+    <!-- Panel: Tàn Cuộc (hidden by default) -->
+    <div id="panel-endgame" class="hidden overflow-y-auto flex-1 custom-scrollbar">
+      <div class="p-3 bg-emerald-50 border-b border-emerald-100">
+        <p class="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-1">🏁 Kỹ Thuật Tàn Cuộc</p>
+        <p class="text-xs text-emerald-600">Học các kỹ thuật chiếu hết và chuyển hóa tàn cuộc</p>
+      </div>
+      <div id="endgame-menu"></div>
     </div>
 
     <!-- Tab: Thành Tích -->
@@ -247,6 +304,20 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
           <button id="btn-hint" class="hidden w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded shadow flex items-center justify-center transition mb-3">
             <i class="fa-solid fa-lightbulb mr-2"></i>Xem Gợi Ý
           </button>
+          <!-- Tactics Controls (hidden in opening/endgame mode) -->
+          <div id="tactics-controls" class="hidden flex flex-col gap-2">
+            <div id="tactics-result"></div>
+            <button id="btn-tactics-next" onclick="nextTacticsPuzzle()" class="hidden w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded shadow flex items-center justify-center gap-2 transition text-sm">
+              <i class="fa-solid fa-forward-step"></i>Câu tiếp theo
+            </button>
+            <button id="btn-tactics-hint" onclick="showTacticsHint()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded shadow flex items-center justify-center gap-2 transition text-sm">
+              <i class="fa-solid fa-lightbulb"></i>Gợi ý (trừ 5 XP)
+            </button>
+            <button onclick="resetTacticsPuzzle()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 rounded shadow flex items-center justify-center gap-2 transition text-sm">
+              <i class="fa-solid fa-rotate-left"></i>Xếp lại
+            </button>
+          </div>
+
           <div class="grid grid-cols-2 gap-2">
             <button id="btn-flip" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 rounded shadow flex items-center justify-center transition text-sm">
               <i class="fa-solid fa-retweet mr-1"></i>Lật Cờ
@@ -412,6 +483,108 @@ const openingData = [
   ]}
 ];
 
+// ===================== DỮ LIỆU CHIẾN THUẬT =====================
+const tacticsData = [
+  { category:"⚔️ Chiếu Hết 1 Nước", puzzles:[
+    { id:"t1", name:"Xe khai thông cột cuối", fen:"6k1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1", solution:["Rf8"], theme:"Chiếu Hết", difficulty:"Dễ", tip:"Xe chiếm cột cuối! Vua Đen bị kẹt sau dãy tốt f7-g7-h7. Rf8# là chiếu hết hoàn hảo.", side:"w" },
+    { id:"t2", name:"Hậu chiếu hết góc", fen:"5rk1/5ppp/8/8/8/8/5PPP/5QK1 w - - 0 1", solution:["Qxf8"], theme:"Chiếu Hết", difficulty:"Dễ", tip:"Hậu ăn Xe f8 là chiếu hết! Vua g8 không còn ô thoát nào. Đòn chiếu hết kinh điển ở góc bàn.", side:"w" },
+    { id:"t3", name:"Xe lướt hàng 7", fen:"5rk1/R7/8/8/8/8/8/6K1 w - - 0 1", solution:["Rh7"], theme:"Chiếu Hết", difficulty:"Dễ", tip:"Xe lướt từ a7 sang h7 là chiếu hết! Xe h7 cắt đường thoát của Vua g8 hoàn toàn.", side:"w" },
+    { id:"t4", name:"Mã chiếu hết nhảy vào", fen:"5r1k/6pp/7N/8/8/8/8/6K1 w - - 0 1", solution:["Nf7"], theme:"Chiếu Hết", difficulty:"Trung bình", tip:"Mã nhảy f7 là chiếu hết! Vua h8 bị kẹt bởi Mã f7 kiểm soát g5, h6, h8 và tốt g7.", side:"w" },
+    { id:"t5", name:"Hậu lùi chiếu hết", fen:"6k1/6Q1/8/8/8/8/8/6K1 w - - 0 1", solution:["Qg6"], theme:"Chiếu Hết", difficulty:"Dễ", tip:"Hậu lùi về g6 là chiếu hết! Vua g8 không có ô thoát nào vì Hậu kiểm soát f7, g7, h7.", side:"w" },
+    { id:"t6", name:"Hậu chiếu hết đường chéo", fen:"6k1/5p1p/8/8/8/8/8/4Q1K1 w - - 0 1", solution:["Qe8"], theme:"Chiếu Hết", difficulty:"Dễ", tip:"Hậu vào e8 là chiếu hết ngay! Vua g8 bị chặn bởi tốt f7-h7 và Hậu e8 kiểm soát toàn bộ.", side:"w" },
+    { id:"t7", name:"Xe + Vua phối hợp", fen:"8/8/8/8/8/8/5k2/R5K1 w - - 0 1", solution:["Ra2"], theme:"Chiếu Hết", difficulty:"Dễ", tip:"Xe a2 chiếu hết! Vua f2 bị kẹt giữa Xe a2 và Vua g1. Không có ô thoát nào.", side:"w" },
+    { id:"t8", name:"Hậu chiếu hết theo đường chéo dài", fen:"7k/5ppp/8/8/8/8/8/Q5K1 w - - 0 1", solution:["Qa8"], theme:"Chiếu Hết", difficulty:"Trung bình", tip:"Hậu a8 chiếu hết từ xa! Hậu kiểm soát toàn bộ hàng 8 và g2 chặn đường thoát. Vua h8 bị bẫy.", side:"w" }
+  ]},
+  { category:"🎯 Chiếu Hết 2 Nước", puzzles:[
+    { id:"t9", name:"Mã + Hậu phối hợp", fen:"6k1/5ppp/8/8/6N1/8/8/4Q1K1 w - - 0 1", solution:["Qe6"], theme:"Chiếu Hết", difficulty:"Trung bình", tip:"Hậu e6 đe dọa Qg8# và Qxf7# cùng lúc! Đen không thể chặn cả hai mối đe dọa.", side:"w" },
+    { id:"t10", name:"Xe chuỗi chiếu hết", fen:"k7/2R5/1R6/8/8/8/8/7K w - - 0 1", solution:["Rc8"], theme:"Chiếu Hết", difficulty:"Trung bình", tip:"Xe c8 chiếu Vua a8! Vua phải đi sang b7. Sau đó Xe b6-b7# là chiếu hết chuỗi kinh điển.", side:"w" },
+    { id:"t11", name:"Thí Xe mở đường chiếu hết", fen:"r5k1/5ppp/8/8/8/8/8/3Q2K1 w - - 0 1", solution:["Qd8"], theme:"Chiếu Hết", difficulty:"Khó", tip:"Hậu d8+! Bắt buộc Rxd8. Sau đó Vua vào f2 và các quân khác kết thúc. Đây là đòn 2 nước quyết định.", side:"w" },
+    { id:"t12", name:"Tượng + Xe đòn gấp", fen:"7k/5ppp/8/8/3B4/8/8/5RK1 w - - 0 1", solution:["Rf8"], theme:"Chiếu Hết", difficulty:"Trung bình", tip:"Xe vào f8+ chiếu Vua h8! Vua chỉ có thể vào g8. Tượng d4 đang phủ g7. Đây là đòn 2 nước phối hợp.", side:"w" },
+    { id:"t13", name:"Mã chiếu rồi chiếu hết", fen:"7k/5Qpp/8/6N1/8/8/8/6K1 w - - 0 1", solution:["Nf7"], theme:"Chiếu Hết", difficulty:"Khó", tip:"Mã f7+ chiếu Vua h8! Vua đi h7 duy nhất — Hậu g7# là chiếu hết. Mã f7 tạo đòn phối hợp hoàn hảo.", side:"w" },
+    { id:"t14", name:"Hai Xe chuỗi chiếu hết", fen:"1k6/8/1K6/8/8/8/8/R7 w - - 0 1", solution:["Ra8"], theme:"Chiếu Hết", difficulty:"Trung bình", tip:"Xe a8 chiếu Vua b8! Vua phải đi c7 hoặc c8. Kết hợp Vua b6 hỗ trợ, Xe a8 kiểm soát hàng 8.", side:"w" }
+  ]},
+  { category:"🐴 Nĩa Đôi — Fork", puzzles:[
+    { id:"t15", name:"Mã nĩa Vua-Xe cơ bản", fen:"6k1/5r2/8/5N2/8/8/8/4K3 w - - 0 1", solution:["Nh6"], theme:"Nĩa Đôi", difficulty:"Dễ", tip:"Mã nhảy h6 tấn công ĐỒNG THỜI Vua g8 và Xe f7! Vua chạy, Mã ăn Xe miễn phí.", side:"w" },
+    { id:"t16", name:"Mã nĩa Vua-Hậu", fen:"3qk3/8/8/3N4/8/8/8/4K3 w - - 0 1", solution:["Nf6"], theme:"Nĩa Đôi", difficulty:"Dễ", tip:"Mã f6 chiếu Vua e8 VÀ tấn công Hậu d8! Vua phải chạy, Mã ăn Hậu — thắng quân to.", side:"w" },
+    { id:"t17", name:"Mã nĩa Vua-Xe hàng dọc", fen:"2k5/5r2/8/1N6/8/8/8/4K3 w - - 0 1", solution:["Nd6"], theme:"Nĩa Đôi", difficulty:"Trung bình", tip:"Mã d6 chiếu Vua c8 VÀ tấn công Xe f7! Vua chạy, Mã ăn Xe. Nĩa đôi theo 2 cột.", side:"w" },
+    { id:"t18", name:"Hậu nĩa Vua-Xe", fen:"8/8/8/8/4kr2/8/8/3Q3K w - - 0 1", solution:["Qd4"], theme:"Nĩa Đôi", difficulty:"Trung bình", tip:"Hậu d4+ chiếu Vua e4 VÀ đe dọa Xe f4! Vua di chuyển, Hậu ăn Xe. Hậu cũng có thể nĩa.", side:"w" },
+    { id:"t19", name:"Tốt nĩa hai quân", fen:"8/8/3n1b2/4P3/8/8/8/4K2k w - - 0 1", solution:["e6"], theme:"Nĩa Đôi", difficulty:"Dễ", tip:"Tốt tiến e6 tấn công CẢ Mã d6 VÀ Tượng f6 cùng lúc! Dù Đen lấy tốt, Trắng vẫn thắng quân.", side:"w" },
+    { id:"t20", name:"Xe nĩa Vua-Tượng", fen:"3k4/3b4/8/8/8/8/8/R3K3 w - - 0 1", solution:["Rd1"], theme:"Nĩa Đôi", difficulty:"Trung bình", tip:"Xe d1+ chiếu Vua d8 VÀ nhắm Tượng d7! Vua phải rời cột d, Xe ăn Tượng miễn phí.", side:"w" },
+    { id:"t21", name:"Mã nĩa ba quân", fen:"r3k2r/8/8/4N3/8/8/8/4K3 w - - 0 1", solution:["Nc6"], theme:"Nĩa Đôi", difficulty:"Khó", tip:"Mã c6 tấn công CẢ BA: Vua e8, Xe a8 và Xe h8! Đây là nĩa ba cực kỳ hiếm và mạnh.", side:"w" },
+    { id:"t22", name:"Mã nĩa Hậu-Xe trung tâm", fen:"8/3q4/8/8/8/3N4/8/2r1K3 w - - 0 1", solution:["Nb4"], theme:"Nĩa Đôi", difficulty:"Trung bình", tip:"Mã b4 tấn công Hậu d7 và nhắm Xe c1 cùng lúc! Hoặc Nf4 tấn công Hậu và Xe. Tìm đòn nĩa tốt nhất.", side:"w" }
+  ]},
+  { category:"📌 Ghim Quân — Pin", puzzles:[
+    { id:"t23", name:"Ăn quân bị ghim", fen:"8/7k/8/5r2/8/3B4/8/K7 w - - 0 1", solution:["Bxf5"], theme:"Ghim Quân", difficulty:"Dễ", tip:"Tượng d3 đã ghim Xe f5 với Vua h7! Xe không thể di chuyển vì sẽ để Vua bị chiếu. Tượng ăn Xe miễn phí!", side:"w" },
+    { id:"t24", name:"Ghim Mã trước Vua", fen:"4k3/8/8/8/4n3/8/4B3/4K3 w - - 0 1", solution:["Bd3"], theme:"Ghim Quân", difficulty:"Dễ", tip:"Tượng d3 ghim Mã e4 với Vua e8! Mã e4 không thể di chuyển. Tiếp theo Trắng tăng áp lực lên Mã bị ghim.", side:"w" },
+    { id:"t25", name:"Xe ghim Tượng với Vua", fen:"r3k3/3b4/8/8/8/8/8/R3K3 w - - 0 1", solution:["Ra8"], theme:"Ghim Quân", difficulty:"Trung bình", tip:"Xe a8+ chiếu Vua e8! Vua phải bỏ Xe a8. Hoặc Xe a1-e1 ghim Tượng d7 với Vua e8. Tìm đòn ghim tốt nhất.", side:"w" },
+    { id:"t26", name:"Tượng ghim Mã trước Hậu", fen:"r1bqk2r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution:["Bxc6"], theme:"Ghim Quân", difficulty:"Trung bình", tip:"Tượng ăn c6 phá cấu trúc tốt Đen! Mã c6 bị tấn công và Đen phải nhận yếu điểm tốt đôi.", side:"w" },
+    { id:"t27", name:"Ghim và ăn quân bị ghim", fen:"4k3/4r3/4n3/8/8/4B3/8/4K3 w - - 0 1", solution:["Bxe6"], theme:"Ghim Quân", difficulty:"Trung bình", tip:"Tượng ăn Mã e6! Xe e7 đang ghim Mã e6 với Vua e8. Mã bị ghim không thể di chuyển — Tượng ăn miễn phí.", side:"w" },
+    { id:"t28", name:"Ghim theo đường chéo dài", fen:"rnbqkbnr/ppp2ppp/3p4/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 3", solution:["Bxf7"], theme:"Ghim Quân", difficulty:"Khó", tip:"Tượng thí vào f7+! Kéo Vua Đen ra, phá quyền nhập thành. Đây là đòn ghim kết hợp thí quân táo bạo.", side:"w" }
+  ]},
+  { category:"🗡️ Xuyên Thấu — Skewer", puzzles:[
+    { id:"t29", name:"Xe xuyên thấu Vua-Xe", fen:"4k3/8/8/R7/8/8/8/5r1K w - - 0 1", solution:["Re5"], theme:"Xuyên Thấu", difficulty:"Dễ", tip:"Xe e5+ chiếu Vua e8! Vua phải chạy, bỏ lại Xe f1. Sau đó Xe ăn Xe Đen — thắng Xe!", side:"w" },
+    { id:"t30", name:"Hậu xuyên thấu Vua-Hậu", fen:"3qk3/8/8/8/8/8/8/3Q3K w - - 0 1", solution:["Qd5"], theme:"Xuyên Thấu", difficulty:"Dễ", tip:"Hậu d5+ chiếu Vua! Vua e8 rời đi, Hậu ăn Hậu Đen d8 — thắng Hậu! Xuyên thấu theo đường chéo.", side:"w" },
+    { id:"t31", name:"Tượng xuyên thấu đường chéo", fen:"8/6q1/8/8/3k4/8/3B4/7K w - - 0 1", solution:["Bc3"], theme:"Xuyên Thấu", difficulty:"Trung bình", tip:"Tượng c3+ chiếu Vua d4! Vua phải di chuyển, để lộ Hậu g7 phía sau. Tượng ăn Hậu — thắng quân to!", side:"w" },
+    { id:"t32", name:"Xe xuyên thấu hàng ngang", fen:"k1r5/8/K7/8/8/8/8/7R w - - 0 1", solution:["Rh8"], theme:"Xuyên Thấu", difficulty:"Trung bình", tip:"Xe h8+ chiếu Vua a8! Vua a8 phải rời đi. Xe Đen c8 đứng phía sau Vua — Xe Trắng ăn Xe Đen.", side:"w" },
+    { id:"t33", name:"Hậu xuyên thấu theo cột", fen:"4k3/4r3/8/8/8/8/8/4Q2K w - - 0 1", solution:["Qe8"], theme:"Xuyên Thấu", difficulty:"Khó", tip:"Hậu e8+ chiếu Vua! Bắt buộc Rxe8. Sau đó Trắng có lợi thế vật chất lớn và tiếp tục tấn công.", side:"w" }
+  ]},
+  { category:"🔥 Thí Quân — Sacrifice", puzzles:[
+    { id:"t34", name:"Thí Tượng vào f7 cổ điển", fen:"r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution:["Bxf7"], theme:"Thí Quân", difficulty:"Trung bình", tip:"Tượng thí vào f7+! Kéo Vua Đen ra khỏi nhà, phá quyền nhập thành, mở đầu cuộc tấn công mãnh liệt.", side:"w" },
+    { id:"t35", name:"Thí Mã đoạt vị trí", fen:"r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution:["Ng5"], theme:"Thí Quân", difficulty:"Trung bình", tip:"Mã g5 đe dọa Nxf7 thí Mã! Tạo áp lực khổng lồ lên f7. Đây là bắt đầu của đòn tấn công kinh điển.", side:"w" },
+    { id:"t36", name:"Thí Xe lấy đường công", fen:"6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1", solution:["Rd8"], theme:"Thí Quân", difficulty:"Dễ", tip:"Xe d8+ chiếu Vua! Dù Đen có thể chặn, Trắng đã dọn đường cho cuộc tấn công quyết định.", side:"w" },
+    { id:"t37", name:"Thí Hậu cưỡng bức chiếu hết", fen:"r5k1/5ppp/8/8/8/8/8/3Q2K1 w - - 0 1", solution:["Qd8"], theme:"Thí Quân", difficulty:"Khó", tip:"Hậu d8+! Bắt buộc Rxd8. Sau đó Trắng có đòn chiếu hết hoặc thắng lớn. Đây là thí Hậu cưỡng bức!", side:"w" },
+    { id:"t38", name:"Thí Tượng mở cột tấn công", fen:"r1bq1rk1/ppp1bppp/2np1n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQ - 0 7", solution:["Bxf7"], theme:"Thí Quân", difficulty:"Khó", tip:"Bxf7+! Kéo Vua g8 ra khỏi vị trí nhập thành. Tượng thí mở ra cuộc tấn công toàn diện vào Vua Đen.", side:"w" }
+  ]},
+  { category:"💥 Đòn Mở — Discovered Attack", puzzles:[
+    { id:"t39", name:"Mã mở đường Tượng chiếu", fen:"4k3/8/8/3B4/8/8/3N4/4K3 w - - 0 1", solution:["Nf3"], theme:"Đòn Mở", difficulty:"Dễ", tip:"Mã di chuyển khỏi đường chéo — Tượng d5 lộ ra nhắm Vua e8! Đây là đòn mở cơ bản nhất.", side:"w" },
+    { id:"t40", name:"Tốt mở đường Xe tấn công", fen:"r3k3/8/8/8/3R4/3P4/8/4K3 w - - 0 1", solution:["d4"], theme:"Đòn Mở", difficulty:"Trung bình", tip:"Tốt tiến d4! Mở đường cho Xe d4 tấn công Xe a8 hoặc Vua e8. Đây là đòn mở kết hợp vật chất.", side:"w" },
+    { id:"t41", name:"Tượng mở đường Hậu tấn công", fen:"3k4/3q4/8/3B4/8/8/3Q4/4K3 w - - 0 1", solution:["Bc6"], theme:"Đòn Mở", difficulty:"Trung bình", tip:"Tượng c6 tấn công Hậu d7 VÀ mở đường cho Hậu d2 nhắm Vua d8! Đây là đòn mở kép hiệu quả.", side:"w" },
+    { id:"t42", name:"Mã mở đường chiếu đôi", fen:"r3k2r/8/8/8/8/3N4/8/R3K3 w - - 0 1", solution:["Nb4"], theme:"Đòn Mở", difficulty:"Khó", tip:"Mã b4 vừa tấn công Xe a8 vừa mở đường cho Xe a1 nhắm cột a! Đây là đòn mở tạo áp lực đôi.", side:"w" },
+    { id:"t43", name:"Chiếu mở giành vật chất", fen:"4k3/3r4/8/8/3B4/8/3R4/4K3 w - - 0 1", solution:["Bc5"], theme:"Đòn Mở", difficulty:"Trung bình", tip:"Tượng c5+ chiếu Vua e8 VÀ mở đường cho Xe d2 nhắm Xe d7! Vua chạy, Xe ăn Xe Đen.", side:"w" }
+  ]},
+  { category:"🪤 Bẫy Quân — Trapping", puzzles:[
+    { id:"t44", name:"Bẫy Tượng góc bàn", fen:"8/8/8/8/8/1b6/2P5/1K6 w - - 0 1", solution:["c3"], theme:"Bẫy Quân", difficulty:"Dễ", tip:"Tốt c3 nhốt Tượng b3! Tượng không có ô nào để thoát. Tốt tiến thêm c4 sẽ bắt Tượng hoàn toàn.", side:"w" },
+    { id:"t45", name:"Bẫy Mã bên cánh", fen:"8/8/6N1/8/5n2/8/8/4K2k w - - 0 1", solution:["Ne7"], theme:"Bẫy Quân", difficulty:"Trung bình", tip:"Mã e7 tấn công Mã f4 Đen! Mã f4 không có ô tốt nào. Sau khi Mã Đen di chuyển, Trắng thắng thêm tốt.", side:"w" },
+    { id:"t46", name:"Bẫy Hậu bằng Mã", fen:"8/3q4/8/2N5/8/8/8/4K2k w - - 0 1", solution:["Ne6"], theme:"Bẫy Quân", difficulty:"Trung bình", tip:"Mã e6 tấn công Hậu d7! Đồng thời Mã e6 kiểm soát các ô quan trọng. Hậu bị bẫy không chạy thoát.", side:"w" },
+    { id:"t47", name:"Bẫy Xe bằng tốt", fen:"8/8/8/8/8/8/6PP/5rRK w - - 0 1", solution:["g3"], theme:"Bẫy Quân", difficulty:"Khó", tip:"Tốt g3 nhốt Xe f1 Đen! Xe f1 bị mắc kẹt hoàn toàn bởi tốt g2-g3-h2. Tiếp theo h3 bắt Xe.", side:"w" },
+    { id:"t48", name:"Bẫy Tượng bằng tốt cánh", fen:"8/8/6b1/5P2/4P3/8/8/4K2k w - - 0 1", solution:["e5"], theme:"Bẫy Quân", difficulty:"Trung bình", tip:"Tốt e5 hạn chế Tượng g6! Kết hợp với f5, các tốt dần nhốt Tượng. Đây là kỹ thuật bẫy Tượng bằng tốt.", side:"w" }
+  ]},
+  { category:"♟️ Phong Cấp Chiến Thuật", puzzles:[
+    { id:"t49", name:"Tốt phong cấp chiếu hết", fen:"8/8/8/8/8/8/6p1/5k1K b - - 0 1", solution:["g1=Q"], theme:"Phong Cấp", difficulty:"Dễ", tip:"Tốt g2 phong cấp thành Hậu — chiếu hết ngay! Vua h1 không có ô thoát. Qg1# là kỹ thuật phong cấp cơ bản.", side:"b" },
+    { id:"t50", name:"Phong cấp giành Hậu", fen:"8/P7/8/8/8/8/8/k1K5 w - - 0 1", solution:["a8=Q"], theme:"Phong Cấp", difficulty:"Dễ", tip:"Tốt a7 phong cấp thành Hậu tại a8! Hậu a8 tạo áp lực quyết định. Đơn giản nhưng quyết định ván cờ.", side:"w" },
+    { id:"t51", name:"Phong cấp thành Mã chiếu hết", fen:"6K1/8/8/8/8/8/p7/k7 b - - 0 1", solution:["a1=N"], theme:"Phong Cấp", difficulty:"Trung bình", tip:"Phong cấp thành Mã a1! Mã a1 kiểm soát b3 và c2. Đây là trường hợp hiếm gặp khi phong Mã tốt hơn phong Hậu.", side:"b" },
+    { id:"t52", name:"Ép phong cấp đúng lúc", fen:"8/8/8/8/8/K7/1p6/1k6 b - - 0 1", solution:["b1=Q"], theme:"Phong Cấp", difficulty:"Trung bình", tip:"Tốt b2 phong cấp thành Hậu b1! Chiếu Vua a3 đồng thời. Trắng phải đối phó với Hậu mới sinh ra.", side:"b" }
+  ]},
+  { category:"🎣 Bẫy Khai Cuộc", puzzles:[
+    { id:"t53", name:"Bẫy Scholar's Mate", fen:"r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", solution:["Qxf7"], theme:"Bẫy Khai Cuộc", difficulty:"Dễ", tip:"Hậu ăn f7 là chiếu hết Scholar's Mate! Vua e8 không thể thoát. Đây là bẫy khai cuộc nhanh nhất cần nhận biết.", side:"w" },
+    { id:"t54", name:"Bẫy Legal cổ điển", fen:"r1bqkb1r/ppp2ppp/2np4/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R b KQkq - 1 5", solution:["Bxd1"], theme:"Bẫy Khai Cuộc", difficulty:"Trung bình", tip:"Tượng ăn Hậu d1? Đây là BẪY! Trắng sẽ chiếu hết bằng Nxf7, Nd5+, Bg5#. Hãy cẩn thận với bẫy Legal!", side:"b" },
+    { id:"t55", name:"Bẫy Fried Liver", fen:"r1bqkb1r/ppp2ppp/2np4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution:["Ng5"], theme:"Bẫy Khai Cuộc", difficulty:"Khó", tip:"Mã g5 bắt đầu đòn Fried Liver! Chuẩn bị Nxf7 thí Mã tấn công Vua Đen. Đây là bẫy khai cuộc cực kỳ nguy hiểm.", side:"w" },
+    { id:"t56", name:"Bẫy Fishing Pole", fen:"r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 2 3", solution:["Ng4"], theme:"Bẫy Khai Cuộc", difficulty:"Khó", tip:"Mã g4 là bẫy Fishing Pole của Đen! Nếu Trắng không thận trọng, Đen sẽ tấn công mạnh bằng h5-h4. Bẫy trong Ruy López.", side:"b" },
+    { id:"t57", name:"Bẫy Elephant Trap", fen:"r1bqkb1r/ppp2ppp/2np1n2/4p3/3PP3/2N2N2/PPP2PPP/R1BQKB1R b KQkq d3 0 5", solution:["exd4"], theme:"Bẫy Khai Cuộc", difficulty:"Trung bình", tip:"Tốt ăn d4! Đây là bẫy Elephant mà Trắng thường mắc phải. Nếu Trắng ăn sai, Đen sẽ giành vật chất lớn.", side:"b" }
+  ]}
+];
+
+// ===================== DỮ LIỆU TÀN CUỘC =====================
+const endgameData = [
+  { category:"1. Vua + Hậu vs Vua", variations:[
+    { name:"Kỹ thuật bao vây cơ bản", type:"Cơ bản", desc:"Dùng Hậu thu hẹp không gian Vua Đen theo từng bước. Vua Trắng tiến vào hỗ trợ, cuối cùng chiếu hết ở góc. Nguyên tắc: Hậu cô lập Vua vào góc, Vua Trắng áp sát, chiếu hết.", moves:["Qf6","Ka5","Qb2","Ka4","Kc2","Ka3","Kc3","Ka4","Qb4#"], tips:["Hậu f6 cắt đứt đường di chuyển của Vua Đen — thu hẹp không gian bước đầu!","Vua lui về góc — Hậu đang bao vây hiệu quả.","Hậu b2 tiếp tục thu hẹp! Kiểm soát nhiều ô hơn, Vua Đen sắp bị kẹt.","Vua lui về góc a — không còn đường thoát tốt.","Vua Trắng tiến vào! Đây là bước quan trọng — Vua hỗ trợ Hậu chiếu hết.","Vua Đen bị kẹt ở góc — càng vào góc càng dễ bị chiếu hết.","Vua Trắng tiến thêm — áp sát để hỗ trợ Hậu.","Vua Đen không còn đường thoát.","🏆 Qb4# — CHIẾU HẾT! Hậu chiếu, Vua bị chặn bởi chính Vua Trắng và biên bàn. Kỹ thuật hoàn hảo!"] },
+    { name:"Tránh thế hòa (Stalemate)", type:"Cơ bản", desc:"Nguy hiểm lớn nhất trong tàn cuộc K+Q vs K là vô tình tạo thế hòa bất ngờ! Luôn kiểm tra Vua Đen còn có nước đi không trước khi chiếu.", moves:["Qg4","Ka5","Qa4#"], tips:["Hậu g4 — di chuyển cẩn thận, đảm bảo không tạo stalemate!","Vua lui về a5.","🏆 Qa4# — CHIẾU HẾT! Nhưng nếu Hậu đi sai, có thể tạo stalemate. Luôn kiểm tra trước khi chiếu!"] }
+  ]},
+  { category:"2. Vua + Xe vs Vua", variations:[
+    { name:"Kỹ thuật chuỗi Xe (Ladder)", type:"Cơ bản", desc:"Kỹ thuật đơn giản nhất: dùng Xe để đẩy Vua Đen về phía biên, mỗi lần một hàng ngang, như leo thang. Vua Trắng đứng từ xa.", moves:["Ra5+","Kd4","Rb5","Kc4","Rc5+","Kd4","Ke2","Kd3","Rd5+","Ke3","Re5+","Kf3","Kf1","Kf4","Rf5+","Ke4","Re5+","Kf4","Re8","Kf3","Kf2","Kf4","Rf8+","Ke4","Re8+","Kd3","Rd8+","Kc2","Rc8+","Kb1","Rc1#"], tips:["Ra5+ chiếu đẩy Vua sang trái — Xe theo hàng ngang, không cho Vua đi sang phải!","Vua phải lui — bước đầu đẩy Vua về góc.","Xe lùi về b5 — giữ Vua Đen trong vùng hạn chế.","Vua cố tiến lên — nhưng Xe kiểm soát cột c.","Rc5+ lại chiếu! Vua bị đẩy lùi thêm. Kỹ thuật thang: mỗi chiếu đẩy Vua 1 hàng.","Vua phải lùi về hàng 4.","Vua Trắng tiến lên hỗ trợ — quan trọng! Xe và Vua phối hợp.","Vua Đen tiến lên thách đấu.","Xe chiếu tiếp — cứ đẩy Vua lui từng bước một.","Vua chạy sang hàng 3.","Tiếp tục chiếu đẩy lui.","Vua chạy sang cánh.","Vua Trắng áp sát — phối hợp Xe-Vua.","Vua Đen cố tiến lên.","Rf5+ — Xe chiếu theo cột, đổi chiều tấn công.","Vua chạy sang hàng 4.","Re5+ lại chiếu — Vua bị đẩy lui mỗi lúc một khó khăn hơn.","Vua cố cản.","Re8 — Xe chiếm hàng 8! Đây là vị trí lý tưởng, Vua Đen sắp bị chiếu hết.","Vua cố tiến lên thách đấu.","Vua Trắng vào hỗ trợ.","Vua Đen cố kháng cự.","Rf8+ — chiếu theo cột f.","Vua lui về e4.","Re8+ chiếu theo hàng.","Vua lui về d3.","Rd8+ — tiếp tục đuổi Vua về góc.","Vua lui về c2.","Rc8+ chiếu, đẩy Vua vào góc.","Vua mắc kẹt ở b1.","🏆 Rc1# — CHIẾU HẾT! Xe chiếu tại c1, Vua b1 bị chặn hoàn toàn. Kỹ thuật chuỗi Xe hoàn hảo!"] },
+    { name:"Vị trí Lucena (Thực tế)", type:"Nâng cao", desc:"Kỹ thuật 'bắc cầu' (building a bridge) trong tàn cuộc Xe. Vua Trắng đã đến hàng cuối, giờ phải đưa Tốt lên phong cấp mà không bị cản.", moves:["Rd1+","Kc7","Rd4","Kc8","Kc6","Kc7","Rc4+","Kb8","Rb4+","Ka8","Kb6","Ka7","Rc4","Ka8","Ra4+","Kb8","Kb7","Rb4+","Ka8","Ra4+","Kb8","Kb6","Ka8","Ra4+","Kb8","Kb7"], tips:["Re1+ chiếu đẩy Vua — Vua Đen phải rời cột Xe!","Vua Đen lui về c7.","Xe về d4 — chuẩn bị 'bắc cầu' che chở Vua!","Vua Đen cố cản.","Vua Trắng tiến lên — áp sát vùng phong cấp.","Vua Đen cố kháng cự.","Xe chiếu đẩy Vua — từng bước đưa Xe vào vị trí bắc cầu.","Vua lui.","Xe chiếu tiếp — đẩy Vua về góc.","Vua vào góc.","Vua Trắng áp sát — tiến đến gần hơn.","Vua Đen cố theo.","Xe về c4 — vị trí 'cầu' che chắn cho Vua Trắng đi lên!","Vua cố kháng cự.","Ra4+ chiếu đẩy Vua.","Vua lui.","Vua Trắng tiến b7 — sắp phong cấp!","Rb4+ chiếu tiếp.","Vua vào góc.","Ra4+ chiếu.","Vua lui.","Vua Trắng áp sát.","Vua Đen bị kẹt.","Ra4+ chiếu.","Vua lui.","Vua Trắng b7 — Tốt sắp phong cấp. Đây là kỹ thuật Lucena nổi tiếng!"] }
+  ]},
+  { category:"3. Tàn Cuộc Tốt Cơ Bản", variations:[
+    { name:"Quy tắc ô vuông (Square Rule)", type:"Cơ bản", desc:"Nguyên tắc đơn giản để xác định Vua có kịp bắt Tốt không: Vẽ 'ô vuông' từ Tốt đến hàng phong cấp. Nếu Vua bước vào ô vuông đó, Vua bắt kịp. Nếu không, Tốt phong cấp!", moves:["Ka7","b5","Ka6","b6","Ka5","b7","Ka6","b8=Q+"], tips:["Vua Đen cố tiến về phía Tốt Trắng — đây là cuộc đua!","Tốt b5 tiến! Đây là Tốt thông (passed pawn) — không quân nào cản được!","Vua cố bám theo — nhưng có kịp không?","Tốt b6 — chỉ còn 2 bước là phong cấp!","Vua cố bắt kịp — đã vào 'ô vuông' chưa? Nếu chưa, thua rồi!","Tốt b7 — chỉ còn 1 bước!","Vua cố cản nhưng quá muộn.","🏆 b8=Q! — Tốt phong cấp thành Hậu! Trắng thắng. Bài học: Tốt thông không quân cản là vũ khí quyết định trong tàn cuộc!"] },
+    { name:"Tốt thông + Vua hỗ trợ", type:"Cơ bản", desc:"Khi Tốt thông có Vua bảo vệ, khả năng phong cấp tăng rất cao. Vua đi trước, Tốt theo sau — đây là kỹ thuật 'Vua dẫn đường'.", moves:["Kd5","Kd7","e5","Ke7","Kc6","Ke6","e6","Ke7","e7","Kf6","Kd7","Kf7","e8=Q+"], tips:["Vua Trắng tiến lên — Vua phải đi TRƯỚC Tốt để dọn đường!","Vua Đen cản — đây là cuộc đối kháng Vua vs Vua.","e5 — Tốt tiến sau khi Vua đã tiến. Đúng nguyên tắc: Vua dẫn, Tốt theo!","Vua Đen tiếp tục cản.","Vua Trắng vượt lên — chiếm 'quyền đối lập' (opposition)!","Vua Đen buộc phải nhường đường.","e6 — Tốt tiến thêm! Vua Trắng đang kiểm soát ô e7.","Vua Đen bị đẩy sang hướng khác.","e7 — Tốt sắp phong cấp!","Vua Đen cố cản từ f6.","Vua Trắng d7 — bảo vệ Tốt e7 để phong cấp!","Vua Đen cố cản ô phong cấp.","🏆 e8=Q! — Phong cấp thành Hậu! Vua hỗ trợ Tốt hoàn hảo. Đây là kỹ thuật cơ bản nhất của tàn cuộc Tốt!"] },
+    { name:"Thế hòa Vua góc (Stalemate Defense)", type:"Nâng cao", desc:"Đây là thế hòa kỳ diệu! Bên yếu hơn chủ động đưa Vua vào góc để tạo thế hòa khi đối phương sắp phong cấp. Kỹ năng cứu ván cực quan trọng!", moves:["Ka1","b2+","Ka2","b1=Q"], tips:["Vua Đen vào góc a1 — đây có vẻ là tự sát! Nhưng thực ra đây là kế hoạch cứu ván!","b2+ chiếu — Trắng tưởng thắng, nhưng Vua đã vào góc tốt!","Vua phải đứng im ở a2 để giữ Tốt — nhưng đây là stalemate nếu không chiếu hết!","b1=Q?? — NẾU Trắng phong cấp không chiếu, Vua Đen bị STALEMATE! Ván hòa! Bài học quan trọng: Stalemate là vũ khí phòng thủ trong tàn cuộc!"] }
+  ]},
+  { category:"4. Nguyên Lý Tàn Cuộc", variations:[
+    { name:"Vua vào trung tâm", type:"Cơ bản", desc:"Quy tắc vàng: Trong tàn cuộc, Vua trở thành quân tấn công MẠNH. Phải đưa Vua vào trung tâm sớm nhất có thể để hỗ trợ Tốt phong cấp.", moves:["Ke2","Ke7","Kd3","Kd6","Kc4","Kc6","Kb4","Kb6","Kc4","Kc6","d4","Kd6","d5","Kd7","Kc5","Kc7","d6+","Kd7","Kd5","Ke8","Kc6","Kd8","d7+","Ke7","Kc7","Ke6","d8=Q"], tips:["Vua Trắng tiến vào trung tâm! Trong tàn cuộc, đây là nguyên tắc số 1.","Vua Đen cũng tiến — cuộc đua Vua vào trung tâm!","Vua Trắng tiếp tục — hướng về phía Tốt d.","Vua Đen theo sát.","Vua Trắng áp sát vùng Tốt — chuẩn bị đẩy Tốt.","Vua Đen cố chặn.","d4 — Tốt bắt đầu tiến! Vua Trắng đã vào vị trí tốt để hỗ trợ.","Vua Đen cố cản.","d5 — Tốt tiến thêm!","Vua Đen cố kháng cự.","Vua Trắng tiến lên — áp sát vùng phong cấp.","Vua Đen cố cản.","d6+! — Tốt chiếu! Vua Đen bị đẩy sang cạnh.","Vua Đen phải lui.","Vua Trắng d5 — tiếp tục tiến về phía phong cấp.","Vua Đen cố cản từ e8.","Vua Trắng c6 — chiếm đất đối phương.","d7+ chiếu — Vua Đen bị đẩy tiếp.","Vua Trắng d5 — giám sát Tốt d7.","Vua Đen lui về e8.","Vua Trắng c6 — áp đảo.","Vua Đen lui về d8.","d7+ chiếu — Tốt sắp phong cấp!","Vua Đen phải nhường đường.","Vua Trắng c7 — kiểm soát ô phong cấp d8.","Vua Đen cố cản nhưng quá muộn.","🏆 d8=Q! — Phong cấp! Vua Trắng đã hỗ trợ Tốt xuyên suốt. Đây là sức mạnh của Vua trong tàn cuộc!"] },
+    { name:"Cặp Tượng trong tàn cuộc", type:"Nâng cao", desc:"Cặp Tượng (hai Tượng) cực kỳ mạnh trong tàn cuộc vì kiểm soát cả hai màu ô. Đặc biệt hiệu quả khi bàn cờ mở và có Tốt ở cả hai cánh.", moves:["Bc3","Kd5","Bf3","Ke5","Ke3","Kf5","Kd4","Kf4","Bd2+","Kf5","Be3","Ke5","Bg4+","Kd4","Bf5","Ke5","Bc7","Kd4","Bb6","Ke5","Ba5","Kd4","Bc4","Ke4","Be6","Kd4","Bc3+","Ke4","Bf5","Kf4","Bd2+","Ke4","Bc3+","Kf4","Bd4"], tips:["Tượng c3 tăng sức ép — cặp Tượng kiểm soát từ xa!","Vua Đen cố tiến — nhưng cặp Tượng rất khó đối phó.","Tượng f3 thu hẹp không gian — cặp Tượng phối hợp như một đội.","Vua Đen cố tìm đường.","Vua Trắng tiến vào — Vua + cặp Tượng là combo cực mạnh!","Vua Đen theo sát.","Vua Trắng d4 — chiếm trung tâm tốt hơn.","Vua Đen cố đối kháng.","Tượng chiếu d2+ — bắt đầu tấn công phối hợp!","Vua phải tránh chiếu.","Tượng e3 — hai Tượng cùng hoạt động trên hai màu ô.","Vua cố kháng cự.","Tượng g4+ chiếu lại — hai Tượng thay nhau chiếu!","Vua phải tránh.","Tượng f5 — kiểm soát thêm nhiều ô.","Vua cố tìm đường.","Tượng c7 — tiếp tục thu hẹp không gian.","Vua cố chống đỡ.","Tượng b6 — hai Tượng trên hai đường chéo dài!","Vua cố thoát.","Tượng a5 — vây hãm hoàn toàn.","Vua cố kháng cự.","Tượng c4 — mạng lưới kiểm soát ngày càng chặt.","Vua bị kẹt.","Tượng e6 — hoàn toàn kiểm soát.","Vua bị vây hãm.","Tượng c3+ chiếu — bắt đầu chuỗi chiếu dứt điểm!","Vua phải tránh.","Tượng f5 — chuẩn bị chiếu hết.","Vua cố chạy.","Tượng d2+ chiếu.","Vua cố tránh.","Tượng c3+ chiếu lại.","Vua bị đẩy vào góc.","Tượng d4 — kiểm soát hoàn toàn. Đây là sức mạnh của cặp Tượng trong tàn cuộc!"] }
+  ]}
+];
+
 // ===================== HỆ THỐNG CẤP ĐỘ & XP =====================
 const LEVELS = [
   { xp:0,    name:"Tân Binh",        icon:"⚔️" },
@@ -565,6 +738,280 @@ function showToast(msg, cls) {
   t.textContent = msg;
   container.appendChild(t);
   setTimeout(() => { t.style.animation = 'fadeOut .4s ease forwards'; setTimeout(() => t.remove(), 400); }, 2500);
+}
+
+// ===================== TRẠNG THÁI TOÀN CỤC =====================
+let currentMode = 'opening'; // 'opening' | 'tactics' | 'endgame'
+
+// ===================== CHUYỂN MODE =====================
+function switchMode(mode) {
+  currentMode = mode;
+  stopAutoPlay();
+
+  // Mode nav buttons
+  ['opening','tactics','endgame'].forEach(m => {
+    document.getElementById('mode-btn-' + m).classList.toggle('active', m === mode);
+  });
+
+  // Sidebar panels
+  const openingSidebar = document.getElementById('tab-lessons').parentElement;
+  // Opening mode: show 3 opening tabs; Tactics/Endgame: hide them
+  const openingTabBar = document.querySelector('.flex.border-b.border-slate-200.bg-slate-50');
+  const tabLessons = document.getElementById('tab-lessons');
+  const tabChallenge = document.getElementById('tab-challenge');
+  const tabStats = document.getElementById('tab-stats');
+  const panelTactics = document.getElementById('panel-tactics');
+  const panelEndgame = document.getElementById('panel-endgame');
+
+  if (mode === 'opening') {
+    openingTabBar.classList.remove('hidden');
+    tabLessons.classList.remove('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
+    panelTactics.classList.add('hidden'); panelEndgame.classList.add('hidden');
+    document.getElementById('tab-btn-lessons').classList.add('active');
+    document.getElementById('tab-btn-challenge').classList.remove('active');
+    document.getElementById('tab-btn-stats').classList.remove('active');
+  } else if (mode === 'tactics') {
+    openingTabBar.classList.add('hidden');
+    tabLessons.classList.add('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
+    panelTactics.classList.remove('hidden'); panelEndgame.classList.add('hidden');
+    initTacticsMenu();
+  } else if (mode === 'endgame') {
+    openingTabBar.classList.add('hidden');
+    tabLessons.classList.add('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
+    panelTactics.classList.add('hidden'); panelEndgame.classList.remove('hidden');
+    initEndgameMenu();
+  }
+
+  // Right panel controls
+  const normalControls = document.getElementById('normal-controls');
+  const practiceWrapper = document.querySelector('.bg-indigo-50.rounded-lg.border.border-indigo-200');
+  const hintBtn = document.getElementById('btn-hint');
+  const examWrapper = document.getElementById('exam-mode-wrapper');
+  const tacticsControls = document.getElementById('tactics-controls');
+
+  if (mode === 'tactics') {
+    normalControls.style.display = 'none';
+    practiceWrapper.style.display = 'none';
+    hintBtn.classList.add('hidden');
+    examWrapper.style.display = 'none';
+    tacticsControls.classList.remove('hidden');
+    // Reset right panel title
+    document.getElementById('opening-parent-name').innerText = 'Bài Tập Chiến Thuật';
+    document.getElementById('opening-title').innerText = 'Chọn câu đố bên trái';
+    document.getElementById('opening-desc').innerText = 'Kéo thả quân cờ để tìm nước đi hay nhất. HLV sẽ chấm điểm và giải thích ngay!';
+    game.reset(); board.position('start');
+    updateProgressBar2(0, 0);
+  } else if (mode === 'endgame') {
+    normalControls.style.display = 'grid';
+    practiceWrapper.style.display = 'none';
+    hintBtn.classList.add('hidden');
+    examWrapper.style.display = 'none';
+    tacticsControls.classList.add('hidden');
+    document.getElementById('opening-parent-name').innerText = 'Tàn Cuộc';
+    document.getElementById('opening-title').innerText = 'Chọn kỹ thuật bên trái';
+    document.getElementById('opening-desc').innerText = 'Học các kỹ thuật tàn cuộc qua từng nước đi có giải thích chi tiết của HLV.';
+    game.reset(); board.position('start');
+    currentOpening = null; currentMoveIndex = 0;
+    updateProgressBar2(0, 0);
+  } else {
+    // Opening mode - restore
+    normalControls.style.display = 'grid';
+    practiceWrapper.style.display = '';
+    tacticsControls.classList.add('hidden');
+    isPracticeMode = false;
+    document.getElementById('practice-toggle').checked = false;
+    togglePracticeModeUI();
+  }
+
+  const coachText = document.getElementById('coach-tip-text');
+  if (coachText) {
+    if (mode === 'tactics') coachText.innerHTML = '<span class="move-badge">HLV</span>Chọn câu đố ở bên trái, sau đó kéo thả quân cờ để tìm nước đi tốt nhất!';
+    else if (mode === 'endgame') coachText.innerHTML = '<span class="move-badge">HLV</span>Chọn kỹ thuật tàn cuộc bên trái để bắt đầu học từng nước đi có giải thích!';
+  }
+}
+
+function updateProgressBar2(done, total) {
+  const pct = total > 0 ? (done / total * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').innerText = total > 0 ? `${done} / ${total} nước đi` : '0 / 0 nước đi';
+}
+
+// ===================== CHIẾN THUẬT =====================
+let currentTacticIdx = null; // { catIdx, puzzleIdx }
+let tacticsSolved = 0, tacticsTotal = 0, tacticsHintUsed = false;
+let tacticsCurrentPuzzle = null;
+
+function initTacticsMenu() {
+  const container = document.getElementById('tactics-menu');
+  if (container.innerHTML.trim()) return; // already built
+  container.innerHTML = '';
+  tacticsData.forEach((cat, ci) => {
+    const hdr = document.createElement('div');
+    hdr.className = 'eg-category-header';
+    hdr.innerHTML = `<span>${cat.category}</span><i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>`;
+    const list = document.createElement('div');
+    list.className = 'variation-list';
+    cat.puzzles.forEach((pz, pi) => {
+      const btn = document.createElement('div');
+      btn.className = 'puzzle-btn';
+      const diffClass = pz.difficulty === 'Dễ' ? 'tag-easy' : pz.difficulty === 'Khó' ? 'tag-hard' : 'tag-medium';
+      const solved = playerData.completedLessons['tactic_' + pz.id];
+      const solvedBadge = solved ? `<span style="background:#d1fae5;color:#065f46;padding:2px 5px;border-radius:4px;font-size:.6rem;font-weight:bold">✅</span>` : '';
+      btn.innerHTML = `<div class="font-medium">${pz.name}</div><div class="flex gap-1 flex-wrap mt-0.5"><span class="${diffClass}">${pz.difficulty}</span><span class="tag-theme">${pz.theme}</span>${solvedBadge}</div>`;
+      btn.onclick = () => loadTacticsPuzzle(ci, pi, btn);
+      list.appendChild(btn);
+    });
+    hdr.onclick = () => {
+      document.querySelectorAll('#tactics-menu .variation-list').forEach(l => { if (l !== list) l.style.display = 'none'; });
+      list.style.display = list.style.display === 'block' ? 'none' : 'block';
+      hdr.querySelector('i').style.transform = list.style.display === 'block' ? 'rotate(180deg)' : '';
+    };
+    container.appendChild(hdr);
+    container.appendChild(list);
+  });
+  // Open first category
+  const firstList = container.querySelector('.variation-list');
+  if (firstList) { firstList.style.display = 'block'; }
+}
+
+function loadTacticsPuzzle(ci, pi, btnEl) {
+  stopAutoPlay();
+  const pz = tacticsData[ci].puzzles[pi];
+  tacticsCurrentPuzzle = { ci, pi, pz };
+  tacticsHintUsed = false;
+
+  // Highlight active button
+  document.querySelectorAll('.puzzle-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  // Update right panel
+  document.getElementById('opening-parent-name').innerText = tacticsData[ci].category;
+  document.getElementById('opening-title').innerText = pz.name;
+  document.getElementById('opening-desc').innerText = `Chủ đề: ${pz.theme} · Độ khó: ${pz.difficulty}`;
+
+  // Load position
+  game = new Chess(pz.fen);
+  board.orientation(pz.side === 'w' ? 'white' : 'black');
+  board.position(pz.fen);
+
+  // Reset result UI
+  const resultEl = document.getElementById('tactics-result');
+  resultEl.className = ''; resultEl.style.display = 'none'; resultEl.textContent = '';
+  document.getElementById('btn-tactics-next').classList.add('hidden');
+
+  updateProgressBar2(0, pz.solution.length);
+
+  const coachText = document.getElementById('coach-tip-text');
+  if (coachText) coachText.innerHTML = `<span class="move-badge">HLV</span>💡 ${pz.tip}`;
+  const box = document.getElementById('coach-tip-box');
+  if (box) { box.classList.remove('tip-new'); void box.offsetWidth; box.classList.add('tip-new'); }
+}
+
+function resetTacticsPuzzle() {
+  if (!tacticsCurrentPuzzle) return;
+  const { ci, pi } = tacticsCurrentPuzzle;
+  const pz = tacticsData[ci].puzzles[pi];
+  game = new Chess(pz.fen);
+  board.position(pz.fen);
+  tacticsHintUsed = false;
+  const resultEl = document.getElementById('tactics-result');
+  resultEl.className = ''; resultEl.style.display = 'none';
+  document.getElementById('btn-tactics-next').classList.add('hidden');
+  updateProgressBar2(0, pz.solution.length);
+}
+
+function showTacticsHint() {
+  if (!tacticsCurrentPuzzle) return;
+  const pz = tacticsCurrentPuzzle.pz;
+  if (pz.solution.length > 0) {
+    const move = game.move(pz.solution[0]);
+    if (move) {
+      board.position(game.fen());
+      game.undo();
+      board.position(game.fen());
+    }
+    const coachText = document.getElementById('coach-tip-text');
+    if (coachText) coachText.innerHTML = `<span class="move-badge">GỢI Ý</span>💡 Thử nước đi <b>${pz.solution[0]}</b> — nhưng trừ 5 XP!`;
+    tacticsHintUsed = true;
+    playerData.xp = Math.max(0, playerData.xp - 5);
+    savePlayerData(); refreshHeaderStats();
+  }
+}
+
+function nextTacticsPuzzle() {
+  if (!tacticsCurrentPuzzle) return;
+  const { ci, pi } = tacticsCurrentPuzzle;
+  const nextPi = pi + 1;
+  const cats = tacticsData;
+  let nextBtn = null;
+  if (nextPi < cats[ci].puzzles.length) {
+    const btns = document.querySelectorAll('#tactics-menu .puzzle-btn');
+    let idx = 0;
+    cats.forEach((cat, c) => cat.puzzles.forEach((_, p) => { if (c === ci && p === nextPi) nextBtn = btns[idx]; idx++; }));
+    loadTacticsPuzzle(ci, nextPi, nextBtn);
+  } else if (ci + 1 < cats.length) {
+    const btns = document.querySelectorAll('#tactics-menu .puzzle-btn');
+    let idx = 0;
+    cats.forEach((cat, c) => cat.puzzles.forEach((_, p) => { if (c === ci + 1 && p === 0) nextBtn = btns[idx]; idx++; }));
+    loadTacticsPuzzle(ci + 1, 0, nextBtn);
+  } else {
+    showToast("🎉 Bạn đã hoàn thành tất cả bài tập chiến thuật!", "toast-level");
+  }
+}
+
+// ===================== TÀN CUỘC =====================
+let currentEndgame = null;
+
+function initEndgameMenu() {
+  const container = document.getElementById('endgame-menu');
+  if (container.innerHTML.trim()) return;
+  container.innerHTML = '';
+  endgameData.forEach((cat, ci) => {
+    const hdr = document.createElement('div');
+    hdr.className = 'eg-category-header';
+    hdr.innerHTML = `<span>${cat.category}</span><i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>`;
+    const list = document.createElement('div');
+    list.className = 'variation-list';
+    cat.variations.forEach((v, vi) => {
+      const btn = document.createElement('div');
+      btn.className = 'eg-var-btn';
+      btn.innerHTML = `<div class="font-medium">${v.name}</div><div class="mt-0.5"><span class="tag-endgame">${v.type}</span></div>`;
+      btn.onclick = () => selectEndgame(ci, vi, btn);
+      list.appendChild(btn);
+    });
+    hdr.onclick = () => {
+      document.querySelectorAll('#endgame-menu .variation-list').forEach(l => { if (l !== list) l.style.display = 'none'; });
+      list.style.display = list.style.display === 'block' ? 'none' : 'block';
+      hdr.querySelector('i').style.transform = list.style.display === 'block' ? 'rotate(180deg)' : '';
+    };
+    container.appendChild(hdr);
+    container.appendChild(list);
+  });
+  const firstList = container.querySelector('.variation-list');
+  if (firstList) firstList.style.display = 'block';
+}
+
+function selectEndgame(ci, vi, btnEl) {
+  stopAutoPlay();
+  document.querySelectorAll('.eg-var-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const eg = endgameData[ci].variations[vi];
+  currentEndgame = eg;
+  currentOpening = { name: eg.name, moves: eg.moves, desc: eg.desc, type: eg.type, tips: eg.tips };
+  currentMoveIndex = 0;
+
+  document.getElementById('opening-parent-name').innerText = endgameData[ci].category;
+  document.getElementById('opening-title').innerText = eg.name;
+  document.getElementById('opening-desc').innerText = eg.desc;
+
+  board.orientation('white');
+  game.reset(); board.position('start');
+  updateMovesHistory(); updateButtons(); updateProgressBar();
+  showCoachIntro();
+
+  // Show progress bar info
+  document.getElementById('progress-text').innerText = `0 / ${eg.moves.length} nước đi`;
 }
 
 // ===================== TRẠNG THÁI BÀN CỜ CHÍNH =====================
@@ -891,10 +1338,16 @@ function showCoachTip(moveIdx) {
   const moveNum = Math.floor(moveIdx / 2) + 1;
   const san = currentOpening.moves[moveIdx];
   if (!san) return;
-  const tipContent = getCoachTip(moveIdx);
+  // Use endgame tips if available
+  let tipContent;
+  if (currentMode === 'endgame' && currentOpening.tips && currentOpening.tips[moveIdx]) {
+    tipContent = currentOpening.tips[moveIdx];
+  } else {
+    tipContent = getCoachTip(moveIdx);
+  }
   text.innerHTML = `<span class="move-badge">Nước ${moveNum} · ${side}</span>${tipContent}`;
   box.classList.remove('tip-new');
-  void box.offsetWidth; // trigger reflow for animation restart
+  void box.offsetWidth;
   box.classList.add('tip-new');
 }
 
@@ -964,6 +1417,7 @@ function selectVariation(catIndex, varIndex, catDiv, btnEl) {
 }
 
 function nextMove() {
+  if (!currentOpening && currentMode !== 'endgame') return;
   if (!currentOpening) return;
   if (currentMoveIndex < currentOpening.moves.length) {
     showCoachTip(currentMoveIndex);
@@ -1067,7 +1521,12 @@ function updateFeedbackTurn() {
     let grade = percent === 100 ? "🏆 HOÀN HẢO!" : percent >= 80 ? "🌟 XUẤT SẮC!" : percent >= 50 ? "👍 TỐT!" : "💪 CẦN CỐ GẮNG THÊM!";
     showFeedback(`${grade}<br>Bạn đạt <span class='text-lg'>${currentScore}/${maxScore}</span> điểm (${percent}%).`, "success");
     showCoachComplete(percent);
-    // Award XP
+    // Award XP (only in opening mode)
+    if (currentMode === 'endgame') {
+      showToast("✅ Hoàn thành kỹ thuật tàn cuộc! +20 XP", "toast-xp");
+      awardXP(20, "Học kỹ thuật tàn cuộc");
+      return;
+    }
     if (currentCatIndex >= 0 && currentVarIndex >= 0) {
       const key = currentCatIndex + '_' + currentVarIndex;
       awardLessonXP(key, percent, currentOpening.name);
@@ -1097,12 +1556,77 @@ function updateFeedbackTurn() {
 }
 
 function onDragStart(source, piece) {
+  if (currentMode === 'tactics') {
+    if (!tacticsCurrentPuzzle || game.game_over()) return false;
+    const resultEl = document.getElementById('tactics-result');
+    if (resultEl && resultEl.classList.contains('correct')) return false; // already solved
+    const pz = tacticsCurrentPuzzle.pz;
+    const expectedSide = pz.side;
+    if ((expectedSide === 'w' && piece.search(/^b/) !== -1) || (expectedSide === 'b' && piece.search(/^w/) !== -1)) return false;
+    return true;
+  }
   if (!isPracticeMode || game.game_over()) return false;
   if ((game.turn() === 'w' && piece.search(/^b/) !== -1) || (game.turn() === 'b' && piece.search(/^w/) !== -1)) return false;
   if (!currentOpening || currentMoveIndex >= currentOpening.moves.length) return false;
 }
 
 function onDrop(source, target) {
+  // ===== TACTICS MODE =====
+  if (currentMode === 'tactics') {
+    if (!tacticsCurrentPuzzle) return 'snapback';
+    const pz = tacticsCurrentPuzzle.pz;
+    const attempt = game.move({ from: source, to: target, promotion: 'q' });
+    if (attempt === null) return 'snapback';
+
+    const clean = s => s.replace(/[+#]/g,'');
+    const expected = pz.solution[0];
+    const resultEl = document.getElementById('tactics-result');
+
+    if (clean(attempt.san) === clean(expected)) {
+      // Correct!
+      resultEl.className = 'correct';
+      resultEl.innerHTML = `✅ Chính xác! <b>${attempt.san}</b> là nước đi hay nhất!<br><span style="font-size:.75rem;font-weight:600">${pz.tip}</span>`;
+      resultEl.style.display = 'block';
+      document.getElementById('btn-tactics-next').classList.remove('hidden');
+      updateProgressBar2(1, 1);
+
+      // Play opponent response if multi-move
+      if (pz.solution.length > 1) {
+        setTimeout(() => {
+          const resp = game.move(pz.solution[1]);
+          if (resp) board.position(game.fen());
+        }, 600);
+      }
+
+      // Award XP
+      const xp = tacticsHintUsed ? 10 : 25;
+      const key = 'tactic_' + pz.id;
+      if (!playerData.completedLessons[key]) {
+        playerData.completedLessons[key] = { best: 100, name: pz.name, ts: Date.now() };
+      }
+      tacticsSolved++; tacticsTotal++;
+      awardXP(xp, `Giải chiến thuật: ${pz.name}`);
+      document.getElementById('tactics-score-display').textContent = `${tacticsSolved} / ${tacticsSolved + tacticsTotal - tacticsSolved + (tacticsTotal - tacticsSolved)} đúng`;
+      document.getElementById('tactics-score-display').textContent = `${tacticsSolved} đúng`;
+
+      const coachText = document.getElementById('coach-tip-text');
+      if (coachText) coachText.innerHTML = `<span class="move-badge">+${xp} XP</span>🎉 Xuất sắc! <b>${attempt.san}</b> — ${pz.tip}`;
+    } else {
+      // Wrong
+      game.undo();
+      tacticsTotal++;
+      resultEl.className = 'wrong';
+      resultEl.innerHTML = `❌ Chưa đúng! Thử lại — đây không phải nước đi hay nhất.`;
+      resultEl.style.display = 'block';
+      setTimeout(() => { resultEl.style.display = 'none'; }, 2000);
+      const coachText = document.getElementById('coach-tip-text');
+      if (coachText) coachText.innerHTML = `<span class="move-badge">GỢI Ý</span>💭 ${pz.tip}`;
+      return 'snapback';
+    }
+    return;
+  }
+
+  // ===== OPENING / ENDGAME MODE =====
   if (!isPracticeMode || !currentOpening) return 'snapback';
   let expectedSAN = currentOpening.moves[currentMoveIndex];
   let attempt = game.move({ from: source, to: target, promotion: 'q' });
