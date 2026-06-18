@@ -6,6 +6,7 @@
 <title>Học Cờ Vua Cùng Vũ Bình Minh</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -128,12 +129,40 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
 .player-row-t:hover{background:#f8fafc}
 .player-num{width:22px;height:22px;border-radius:50%;background:#1e293b;color:#f8fafc;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .rating-badge-t{background:#f0f9ff;color:#0369a1;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid #bae6fd}
-.pairing-row{display:flex;align-items:center;gap:.4rem;padding:.5rem .75rem;border-bottom:1px solid #f1f5f9;font-size:.78rem}
-.pairing-board-num{width:26px;text-align:center;font-weight:800;color:#64748b;font-size:.7rem;flex-shrink:0}
-.pairing-player{flex:1;padding:.3rem .5rem;border-radius:.3rem;font-size:.75rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ── Pairing card (mobile-first) ── */
+.pairing-row{background:#fff;border-bottom:1.5px solid #f1f5f9;padding:.55rem .65rem}
+.pairing-row.bye-row{opacity:.55}
+.pairing-board-num{font-size:.58rem;font-weight:700;color:#9ca3af;margin-bottom:.3rem}
+.pairing-players{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.4rem}
+.pairing-player{padding:.32rem .5rem;border-radius:.3rem;font-size:.75rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pairing-white{background:#fffbeb;border:1px solid #fde68a;color:#1e293b}
-.pairing-black{background:#1e293b;color:#f8fafc;border:1px solid #334155}
-.pairing-vs{font-weight:800;color:#94a3b8;font-size:.7rem;flex-shrink:0}
+.pairing-black{background:#1e293b;color:#f8fafc;border:1px solid #334155;text-align:right}
+.pairing-vs{font-weight:800;color:#94a3b8;font-size:.7rem;flex-shrink:0;text-align:center}
+/* Result button group */
+.result-grp{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-top:.35rem}
+.rbtn{min-height:40px;border:1.5px solid #e5e7eb;background:#fff;border-radius:.35rem;font-size:.72rem;font-weight:700;cursor:pointer;color:#6b7280;transition:all .1s ease;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.rbtn:active{transform:scale(.95);opacity:.85}
+.rbtn.r-win{background:#d1fae5;border-color:#34d399;color:#065f46}
+.rbtn.r-loss{background:#fee2e2;border-color:#f87171;color:#7f1d1d}
+.rbtn.r-draw{background:#fef3c7;border-color:#fbbf24;color:#78350f}
+.rbtn.r-bye{background:#f0fdf4;border-color:#86efac;color:#166534}
+.rbtn.r-pending{background:#f8fafc;border-color:#cbd5e1;color:#94a3b8}
+/* Create modal (bottom sheet on mobile) */
+#tn-create-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+#tn-create-modal.hidden{display:none!important}
+#tn-create-modal-inner{background:#fff;width:100%;max-width:540px;border-radius:1.25rem 1.25rem 0 0;max-height:92dvh;overflow-y:auto;padding:1.25rem 1.1rem 2rem;animation:slideUp .22s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:600px){
+  #tn-create-modal{align-items:center}
+  #tn-create-modal-inner{border-radius:1rem;max-height:85vh}
+}
+/* Form fields inside modal */
+.tn-modal-field{margin-bottom:.85rem}
+.tn-modal-field label{display:block;font-size:.72rem;font-weight:700;color:#374151;margin-bottom:.3rem}
+.tn-modal-field input,.tn-modal-field select{width:100%;padding:.6rem .75rem;border:1.5px solid #d1d5db;border-radius:.5rem;font-size:.88rem;color:#111827;background:#fff;box-sizing:border-box;-webkit-appearance:none;outline:none}
+.tn-modal-field input:focus,.tn-modal-field select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+/* Save result sticky bar */
+#tn-save-bar{position:sticky;bottom:0;background:#fff;border-top:2px solid #e5e7eb;padding:.6rem .75rem;display:flex;gap:.5rem;align-items:center;z-index:10}
 .result-sel{font-size:.7rem;font-weight:700;border:1.5px solid #e2e8f0;border-radius:.3rem;padding:.2rem .3rem;background:white;cursor:pointer;flex-shrink:0}
 .result-sel:focus{outline:none;border-color:#3b82f6}
 .standing-row{display:flex;align-items:center;gap:.3rem;padding:.4rem .75rem;border-bottom:1px solid #f1f5f9;font-size:.75rem}
@@ -396,41 +425,6 @@ body.tn-solo #tn-solo-bar{display:flex!important}
         </div>
       </div>
 
-      <!-- Form tạo giải (ẩn hoàn toàn, chỉ hiện khi click) -->
-      <div id="tn-create-form" class="hidden form-tn" style="background:#eff6ff;border-bottom:2px solid #3b82f6;overflow:hidden;transition:max-height .35s ease">
-        <div class="flex items-center justify-between px-3 pt-2.5 pb-1 border-b border-blue-200">
-          <p class="text-xs font-bold text-blue-800">📋 Tạo giải đấu mới</p>
-          <button onclick="tnHideCreate()" class="text-blue-400 hover:text-blue-700 font-bold text-base leading-none">✕</button>
-        </div>
-        <div class="p-3">
-          <div class="field"><label>Tên giải đấu *</label><input id="tn-f-name" type="text" placeholder="VD: Giải Cờ Vua Hè 2026"></div>
-          <div class="field"><label>Hệ thống thi đấu</label>
-            <select id="tn-f-system">
-              <option value="swiss">Swiss (Hệ Thụy Sĩ)</option>
-              <option value="roundrobin">Vòng Tròn (Round Robin)</option>
-              <option value="knockout">Loại Trực Tiếp (Knockout)</option>
-            </select>
-          </div>
-          <div class="field"><label>Số vòng đấu</label><input id="tn-f-rounds" type="number" min="1" max="15" value="7"></div>
-          <div class="field"><label>Kiểm soát thời gian</label>
-            <select id="tn-f-tc">
-              <option value="Classical (90+30)">Classical (90+30 phút)</option>
-              <option value="Rapid (15+10)">Rapid (15+10 phút)</option>
-              <option value="Rapid (25+10)">Rapid (25+10 phút)</option>
-              <option value="Blitz (3+2)">Blitz (3+2 phút)</option>
-              <option value="Blitz (5+3)">Blitz (5+3 phút)</option>
-              <option value="Bullet (1+0)">Bullet (1+0 phút)</option>
-            </select>
-          </div>
-          <div class="field"><label>Địa điểm</label><input id="tn-f-venue" type="text" placeholder="VD: CLB Cờ Vua Trung Tâm"></div>
-          <div class="field"><label>Trọng tài trưởng</label><input id="tn-f-arbiter" type="text" placeholder="VD: Nguyễn Văn A"></div>
-          <div class="field"><label>Ngày bắt đầu</label><input id="tn-f-date" type="date"></div>
-          <div class="flex gap-2 mt-2">
-            <button onclick="tnCreateTournament()" class="tn-btn tn-btn-primary flex-1">✓ Tạo &amp; Lưu lên Sheets</button>
-            <button onclick="tnHideCreate()" class="tn-btn tn-btn-slate">Hủy</button>
-          </div>
-        </div>
-      </div>
 
       <!-- Danh sách giải (quản lý) -->
       <div id="tn-list" class="overflow-y-auto custom-scrollbar flex-1" style="padding:.4rem"></div>
@@ -547,29 +541,31 @@ body.tn-solo #tn-solo-bar{display:flex!important}
           <button class="vw-tab-btn active" id="vw-tab-pairings" onclick="vwSwitchTab('pairings')">🎯 Xếp Cặp</button>
           <button class="vw-tab-btn" id="vw-tab-standings" onclick="vwSwitchTab('standings')">📊 BXH</button>
           <button class="vw-tab-btn" id="vw-tab-crosstable" onclick="vwSwitchTab('crosstable')">📋 Đối Chiếu</button>
+          <button onclick="exportToExcel(vwSelectedId)" title="Xuất ra file Excel"
+            style="margin-left:auto;background:#16a34a;color:#fff;border:none;border-radius:.3rem;padding:.22rem .6rem;font-size:.62rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">📥 Excel</button>
         </div>
       </div>
 
       <!-- Detail search (filter within tournament) -->
-      <div style="padding:.4rem .6rem;border-bottom:1px solid #111827;background:#0f172a;flex-shrink:0">
+      <div style="padding:.4rem .6rem;border-bottom:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0">
         <input id="vw-detail-search" type="text" placeholder="🔍 Tìm thí sinh..."
           oninput="vwApplyDetailSearch()"
-          style="width:100%;padding:.35rem .6rem;background:#1e293b;border:1.5px solid #1e293b;border-radius:.35rem;color:#e2e8f0;font-size:.78rem;outline:none;box-sizing:border-box">
+          style="width:100%;padding:.35rem .6rem;background:#fff;border:1.5px solid #d1d5db;border-radius:.35rem;color:#374151;font-size:.78rem;outline:none;box-sizing:border-box">
       </div>
 
       <!-- Tab: Pairings -->
-      <div id="vw-view-pairings" class="flex-1 flex flex-col overflow-hidden">
-        <div id="vw-round-tabs" style="display:flex;gap:.3rem;padding:.4rem .6rem;border-bottom:1px solid #111827;background:#0a0f1a;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap"></div>
-        <div id="vw-pairings-body" class="overflow-y-auto flex-1 custom-scrollbar" style="-webkit-overflow-scrolling:touch"></div>
+      <div id="vw-view-pairings" class="flex-1 flex flex-col overflow-hidden" style="background:#fff">
+        <div id="vw-round-tabs" style="display:flex;gap:.3rem;padding:.4rem .6rem;border-bottom:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap"></div>
+        <div id="vw-pairings-body" class="overflow-y-auto flex-1 custom-scrollbar" style="-webkit-overflow-scrolling:touch;background:#fff"></div>
       </div>
 
       <!-- Tab: Standings -->
-      <div id="vw-view-standings" class="hidden flex-1 flex flex-col overflow-hidden">
-        <div id="vw-standings-body" class="overflow-y-auto flex-1 custom-scrollbar" style="-webkit-overflow-scrolling:touch"></div>
+      <div id="vw-view-standings" class="hidden flex-1 flex flex-col overflow-hidden" style="background:#fff">
+        <div id="vw-standings-body" class="overflow-y-auto flex-1 custom-scrollbar" style="-webkit-overflow-scrolling:touch;background:#fff"></div>
       </div>
 
       <!-- Tab: Crosstable -->
-      <div id="vw-view-crosstable" class="hidden flex-1 overflow-auto custom-scrollbar" style="-webkit-overflow-scrolling:touch;padding:.5rem">
+      <div id="vw-view-crosstable" class="hidden flex-1 overflow-auto custom-scrollbar" style="-webkit-overflow-scrolling:touch;padding:.5rem;background:#fff">
         <div id="vw-crosstable-body"></div>
       </div>
 
@@ -649,16 +645,19 @@ body.tn-solo #tn-solo-bar{display:flex!important}
 
     <!-- View: Pairings -->
     <div id="tn-view-pairings" class="hidden flex-1 flex flex-col overflow-hidden">
-      <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2 flex-wrap">
-        <div class="flex gap-1" id="tn-round-tabs"></div>
-        <div class="flex-1"></div>
-        <button onclick="tnGenerateNextRound()" id="tn-btn-next-round" class="tn-btn tn-btn-amber hidden">▶ Xếp Cặp Vòng Tiếp</button>
-        <button onclick="pwPrompt('results','Lưu kết quả thi đấu',tnSaveResults)" class="tn-btn tn-btn-green">💾 Lưu Kết Quả</button>
+      <!-- Round tabs header -->
+      <div style="padding:.45rem .6rem;background:#f8fafc;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;flex-shrink:0">
+        <div class="flex gap-1 flex-wrap" id="tn-round-tabs"></div>
+        <button onclick="tnGenerateNextRound()" id="tn-btn-next-round" class="tn-btn tn-btn-amber hidden" style="margin-left:auto;font-size:.68rem">▶ Vòng Tiếp</button>
       </div>
-      <div class="p-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-700 font-semibold">
-        📌 Nhập kết quả: chọn <b>1-0</b> (Trắng thắng) · <b>0-1</b> (Đen thắng) · <b>½-½</b> (Hoà) · <b>+/-</b> (Forfeit)
+      <!-- Pairings scroll area -->
+      <div id="tn-pairings-body" class="overflow-y-auto flex-1 custom-scrollbar" style="background:#fff"></div>
+      <!-- Sticky save bar (always visible at bottom) -->
+      <div id="tn-save-bar">
+        <span id="tn-result-count" style="font-size:.7rem;color:#6b7280;flex:1">0/0 kết quả</span>
+        <button onclick="pwPrompt('results','Lưu kết quả thi đấu',tnSaveResults)"
+          style="background:#16a34a;color:#fff;border:none;border-radius:.5rem;padding:.55rem 1.2rem;font-size:.82rem;font-weight:800;cursor:pointer;min-height:44px">💾 Lưu kết quả</button>
       </div>
-      <div id="tn-pairings-body" class="overflow-y-auto flex-1 custom-scrollbar"></div>
     </div>
 
     <!-- View: Standings -->
@@ -2940,9 +2939,9 @@ function vwRenderPairings(t) {
     const isActive = i === vwCurrentRound;
     return `<button onclick="vwCurrentRound=${i};vwRenderPairings(tnGetById('${t.id}'))"
       style="padding:.22rem .5rem;border-radius:.3rem;font-size:.65rem;font-weight:700;cursor:pointer;
-        border:1.5px solid ${isActive?'#f59e0b':'rgba(255,255,255,.12)'};
-        color:${isActive?'#0f172a':'#64748b'};
-        background:${isActive?'#f59e0b':'transparent'}">V${i+1}</button>`;
+        border:1.5px solid ${isActive?'#1d4ed8':'#d1d5db'};
+        color:${isActive?'#fff':'#6b7280'};
+        background:${isActive?'#1d4ed8':'#fff'}">V${i+1}</button>`;
   }).join('');
 
   const round = t.pairings[vwCurrentRound];
@@ -2953,33 +2952,37 @@ function vwRenderPairings(t) {
   const done = round.filter(p=>p.result!=='*').length;
   const total = round.filter(p=>p.black!=='BYE').length;
 
+  // Header row (like chess-results.com table header)
   let html = `<div>
-    <div style="padding:.4rem .75rem;border-bottom:1px solid #1e293b;background:#0a0f1a">
-      <span style="color:#475569;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Vòng ${vwCurrentRound+1} &nbsp;·&nbsp; ${done}/${total} kết quả</span>
+    <div style="display:flex;align-items:center;background:#f3f4f6;border-bottom:2px solid #d1d5db;padding:.35rem .6rem;flex-shrink:0">
+      <span style="color:#6b7280;font-size:.6rem;font-weight:700;flex-shrink:0;width:22px;text-align:right;margin-right:.4rem">#</span>
+      <span style="flex:1;font-size:.6rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Trắng</span>
+      <span style="width:40px;text-align:center;font-size:.6rem;font-weight:700;color:#6b7280">Kết quả</span>
+      <span style="flex:1;text-align:right;font-size:.6rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Đen</span>
     </div>`;
 
   round.forEach((pair, bi) => {
     const w = pair.white === 'BYE' ? {name:'BYE',id:'_bye'} : (playerMap[pair.white]||{name:'?',id:pair.white});
     const b = pair.black === 'BYE' ? {name:'Điểm Trắng',id:'_bye'} : (playerMap[pair.black]||{name:'?',id:pair.black});
-    // Filter by search
     if (q && !w.name.toLowerCase().includes(q) && !b.name.toLowerCase().includes(q)) return;
     const wScore = tnFmtScore(scores[pair.white]?.score||0);
     const bScore = pair.black === 'BYE' ? '' : tnFmtScore(scores[pair.black]?.score||0);
     const r = pair.result;
-    const rColor = r==='1-0'?'#10b981':r==='0-1'?'#f87171':r==='½-½'?'#fbbf24':'#334155';
-    const rText = r==='*'?'·':r;
+    const rText = r==='*'?'–':r;
+    const rColor = r==='1-0'?'#059669':r==='0-1'?'#dc2626':r==='½-½'?'#d97706':'#9ca3af';
     const wWin = r==='1-0', bWin = r==='0-1';
     const isBye = pair.black === 'BYE';
     const wHighlight = q && w.name.toLowerCase().includes(q);
     const bHighlight = q && b.name.toLowerCase().includes(q);
-    html += `<div class="vw-row" style="display:flex;align-items:center;gap:.4rem;padding:.6rem .6rem;border-bottom:1px solid #111827;box-sizing:border-box;${q?(wHighlight||bHighlight?'background:rgba(245,158,11,.04)':''):''}${isBye?';opacity:.45':''}">
-      <span style="color:#1e293b;font-size:.58rem;width:18px;text-align:right;flex-shrink:0">${bi+1}</span>
-      <span style="flex:1;font-size:.82rem;color:${wWin?'#fbbf24':'#cbd5e1'};font-weight:${wWin?'800':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
-        ${vwHL(w.name,q)} <span style="color:#334155;font-size:.6rem">(${wScore})</span>
+    const rowBg = bi%2===0?'#fff':'#f9fafb';
+    html += `<div class="vw-row" style="display:flex;align-items:center;gap:.4rem;padding:.55rem .6rem;border-bottom:1px solid #f3f4f6;box-sizing:border-box;background:${q&&(wHighlight||bHighlight)?'#fffbeb':rowBg};${isBye?'opacity:.5':''}">
+      <span style="color:#9ca3af;font-size:.58rem;width:22px;text-align:right;flex-shrink:0">${bi+1}</span>
+      <span style="flex:1;font-size:.8rem;color:${wWin?'#1e40af':'#1d4ed8'};font-weight:${wWin?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
+        ${vwHL(w.name,q)}<span style="color:#9ca3af;font-size:.6rem;margin-left:.25rem">(${wScore})</span>
       </span>
-      <span style="min-width:36px;text-align:center;font-weight:900;color:${rColor};font-size:.88rem;flex-shrink:0">${rText}</span>
-      <span style="flex:1;text-align:right;font-size:.82rem;color:${bWin?'#fbbf24':'#475569'};font-weight:${bWin?'800':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
-        ${vwHL(b.name,q)}${bScore?` <span style="color:#334155;font-size:.6rem">(${bScore})</span>`:''}
+      <span style="min-width:40px;text-align:center;font-weight:800;color:${rColor};font-size:.82rem;flex-shrink:0;border:1px solid ${r!=='*'?rColor+'33':'#e5e7eb'};border-radius:.25rem;padding:.05rem .2rem;background:${r!=='*'?rColor+'0d':'transparent'}">${rText}</span>
+      <span style="flex:1;text-align:right;font-size:.8rem;color:${bWin?'#1e40af':'#1d4ed8'};font-weight:${bWin?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
+        ${bScore?`<span style="color:#9ca3af;font-size:.6rem;margin-right:.25rem">(${bScore})</span>`:''}${vwHL(b.name,q)}
       </span>
     </div>`;
   });
@@ -2999,28 +3002,30 @@ function vwRenderStandings(t) {
   const q = vwDetailQuery;
   const medals = ['🥇','🥈','🥉'];
   let html = `<div>
-    <div style="display:flex;align-items:center;background:#1e293b;padding:.45rem .75rem;border-bottom:2px solid #f59e0b;font-size:.6rem;font-weight:700;color:#475569;gap:.25rem;flex-shrink:0">
-      <span style="width:26px">#</span>
+    <div style="display:flex;align-items:center;background:#f3f4f6;padding:.4rem .6rem;border-bottom:2px solid #d1d5db;font-size:.6rem;font-weight:700;color:#6b7280;gap:.25rem;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em">
+      <span style="width:26px;text-align:center">#</span>
       <span style="flex:1">Thí sinh</span>
-      <span style="width:40px;text-align:center">Pts</span>
-      <span style="width:44px;text-align:center">Buch</span>
-      <span style="width:44px;text-align:center">SB</span>
-      <span style="width:26px;text-align:center">W</span>
+      <span style="width:36px;text-align:center">Pts</span>
+      <span style="width:40px;text-align:center" title="Buchholz">Buch.</span>
+      <span style="width:40px;text-align:center" title="Sonneborn-Berger">SB</span>
+      <span style="width:24px;text-align:center" title="Số ván thắng">W</span>
     </div>`;
   sorted.forEach((p, i) => {
     if (q && !p.name.toLowerCase().includes(q) && !p.club?.toLowerCase().includes(q)) return;
     const sc = scores[p.id] || {};
-    const bg = i===0?'rgba(245,158,11,.07)':i===1?'rgba(148,163,184,.04)':i===2?'rgba(180,100,40,.04)':'transparent';
+    const isTop3 = i < 3;
+    const rowBg = i%2===0?'#fff':'#f9fafb';
+    const highlight = q && p.name.toLowerCase().includes(q);
     const nameHtml = vwHL(p.name, q);
-    html += `<div class="vw-row" style="display:flex;align-items:center;gap:.25rem;padding:.5rem .6rem;border-bottom:1px solid #111827;font-size:.78rem;box-sizing:border-box;background:${bg}${q&&p.name.toLowerCase().includes(q)?';box-shadow:inset 3px 0 0 #f59e0b':''}">
-      <span style="width:26px;font-size:.7rem;text-align:center">${medals[i]||i+1}</span>
-      <span style="flex:1;color:#e2e8f0;font-weight:${i<3?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
-        ${nameHtml}${p.club?`<span style="font-size:.58rem;color:#334155;margin-left:.3rem">${p.club}</span>`:''}${p.rating?`<span style="font-size:.58rem;color:#334155;margin-left:.25rem">${p.rating}</span>`:''}
+    html += `<div class="vw-row" style="display:flex;align-items:center;gap:.25rem;padding:.48rem .6rem;border-bottom:1px solid #f3f4f6;font-size:.78rem;box-sizing:border-box;background:${highlight?'#eff6ff':rowBg}${highlight?';box-shadow:inset 3px 0 0 #1d4ed8':''}">
+      <span style="width:26px;font-size:.7rem;text-align:center;color:#374151">${medals[i]||`<span style='color:#6b7280'>${i+1}</span>`}</span>
+      <span style="flex:1;color:#1d4ed8;font-weight:${isTop3?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
+        ${nameHtml}${p.club?`<span style="font-size:.58rem;color:#9ca3af;margin-left:.3rem">${p.club}</span>`:''}${p.rating?`<span style="font-size:.58rem;color:#9ca3af;margin-left:.25rem">${p.rating}</span>`:''}
       </span>
-      <span style="width:40px;text-align:center;font-weight:800;color:#60a5fa;font-size:.9rem">${tnFmtScore(sc.score||0)}</span>
-      <span style="width:44px;text-align:center;font-size:.65rem;color:#334155">${tnFmtScore(sc.buchholz||0)}</span>
-      <span style="width:44px;text-align:center;font-size:.65rem;color:#334155">${tnFmtScore(sc.sb||0)}</span>
-      <span style="width:26px;text-align:center;font-size:.68rem;color:#10b981;font-weight:700">${sc.wins||0}</span>
+      <span style="width:36px;text-align:center;font-weight:800;color:#111827;font-size:.88rem">${tnFmtScore(sc.score||0)}</span>
+      <span style="width:40px;text-align:center;font-size:.65rem;color:#6b7280">${tnFmtScore(sc.buchholz||0)}</span>
+      <span style="width:40px;text-align:center;font-size:.65rem;color:#6b7280">${tnFmtScore(sc.sb||0)}</span>
+      <span style="width:24px;text-align:center;font-size:.68rem;color:#059669;font-weight:700">${sc.wins||0}</span>
     </div>`;
   });
   html += '</div>';
@@ -3042,38 +3047,399 @@ function vwRenderCrosstable(t) {
       else if (r === '½-½') { matrix[pair.white][pair.black] = '½'; matrix[pair.black][pair.white] = '½'; }
     });
   });
-  const cellBg = {'1':'rgba(16,185,129,.15)','0':'rgba(239,68,68,.12)','½':'rgba(245,158,11,.10)'};
+  const cellBg = {'1':'#dcfce7','0':'#fee2e2','½':'#fef9c3'};
   const cellHtml = {
-    '1':'<span style="color:#10b981;font-weight:800">1</span>',
-    '0':'<span style="color:#ef4444;font-weight:800">0</span>',
-    '½':'<span style="color:#f59e0b;font-weight:700">½</span>'
+    '1':'<span style="color:#059669;font-weight:800">1</span>',
+    '0':'<span style="color:#dc2626;font-weight:800">0</span>',
+    '½':'<span style="color:#d97706;font-weight:700">½</span>'
   };
   const q = vwDetailQuery;
-  let html = `<table style="border-collapse:collapse;font-size:.68rem;color:#e2e8f0;min-width:380px;width:100%">
+  let html = `<table style="border-collapse:collapse;font-size:.68rem;color:#374151;min-width:380px;width:100%">
     <thead><tr style="position:sticky;top:0;z-index:1">
-      <th style="padding:.3rem .4rem;background:#1e293b;border:1px solid #0f172a;color:#475569;width:22px;text-align:center">#</th>
-      <th style="padding:.3rem .5rem;background:#1e293b;border:1px solid #0f172a;color:#475569;text-align:left;min-width:110px">Thí sinh</th>
-      ${sorted.map((_,i)=>`<th style="padding:.3rem .3rem;background:#1e293b;border:1px solid #0f172a;color:#475569;text-align:center;width:26px">${i+1}</th>`).join('')}
-      <th style="padding:.3rem .4rem;background:#1e293b;border:1px solid #0f172a;color:#60a5fa;text-align:center;width:34px;font-weight:800">Pts</th>
+      <th style="padding:.3rem .4rem;background:#f3f4f6;border:1px solid #d1d5db;color:#6b7280;width:22px;text-align:center">#</th>
+      <th style="padding:.3rem .5rem;background:#f3f4f6;border:1px solid #d1d5db;color:#6b7280;text-align:left;min-width:110px">Thí sinh</th>
+      ${sorted.map((_,i)=>`<th style="padding:.3rem .3rem;background:#f3f4f6;border:1px solid #d1d5db;color:#6b7280;text-align:center;width:26px">${i+1}</th>`).join('')}
+      <th style="padding:.3rem .4rem;background:#f3f4f6;border:1px solid #d1d5db;color:#1d4ed8;text-align:center;width:34px;font-weight:800">Pts</th>
     </tr></thead>
     <tbody>`;
   sorted.forEach((p,i) => {
     const sc = scores[p.id]||{};
     const matched = q && p.name.toLowerCase().includes(q);
-    const bg = matched ? 'rgba(245,158,11,.06)' : i%2===0?'#0f172a':'#111827';
-    html += `<tr style="background:${bg}${matched?';outline:1px solid rgba(245,158,11,.3)':''}">
-      <td style="padding:.3rem .4rem;border:1px solid #0a0f1a;text-align:center;color:#334155">${i+1}</td>
-      <td style="padding:.3rem .5rem;border:1px solid #0a0f1a;font-weight:${matched?'700':'500'};color:${matched?'#fbbf24':'#cbd5e1'};white-space:nowrap">${vwHL(p.name,q)}${p.rating?`<span style='color:#334155;font-size:.55rem;margin-left:.2rem'>${p.rating}</span>`:''}</td>
+    const bg = matched ? '#eff6ff' : i%2===0?'#fff':'#f9fafb';
+    html += `<tr style="background:${bg}${matched?';outline:2px solid #bfdbfe':''}">
+      <td style="padding:.3rem .4rem;border:1px solid #e5e7eb;text-align:center;color:#6b7280">${i+1}</td>
+      <td style="padding:.3rem .5rem;border:1px solid #e5e7eb;font-weight:${matched?'700':'400'};color:#1d4ed8;white-space:nowrap">${vwHL(p.name,q)}${p.rating?`<span style='color:#9ca3af;font-size:.55rem;margin-left:.2rem'>${p.rating}</span>`:''}</td>
       ${sorted.map(qq => {
-        if (qq.id === p.id) return `<td style="padding:.3rem;border:1px solid #0a0f1a;text-align:center;background:#1e293b;color:#334155">✕</td>`;
+        if (qq.id === p.id) return `<td style="padding:.3rem;border:1px solid #e5e7eb;text-align:center;background:#f3f4f6;color:#d1d5db">✕</td>`;
         const v = matrix[p.id][qq.id] ?? '';
-        return `<td style="padding:.3rem;border:1px solid #0a0f1a;text-align:center;background:${cellBg[v]||'transparent'}">${cellHtml[v]||'<span style="color:#1e293b">·</span>'}</td>`;
+        return `<td style="padding:.3rem;border:1px solid #e5e7eb;text-align:center;background:${cellBg[v]||'transparent'}">${cellHtml[v]||'<span style="color:#d1d5db">·</span>'}</td>`;
       }).join('')}
-      <td style="padding:.3rem .4rem;border:1px solid #0a0f1a;text-align:center;font-weight:800;color:#60a5fa;font-size:.8rem">${tnFmtScore(sc.score||0)}</td>
+      <td style="padding:.3rem .4rem;border:1px solid #e5e7eb;text-align:center;font-weight:800;color:#111827;font-size:.8rem">${tnFmtScore(sc.score||0)}</td>
     </tr>`;
   });
   html += '</tbody></table>';
   document.getElementById('vw-crosstable-body').innerHTML = html;
+}
+
+// ===================== EXCEL EXPORT =====================
+function exportToExcel(tournId) {
+  const XL = window.XLSX;
+  if (!XL) return alert('Thư viện Excel chưa tải. Vui lòng thử lại!');
+  const t = tnGetById(tournId);
+  if (!t) return alert('Chưa chọn giải đấu!');
+
+  const wb = XL.utils.book_new();
+  const scores = tnComputeScores(t);
+  const playerMap = {};
+  t.players.forEach(p => { playerMap[p.id] = p; });
+
+  // Sort players by score/buchholz for standings
+  const sorted = [...t.players].sort((a, b) => {
+    const ds = (scores[b.id]?.score || 0) - (scores[a.id]?.score || 0);
+    if (ds !== 0) return ds;
+    const db = (scores[b.id]?.buchholz || 0) - (scores[a.id]?.buchholz || 0);
+    if (db !== 0) return db;
+    return (scores[b.id]?.sb || 0) - (scores[a.id]?.sb || 0);
+  });
+
+  // ── Style helpers ──
+  const bdr = { style: 'thin', color: { rgb: 'D1D5DB' } };
+  const bdrM = { style: 'medium', color: { rgb: '9CA3AF' } };
+  const border = { top: bdr, bottom: bdr, left: bdr, right: bdr };
+  const borderM = { top: bdrM, bottom: bdrM, left: bdrM, right: bdrM };
+
+  const fHdr = (rgb) => ({
+    font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' }, name: 'Arial' },
+    fill: { fgColor: { rgb: rgb || '1D4ED8' } },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border: borderM
+  });
+  const fTitle = () => ({
+    font: { bold: true, sz: 13, color: { rgb: '1D4ED8' }, name: 'Arial' },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  });
+  const fSub = () => ({
+    font: { sz: 9, color: { rgb: '6B7280' }, name: 'Arial', italic: true },
+    alignment: { horizontal: 'left', vertical: 'center' }
+  });
+  const fLbl = () => ({
+    font: { bold: true, sz: 10, color: { rgb: '374151' }, name: 'Arial' },
+    alignment: { horizontal: 'right', vertical: 'center' }
+  });
+  const fCell = (bold, center, color) => ({
+    font: { sz: 10, bold: !!bold, color: { rgb: color || '111827' }, name: 'Arial' },
+    alignment: { horizontal: center ? 'center' : 'left', vertical: 'center' },
+    border
+  });
+  const fScore = () => ({
+    font: { bold: true, sz: 11, color: { rgb: '1D4ED8' }, name: 'Arial' },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border
+  });
+  const fWin = () => ({
+    font: { bold: true, sz: 10, color: { rgb: '064E3B' }, name: 'Arial' },
+    fill: { fgColor: { rgb: 'D1FAE5' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { top: bdr, bottom: bdr, left: bdr, right: bdr }
+  });
+  const fLoss = () => ({
+    font: { bold: true, sz: 10, color: { rgb: '7F1D1D' }, name: 'Arial' },
+    fill: { fgColor: { rgb: 'FEE2E2' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { top: bdr, bottom: bdr, left: bdr, right: bdr }
+  });
+  const fDraw = () => ({
+    font: { bold: true, sz: 10, color: { rgb: '78350F' }, name: 'Arial' },
+    fill: { fgColor: { rgb: 'FEF3C7' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { top: bdr, bottom: bdr, left: bdr, right: bdr }
+  });
+  const fAlt = (i) => ({
+    font: { sz: 10, name: 'Arial', color: { rgb: '111827' } },
+    fill: { fgColor: { rgb: i % 2 === 0 ? 'FFFFFF' : 'F9FAFB' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border
+  });
+
+  // Make cell object
+  function C(v, s) {
+    return { v: v === null || v === undefined ? '' : v, t: typeof v === 'number' ? 'n' : 's', s };
+  }
+  function N(v, s) {
+    return { v: typeof v === 'number' ? v : (parseFloat(v) || 0), t: 'n', s };
+  }
+
+  // Apply sheet to workbook
+  function addSheet(name, rows, colWidths, merges) {
+    const ws = XL.utils.aoa_to_sheet(rows);
+    if (colWidths) ws['!cols'] = colWidths.map(w => ({ wch: w }));
+    if (merges) ws['!merges'] = merges;
+    XL.utils.book_append_sheet(wb, ws, name);
+  }
+
+  const sysLabel = { swiss: 'Swiss (Hệ Thụy Sĩ)', roundrobin: 'Vòng Tròn', knockout: 'Loại Trực Tiếp' }[t.system] || t.system;
+  const statusLabel = { setup: 'Cài đặt', running: 'Đang diễn ra', finished: 'Kết thúc' }[t.status] || t.status;
+  const now = new Date().toLocaleString('vi-VN');
+
+  // ─────────────────────────────────────────
+  // SHEET 1: Thông Tin Giải
+  // ─────────────────────────────────────────
+  {
+    const rows = [
+      [C(t.name, fTitle()), '', '', ''],
+      [C(`Xuất ngày: ${now}`, fSub()), '', '', ''],
+      ['', '', '', ''],
+      [C('THÔNG TIN GIẢI ĐẤU', fHdr('1E3A5F')), '', '', ''],
+      [C('Tên giải:', fLbl()), C(t.name, fCell(true)), '', ''],
+      [C('Hệ thống:', fLbl()), C(sysLabel, fCell()), '', ''],
+      [C('Kiểm soát thời gian:', fLbl()), C(t.tc, fCell()), '', ''],
+      [C('Số vòng:', fLbl()), N(t.rounds, fCell(false, true)), '', ''],
+      [C('Số thí sinh:', fLbl()), N(t.players.length, fCell(false, true)), '', ''],
+      [C('Ngày thi đấu:', fLbl()), C(t.date || '—', fCell()), '', ''],
+      [C('Địa điểm:', fLbl()), C(t.venue || '—', fCell()), '', ''],
+      [C('Trọng tài trưởng:', fLbl()), C(t.arbiter || '—', fCell()), '', ''],
+      [C('Trạng thái:', fLbl()), C(statusLabel, fCell(true)), '', ''],
+      [C('Vòng hoàn thành:', fLbl()), N(t.currentRound, fCell(false, true)), '', ''],
+    ];
+    addSheet('Thông tin', rows, [22, 35, 10, 10], [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 3 } },
+      { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } },
+      { s: { r: 5, c: 1 }, e: { r: 5, c: 3 } },
+      { s: { r: 6, c: 1 }, e: { r: 6, c: 3 } },
+      { s: { r: 9, c: 1 }, e: { r: 9, c: 3 } },
+      { s: { r: 10, c: 1 }, e: { r: 10, c: 3 } },
+      { s: { r: 11, c: 1 }, e: { r: 11, c: 3 } },
+    ]);
+  }
+
+  // ─────────────────────────────────────────
+  // SHEET 2: Danh Sách Thí Sinh
+  // ─────────────────────────────────────────
+  {
+    const rows = [
+      [C('DANH SÁCH THÍ SINH', fHdr('1E3A5F')), '', '', '', ''],
+      [C('Giải:', fLbl()), C(t.name, fCell(true)), '', '', ''],
+      ['', '', '', '', ''],
+      [
+        C('#', fHdr('374151')), C('Họ và tên', fHdr('374151')),
+        C('ELO', fHdr('374151')), C('Đơn vị / CLB', fHdr('374151')),
+        C('Quốc gia', fHdr('374151'))
+      ],
+    ];
+    t.players.forEach((p, i) => {
+      const alt = fAlt(i);
+      rows.push([
+        N(i + 1, { ...fCell(false, true), fill: { fgColor: { rgb: i%2===0?'FFFFFF':'F9FAFB' } } }),
+        C(p.name, alt),
+        p.rating ? N(p.rating, { ...fCell(false, true), fill: { fgColor: { rgb: i%2===0?'FFFFFF':'F9FAFB' } } }) : C('—', { ...fCell(false, true), fill: { fgColor: { rgb: i%2===0?'FFFFFF':'F9FAFB' } } }),
+        C(p.club || '—', alt),
+        C('VIE', alt),
+      ]);
+    });
+    rows.push(['', C(`Tổng cộng: ${t.players.length} thí sinh`, fSub()), '', '', '']);
+    addSheet('Danh sách', rows, [5, 30, 8, 25, 8], [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+      { s: { r: 1, c: 1 }, e: { r: 1, c: 4 } },
+    ]);
+  }
+
+  // ─────────────────────────────────────────
+  // SHEET 3+: Lịch Thi Đấu (từng vòng)
+  // ─────────────────────────────────────────
+  t.pairings.forEach((round, ri) => {
+    const done = round.filter(p => p.result !== '*').length;
+    const total = round.filter(p => p.black !== 'BYE').length;
+    const rows = [
+      [C(`VÒNG ${ri + 1} — ${t.name}`, fHdr('1E3A5F')), '', '', '', '', ''],
+      [C(`${done}/${total} kết quả · ${statusLabel}`, fSub()), '', '', '', '', ''],
+      ['', '', '', '', '', ''],
+      [
+        C('Bàn', fHdr('374151')), C('Quân Trắng', fHdr('374151')),
+        C('ELO', fHdr('374151')), C('Kết quả', fHdr('2563EB')),
+        C('ELO', fHdr('374151')), C('Quân Đen', fHdr('374151')),
+      ],
+    ];
+    round.forEach((pair, bi) => {
+      const w = pair.white === 'BYE' ? { name: 'BYE' } : (playerMap[pair.white] || { name: '?' });
+      const b = pair.black === 'BYE' ? { name: 'Điểm Trắng' } : (playerMap[pair.black] || { name: '?' });
+      const r = pair.result;
+      const rCell = r === '1-0' ? C('1 - 0', fWin())
+        : r === '0-1' ? C('0 - 1', fLoss())
+        : r === '½-½' ? C('½ - ½', fDraw())
+        : r === '+/-' ? C('+/-', fCell(true, true))
+        : C('·', fCell(false, true));
+      const wWin = r === '1-0', bWin = r === '0-1';
+      const alt = fAlt(bi);
+      rows.push([
+        N(bi + 1, { ...fCell(false, true), fill: { fgColor: { rgb: bi%2===0?'FFFFFF':'F9FAFB' } } }),
+        C(w.name, { ...alt, font: { ...alt.font, bold: wWin, color: { rgb: wWin ? '1E40AF' : '1D4ED8' } } }),
+        w.rating ? N(w.rating, { ...fCell(false, true), fill: { fgColor: { rgb: bi%2===0?'FFFFFF':'F9FAFB' } } }) : C('—', { ...fCell(false, true), fill: { fgColor: { rgb: bi%2===0?'FFFFFF':'F9FAFB' } } }),
+        rCell,
+        b.rating ? N(b.rating, { ...fCell(false, true), fill: { fgColor: { rgb: bi%2===0?'FFFFFF':'F9FAFB' } } }) : C('—', { ...fCell(false, true), fill: { fgColor: { rgb: bi%2===0?'FFFFFF':'F9FAFB' } } }),
+        C(b.name, { ...alt, font: { ...alt.font, bold: bWin, color: { rgb: bWin ? '1E40AF' : '1D4ED8' } } }),
+      ]);
+    });
+    addSheet(`Vòng ${ri + 1}`, rows, [6, 28, 7, 10, 7, 28], [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+    ]);
+  });
+
+  // ─────────────────────────────────────────
+  // SHEET: Bảng Điểm (Standings)
+  // ─────────────────────────────────────────
+  {
+    const rows = [
+      [C(`BẢNG XẾP HẠNG — ${t.name}`, fHdr('1E3A5F')), '', '', '', '', '', ''],
+      [C(`Sau vòng ${t.currentRound}/${t.rounds} · ${sysLabel}`, fSub()), '', '', '', '', '', ''],
+      ['', '', '', '', '', '', ''],
+      [
+        C('#', fHdr('374151')), C('Thí sinh', fHdr('374151')),
+        C('ELO', fHdr('374151')), C('Đơn vị', fHdr('374151')),
+        C('Điểm', fHdr('2563EB')), C('Buchholz', fHdr('374151')),
+        C('SB', fHdr('374151')), C('Thắng', fHdr('374151')),
+      ],
+    ];
+    const medals = ['🥇', '🥈', '🥉'];
+    sorted.forEach((p, i) => {
+      const sc = scores[p.id] || {};
+      const isMedal = i < 3;
+      const bg = i === 0 ? 'FFFBEB' : i === 1 ? 'F8FAFC' : i === 2 ? 'FFF7F0' : (i % 2 === 0 ? 'FFFFFF' : 'F9FAFB');
+      const rowStyle = (bold, center, color) => ({
+        font: { sz: 10, bold: !!bold, color: { rgb: color || '111827' }, name: 'Arial' },
+        fill: { fgColor: { rgb: bg } },
+        alignment: { horizontal: center ? 'center' : 'left', vertical: 'center' },
+        border
+      });
+      rows.push([
+        C(medals[i] || String(i + 1), rowStyle(isMedal, true)),
+        C(p.name, rowStyle(isMedal, false, '1D4ED8')),
+        p.rating ? N(p.rating, rowStyle(false, true)) : C('—', rowStyle(false, true)),
+        C(p.club || '—', rowStyle()),
+        N(sc.score || 0, { ...fScore(), fill: { fgColor: { rgb: bg } } }),
+        N(sc.buchholz || 0, rowStyle(false, true, '374151')),
+        N(sc.sb || 0, rowStyle(false, true, '374151')),
+        N(sc.wins || 0, rowStyle(false, true, '059669')),
+      ]);
+    });
+    addSheet('Bảng điểm', rows, [6, 28, 7, 20, 8, 10, 10, 8], [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+    ]);
+  }
+
+  // ─────────────────────────────────────────
+  // SHEET: Bảng Đối Chiếu (Crosstable)
+  // ─────────────────────────────────────────
+  {
+    const matrix = {};
+    t.players.forEach(p => { matrix[p.id] = {}; });
+    t.pairings.forEach(round => {
+      round.forEach(pair => {
+        if (pair.black === 'BYE' || !pair.result || pair.result === '*') return;
+        if (pair.result === '1-0') { matrix[pair.white][pair.black] = 1; matrix[pair.black][pair.white] = 0; }
+        else if (pair.result === '0-1') { matrix[pair.white][pair.black] = 0; matrix[pair.black][pair.white] = 1; }
+        else if (pair.result === '½-½') { matrix[pair.white][pair.black] = 0.5; matrix[pair.black][pair.white] = 0.5; }
+      });
+    });
+    const hdrRow = [
+      C('#', fHdr('374151')), C('Thí sinh', fHdr('374151')), C('ELO', fHdr('374151')),
+      ...sorted.map((_, i) => C(String(i + 1), fHdr('374151'))),
+      C('Điểm', fHdr('2563EB'))
+    ];
+    const rows = [
+      [C(`BẢNG ĐỐI CHIẾU — ${t.name}`, fHdr('1E3A5F')), ...Array(sorted.length + 3).fill('')],
+      [C(`${sorted.length} thí sinh · ${t.currentRound} vòng hoàn thành`, fSub()), ...Array(sorted.length + 3).fill('')],
+      ['', '', '', ...Array(sorted.length + 1).fill('')],
+      hdrRow,
+    ];
+    sorted.forEach((p, i) => {
+      const sc = scores[p.id] || {};
+      const bg = i % 2 === 0 ? 'FFFFFF' : 'F9FAFB';
+      const rowBase = (bold, center, color) => ({
+        font: { sz: 9, bold: !!bold, color: { rgb: color || '111827' }, name: 'Arial' },
+        fill: { fgColor: { rgb: bg } },
+        alignment: { horizontal: center ? 'center' : 'left', vertical: 'center' },
+        border
+      });
+      const cells = sorted.map(qq => {
+        if (qq.id === p.id) return C('✕', { ...rowBase(false, true), fill: { fgColor: { rgb: 'F3F4F6' } }, font: { sz: 9, color: { rgb: 'D1D5DB' }, name: 'Arial' } });
+        const v = matrix[p.id][qq.id];
+        if (v === 1) return C('1', fWin());
+        if (v === 0) return C('0', fLoss());
+        if (v === 0.5) return C('½', fDraw());
+        return C('·', { ...rowBase(false, true), font: { sz: 9, color: { rgb: 'D1D5DB' }, name: 'Arial' } });
+      });
+      rows.push([
+        C(String(i + 1), rowBase(false, true)),
+        C(p.name, rowBase(true, false, '1D4ED8')),
+        p.rating ? N(p.rating, rowBase(false, true)) : C('—', rowBase(false, true)),
+        ...cells,
+        N(sc.score || 0, { ...fScore(), fill: { fgColor: { rgb: bg } } }),
+      ]);
+    });
+    const colW = [5, 25, 6, ...sorted.map(() => 5), 8];
+    addSheet('Đối chiếu', rows, colW, [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: sorted.length + 3 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: sorted.length + 3 } },
+    ]);
+  }
+
+  // ─────────────────────────────────────────
+  // SHEET: Thống Kê
+  // ─────────────────────────────────────────
+  {
+    const totalGames = t.pairings.reduce((acc, r) => acc + r.filter(p => p.black !== 'BYE').length, 0);
+    const decidedGames = t.pairings.reduce((acc, r) => acc + r.filter(p => p.result && p.result !== '*' && p.black !== 'BYE').length, 0);
+    const wins1 = t.pairings.reduce((acc, r) => acc + r.filter(p => p.result === '1-0').length, 0);
+    const wins0 = t.pairings.reduce((acc, r) => acc + r.filter(p => p.result === '0-1').length, 0);
+    const draws = t.pairings.reduce((acc, r) => acc + r.filter(p => p.result === '½-½').length, 0);
+
+    const rows = [
+      [C('THỐNG KÊ GIẢI ĐẤU', fHdr('1E3A5F')), '', ''],
+      [C(t.name, fSub()), '', ''],
+      ['', '', ''],
+      [C('CHỈ SỐ', fHdr('374151')), C('GIÁ TRỊ', fHdr('374151')), C('GHI CHÚ', fHdr('374151'))],
+      [C('Tổng số thí sinh', fCell(true)), N(t.players.length, fCell(false, true)), C('', fCell())],
+      [C('Tổng số vòng đấu', fCell(true)), N(t.rounds, fCell(false, true)), C('', fCell())],
+      [C('Vòng đã hoàn thành', fCell(true)), N(t.currentRound, fCell(false, true)), C('', fCell())],
+      [C('Tổng số ván đấu (đã xếp)', fCell(true)), N(totalGames, fCell(false, true)), C('', fCell())],
+      [C('Ván đấu đã có kết quả', fCell(true)), N(decidedGames, fCell(false, true)), C('', fCell())],
+      [C('Ván Trắng thắng (1-0)', fCell(true)), N(wins1, { ...fCell(false, true), ...fWin() }), C(decidedGames ? `${Math.round(wins1 / decidedGames * 100)}%` : '—', fCell(false, true))],
+      [C('Ván Đen thắng (0-1)', fCell(true)), N(wins0, { ...fCell(false, true), ...fLoss() }), C(decidedGames ? `${Math.round(wins0 / decidedGames * 100)}%` : '—', fCell(false, true))],
+      [C('Ván hoà (½-½)', fCell(true)), N(draws, { ...fCell(false, true), ...fDraw() }), C(decidedGames ? `${Math.round(draws / decidedGames * 100)}%` : '—', fCell(false, true))],
+      ['', '', ''],
+      [C('TOP 3 XẾP HẠNG', fHdr('2563EB')), C('ĐIỂM', fHdr('2563EB')), C('Buchholz', fHdr('2563EB'))],
+      ...sorted.slice(0, 3).map((p, i) => {
+        const sc = scores[p.id] || {};
+        return [
+          C(`${['🥇','🥈','🥉'][i]} ${p.name}`, fCell(true, false, '1D4ED8')),
+          N(sc.score || 0, fScore()),
+          N(sc.buchholz || 0, fCell(false, true)),
+        ];
+      }),
+      ['', '', ''],
+      [C('THỐNG KÊ CÁ NHÂN', fHdr('374151')), C('THẮNG', fHdr('374151')), C('HÒA', fHdr('374151'))],
+      ...sorted.map((p, i) => {
+        const sc = scores[p.id] || {};
+        return [
+          C(p.name, fAlt(i)),
+          N(sc.wins || 0, { ...fCell(false, true), fill: { fgColor: { rgb: i%2===0?'FFFFFF':'F9FAFB' } } }),
+          N(sc.draws || 0, { ...fCell(false, true), fill: { fgColor: { rgb: i%2===0?'FFFFFF':'F9FAFB' } } }),
+        ];
+      }),
+    ];
+    addSheet('Thống kê', rows, [30, 12, 12], [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+    ]);
+  }
+
+  // ── Download ──
+  const safeName = t.name.replace(/[^\w\s\-]/g, '').trim().replace(/\s+/g, '_').substring(0, 40);
+  XL.writeFile(wb, `${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ===================== SPECTATOR MODE =====================
@@ -3420,19 +3786,18 @@ function tnGetById(id) {
 }
 
 function tnShowCreate() {
-  const f = document.getElementById('tn-create-form');
-  // Đóng menu xem giải nếu đang mở
-  document.getElementById('tn-view-menu').classList.add('hidden');
-  f.classList.remove('hidden');
+  const modal = document.getElementById('tn-create-modal');
+  modal.classList.remove('hidden');
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('tn-f-date').value = today;
-  setTimeout(() => document.getElementById('tn-f-name').focus(), 80);
-  // Cuộn form vào view
-  f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('tn-f-name').value = '';
+  document.getElementById('tn-f-venue').value = '';
+  document.getElementById('tn-f-arbiter').value = '';
+  setTimeout(() => document.getElementById('tn-f-name').focus(), 120);
 }
 
 function tnHideCreate() {
-  document.getElementById('tn-create-form').classList.add('hidden');
+  document.getElementById('tn-create-modal').classList.add('hidden');
 }
 
 function tnCreateTournament() {
@@ -3468,73 +3833,12 @@ function tnCreateTournament() {
   tnSyncToSheets();
 }
 
-// ---- MENU XEM GIẢI ĐẤU ----
-function tnToggleViewMenu() {
-  const menu = document.getElementById('tn-view-menu');
-  const isHidden = menu.classList.contains('hidden');
-  menu.classList.toggle('hidden');
-  if (isHidden) {
-    // Đóng form tạo giải nếu đang mở
-    tnHideCreate();
-    tnRefreshViewMenu();
-  }
-}
-
-function tnRefreshViewMenu() {
-  const body = document.getElementById('tn-view-menu-body');
-  if (!tnData.tournaments.length) {
-    body.innerHTML = `<div style="padding:1rem;text-align:center;color:#64748b;font-size:.75rem">
-      Chưa có giải đấu.<br>Nhấn <b>⬇️ Tải mới</b> để tải từ Google Sheets.
-    </div>`;
-    return;
-  }
-  const scores = {};
-  body.innerHTML = tnData.tournaments.map(t => {
-    const sysLabel = {swiss:'Swiss',roundrobin:'Vòng Tròn',knockout:'Loại Trực Tiếp'}[t.system]||t.system;
-    const statusColor = {setup:'#f59e0b',running:'#10b981',finished:'#60a5fa'}[t.status]||'#94a3b8';
-    const statusLabel = {setup:'Cài đặt',running:`Vòng ${t.currentRound}/${t.rounds}`,finished:'Kết thúc'}[t.status]||t.status;
-
-    // Tính top 3 nếu có kết quả
-    let topHtml = '';
-    if (t.pairings.length > 0 && t.players.length > 0) {
-      const sc = tnComputeScores(t);
-      const sorted = [...t.players].sort((a,b) => (sc[b.id]?.score||0) - (sc[a.id]?.score||0)).slice(0,3);
-      const medals = ['🥇','🥈','🥉'];
-      topHtml = `<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.3rem">` +
-        sorted.map((p,i) => `<span style="font-size:.6rem;color:#94a3b8">${medals[i]} ${p.name} <b style="color:#60a5fa">${tnFmtScore(sc[p.id]?.score||0)}</b></span>`).join('') +
-        `</div>`;
-    }
-
-    return `<div style="padding:.65rem .85rem;border-bottom:1px solid #334155;cursor:pointer;transition:background .15s"
-        onmouseover="this.style.background='#334155'" onmouseout="this.style.background=''"
-        onclick="tnViewMenuSelect('${t.id}')">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
-        <span style="font-size:.8rem;font-weight:700;color:#e2e8f0;flex:1">${t.name}</span>
-        <span style="font-size:.6rem;font-weight:700;color:${statusColor};white-space:nowrap">${statusLabel}</span>
-      </div>
-      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.2rem">
-        <span style="font-size:.6rem;color:#64748b">${sysLabel}</span>
-        <span style="font-size:.6rem;color:#64748b">·</span>
-        <span style="font-size:.6rem;color:#64748b">${t.tc}</span>
-        <span style="font-size:.6rem;color:#64748b">·</span>
-        <span style="font-size:.6rem;color:#64748b">${t.players.length} thí sinh</span>
-        ${t.date ? `<span style="font-size:.6rem;color:#64748b">· 📅 ${t.date}</span>` : ''}
-      </div>
-      ${topHtml}
-    </div>`;
-  }).join('');
-}
-
-async function tnLoadAndRefreshViewMenu() {
-  const body = document.getElementById('tn-view-menu-body');
-  body.innerHTML = `<div style="padding:1rem;text-align:center;color:#64748b;font-size:.75rem">⏳ Đang tải từ Google Sheets...</div>`;
-  await tnLoadFromSheets();
-  tnRefreshViewMenu();
-}
+// ---- MENU XEM GIẢI ĐẤU (legacy stubs - menu removed, kept for compat) ----
+function tnToggleViewMenu() { /* no-op: view menu removed */ }
+function tnRefreshViewMenu() { /* no-op */ }
+async function tnLoadAndRefreshViewMenu() { await tnLoadFromSheets(); }
 
 function tnViewMenuSelect(id) {
-  // Đóng menu và mở spectator view cho giải này
-  document.getElementById('tn-view-menu').classList.add('hidden');
   specTournamentId = id;
   specEnter(id, false);
 }
@@ -3638,6 +3942,8 @@ function tnOpenTournament(id) {
       <button class="tourn-view-btn" id="tvb-crosstable" onclick="tnSwitchView('crosstable')">📋 Đối Chiếu</button>
       <button class="tourn-view-btn" id="tvb-info" onclick="tnSwitchView('info')">ℹ️ Info</button>
       ${showNR ? `<button onclick="pwPrompt('round','Xếp cặp vòng đấu mới',tnGenerateNextRound)" id="tn-btn-next-round" class="tn-btn tn-btn-amber ml-auto" style="padding:.3rem .7rem;font-size:.7rem">${nrLabel}</button>` : '<span id="tn-btn-next-round" class="hidden"></span>'}
+      <button onclick="exportToExcel('${t.id}')" title="Xuất ra file Excel chuyên nghiệp"
+        style="background:#16a34a;color:#fff;border:none;border-radius:.3rem;padding:.3rem .65rem;font-size:.68rem;font-weight:700;cursor:pointer;white-space:nowrap;${showNR?'':'margin-left:auto'}">📥 Xuất Excel</button>
     </div>
   `;
 
@@ -3981,24 +4287,43 @@ function tnRenderPairings(t) {
   const playerMap = {};
   t.players.forEach(p => { playerMap[p.id] = p; });
 
+  const results = ['*','1-0','½-½','0-1','+/-'];
+  const rLabel = {'*':'·','1-0':'1–0','½-½':'½–½','0-1':'0–1','+/-':'+/−'};
+  const rClass = {'*':'r-pending','1-0':'r-win','½-½':'r-draw','0-1':'r-loss','+/-':'r-bye'};
+
   let html = '';
+  let done = 0, total = 0;
   round.forEach((pair, bi) => {
     const w = pair.white === 'BYE' ? {name:'BYE',rating:0} : (playerMap[pair.white]||{name:'?',rating:0});
     const b = pair.black === 'BYE' ? {name:'Điểm Trắng (BYE)',rating:0} : (playerMap[pair.black]||{name:'?',rating:0});
     const isBye = pair.black === 'BYE';
-    const resultOpts = ['*','1-0','0-1','½-½','+','-'].map(r =>
-      `<option value="${r}" ${pair.result===r?'selected':''}>${r==='*'?'—':r}</option>`
-    ).join('');
+    if (!isBye) { total++; if (pair.result !== '*') done++; }
+    const cur = pair.result || '*';
+
+    const btnRow = isBye
+      ? `<div style="font-size:.7rem;color:#d97706;font-weight:700;text-align:center;padding:.3rem 0">BYE — Điểm trắng</div>`
+      : `<div class="result-grp">
+          ${results.map(r =>
+            `<button class="rbtn ${cur===r ? rClass[r] : ''}"
+              onclick="tnUpdateResult(${tnCurrentRound},${bi},'${r}')"
+              style="font-size:${r==='*'?'.85':'.72'}rem">${rLabel[r]}</button>`
+          ).join('')}
+        </div>`;
+
     html += `<div class="pairing-row ${isBye?'bye-row':''}">
-      <span class="pairing-board-num">${bi+1}</span>
-      <span class="pairing-player pairing-white" title="ELO: ${w.rating||'—'}">${w.name}${w.rating?`<sup style="font-size:.55rem;color:#92400e"> ${w.rating}</sup>`:''}</span>
-      <span class="pairing-vs">vs</span>
-      <span class="pairing-player pairing-black" title="ELO: ${b.rating||'—'}">${b.name}${(!isBye&&b.rating)?`<sup style="font-size:.55rem;color:#94a3b8"> ${b.rating}</sup>`:''}</span>
-      ${isBye ? `<span class="text-xs text-amber-600 font-bold px-2">BYE</span>` :
-        `<select class="result-sel" onchange="tnUpdateResult(${tnCurrentRound},${bi},this.value)">${resultOpts}</select>`}
+      <div class="pairing-board-num">Bàn ${bi+1}</div>
+      <div class="pairing-players">
+        <span class="pairing-player pairing-white">${w.name}${w.rating?`<sup style="font-size:.52rem;margin-left:.2rem;opacity:.7">${w.rating}</sup>`:''}</span>
+        <span class="pairing-vs">vs</span>
+        <span class="pairing-player pairing-black">${b.name}${(!isBye&&b.rating)?`<sup style="font-size:.52rem;margin-left:.2rem;opacity:.7">${b.rating}</sup>`:''}</span>
+      </div>
+      ${btnRow}
     </div>`;
   });
   document.getElementById('tn-pairings-body').innerHTML = html;
+  // Update result count
+  const countEl = document.getElementById('tn-result-count');
+  if (countEl) countEl.textContent = `${done}/${total} kết quả`;
 }
 
 function tnSelectRound(idx) {
@@ -4007,11 +4332,38 @@ function tnSelectRound(idx) {
   if (t) tnRenderPairings(t);
 }
 
+const rClass = {'*':'r-pending','1-0':'r-win','½-½':'r-draw','0-1':'r-loss','+/-':'r-bye'};
 function tnUpdateResult(roundIdx, pairIdx, result) {
   const t = tnGetById(tnActive);
   if (!t) return;
   t.pairings[roundIdx][pairIdx].result = result;
   tnSave();
+  // Update button highlights in-place (no full re-render for snappy feel)
+  const body = document.getElementById('tn-pairings-body');
+  const pairingCards = body.querySelectorAll('.pairing-row');
+  const card = pairingCards[pairIdx];
+  if (card) {
+    card.querySelectorAll('.rbtn').forEach(btn => {
+      const r = btn.onclick?.toString().match(/'([^']+)'\)$/)?.[1] ||
+        [...btn.classList].find(c=>c.startsWith('r-'));
+      // Re-derive value from onclick attr
+    });
+    // Simpler: update classes of all buttons in this card's result-grp
+    const btns = card.querySelectorAll('.rbtn');
+    btns.forEach(btn => {
+      const r = btn.getAttribute('onclick')?.match(/'([^']+)'\s*\)/)?.[1];
+      if (!r) return;
+      // Remove all result classes
+      Object.values(rClass).forEach(cls => btn.classList.remove(cls));
+      if (r === result) btn.classList.add(rClass[r] || 'r-pending');
+    });
+  }
+  // Update count
+  const round = t.pairings[roundIdx];
+  const done = round.filter(p => p.result !== '*' && p.black !== 'BYE').length;
+  const total = round.filter(p => p.black !== 'BYE').length;
+  const countEl = document.getElementById('tn-result-count');
+  if (countEl) countEl.textContent = `${done}/${total} kết quả`;
 }
 
 function tnSaveResults() {
@@ -4239,5 +4591,74 @@ $(document).ready(function() {
   }
 });
 </script>
+
+<!-- ═══ Create Tournament Modal (bottom-sheet) ═══ -->
+<div id="tn-create-modal" class="hidden">
+  <div style="position:absolute;inset:0" onclick="tnHideCreate()"></div>
+  <div id="tn-create-modal-inner">
+    <!-- Handle bar -->
+    <div style="width:44px;height:4px;background:#d1d5db;border-radius:999px;margin:0 auto .85rem"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
+      <p style="font-size:1rem;font-weight:800;color:#111827">📋 Tạo giải đấu mới</p>
+      <button onclick="tnHideCreate()" style="background:#f3f4f6;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;color:#6b7280;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+
+    <div class="tn-modal-field">
+      <label>Tên giải đấu *</label>
+      <input id="tn-f-name" type="text" placeholder="VD: Giải Cờ Vua Hè 2026" autocomplete="off">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+      <div class="tn-modal-field">
+        <label>Hệ thống thi đấu</label>
+        <select id="tn-f-system">
+          <option value="swiss">Swiss (Hệ Thụy Sĩ)</option>
+          <option value="roundrobin">Vòng Tròn</option>
+          <option value="knockout">Loại Trực Tiếp</option>
+        </select>
+      </div>
+      <div class="tn-modal-field">
+        <label>Số vòng</label>
+        <input id="tn-f-rounds" type="number" min="1" max="15" value="7" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="tn-modal-field">
+      <label>Kiểm soát thời gian</label>
+      <select id="tn-f-tc">
+        <option value="Classical (90+30)">Classical (90+30 phút)</option>
+        <option value="Rapid (25+10)">Rapid (25+10 phút)</option>
+        <option value="Rapid (15+10)">Rapid (15+10 phút)</option>
+        <option value="Blitz (5+3)">Blitz (5+3 phút)</option>
+        <option value="Blitz (3+2)">Blitz (3+2 phút)</option>
+        <option value="Bullet (1+0)">Bullet (1+0 phút)</option>
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+      <div class="tn-modal-field">
+        <label>Ngày bắt đầu</label>
+        <input id="tn-f-date" type="date">
+      </div>
+      <div class="tn-modal-field">
+        <label>Địa điểm</label>
+        <input id="tn-f-venue" type="text" placeholder="CLB Cờ Vua...">
+      </div>
+    </div>
+
+    <div class="tn-modal-field">
+      <label>Trọng tài trưởng</label>
+      <input id="tn-f-arbiter" type="text" placeholder="Họ tên trọng tài">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.35rem">
+      <button onclick="tnHideCreate()"
+        style="background:#f3f4f6;border:none;border-radius:.6rem;padding:.7rem;font-size:.88rem;font-weight:700;cursor:pointer;color:#6b7280;min-height:48px">Hủy</button>
+      <button onclick="tnCreateTournament()"
+        style="background:#1d4ed8;color:#fff;border:none;border-radius:.6rem;padding:.7rem;font-size:.88rem;font-weight:800;cursor:pointer;min-height:48px">✓ Tạo Giải</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
