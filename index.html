@@ -138,6 +138,12 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
 .pairing-white{background:#fffbeb;border:1px solid #fde68a;color:#1e293b}
 .pairing-black{background:#1e293b;color:#f8fafc;border:1px solid #334155;text-align:right}
 .pairing-vs{font-weight:800;color:#94a3b8;font-size:.7rem;flex-shrink:0;text-align:center}
+.result-sel{width:72px;padding:.28rem .2rem;border-radius:.35rem;font-size:.72rem;font-weight:700;border:1.5px solid #e5e7eb;background:#f8fafc;color:#6b7280;cursor:pointer;text-align:center;appearance:none;-webkit-appearance:none;outline:none;flex-shrink:0}
+.result-sel.r-win{background:#d1fae5;border-color:#34d399;color:#065f46}
+.result-sel.r-loss{background:#fee2e2;border-color:#f87171;color:#7f1d1d}
+.result-sel.r-draw{background:#fef3c7;border-color:#fbbf24;color:#78350f}
+.result-sel.r-bye{background:#f0fdf4;border-color:#86efac;color:#166534}
+.result-sel.r-pending{background:#f8fafc;border-color:#cbd5e1;color:#94a3b8}
 /* Result button group */
 .result-grp{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-top:.35rem}
 .rbtn{min-height:40px;border:1.5px solid #e5e7eb;background:#fff;border-radius:.35rem;font-size:.72rem;font-weight:700;cursor:pointer;color:#6b7280;transition:all .1s ease;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
@@ -3437,9 +3443,39 @@ function exportToExcel(tournId) {
     ]);
   }
 
-  // ── Download ──
+  // ── Export as Blob then Share or Download ──
   const safeName = t.name.replace(/[^\w\s\-]/g, '').trim().replace(/\s+/g, '_').substring(0, 40);
-  XL.writeFile(wb, `${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  const fileName = `${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  const wbout = XL.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  // Try native share sheet first (mobile: WhatsApp, email, AirDrop...)
+  if (navigator.canShare) {
+    const file = new File([blob], fileName, { type: blob.type });
+    if (navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: t.name,
+        text: `Kết quả giải: ${t.name}`
+      }).catch(() => {
+        // User cancelled or share failed → fallback to download
+        _xlDownload(blob, fileName);
+      });
+      return;
+    }
+  }
+  _xlDownload(blob, fileName);
+}
+
+function _xlDownload(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 // ===================== SPECTATOR MODE =====================
@@ -4287,9 +4323,8 @@ function tnRenderPairings(t) {
   const playerMap = {};
   t.players.forEach(p => { playerMap[p.id] = p; });
 
-  const results = ['*','1-0','½-½','0-1','+/-'];
-  const rLabel = {'*':'·','1-0':'1–0','½-½':'½–½','0-1':'0–1','+/-':'+/−'};
-  const rClass = {'*':'r-pending','1-0':'r-win','½-½':'r-draw','0-1':'r-loss','+/-':'r-bye'};
+  const rSelClass = {'*':'r-pending','1-0':'r-win','½-½':'r-draw','0-1':'r-loss','+/-':'r-bye'};
+  const rOptLabel = {'*':'· ·','1-0':'1 – 0','½-½':'½ – ½','0-1':'0 – 1','+/-':'+/−'};
 
   let html = '';
   let done = 0, total = 0;
@@ -4300,24 +4335,23 @@ function tnRenderPairings(t) {
     if (!isBye) { total++; if (pair.result !== '*') done++; }
     const cur = pair.result || '*';
 
-    const btnRow = isBye
-      ? `<div style="font-size:.7rem;color:#d97706;font-weight:700;text-align:center;padding:.3rem 0">BYE — Điểm trắng</div>`
-      : `<div class="result-grp">
-          ${results.map(r =>
-            `<button class="rbtn ${cur===r ? rClass[r] : ''}"
-              onclick="tnUpdateResult(${tnCurrentRound},${bi},'${r}')"
-              style="font-size:${r==='*'?'.85':'.72'}rem">${rLabel[r]}</button>`
-          ).join('')}
-        </div>`;
+    const centerCol = isBye
+      ? `<span style="font-size:.65rem;color:#d97706;font-weight:700;text-align:center;white-space:nowrap">BYE</span>`
+      : `<select class="result-sel ${rSelClass[cur]}"
+           onchange="tnUpdateResult(${tnCurrentRound},${bi},this.value,this)"
+           data-ri="${tnCurrentRound}" data-pi="${bi}">
+           ${['*','1-0','½-½','0-1','+/-'].map(r =>
+             `<option value="${r}" ${cur===r?'selected':''}>${rOptLabel[r]}</option>`
+           ).join('')}
+         </select>`;
 
     html += `<div class="pairing-row ${isBye?'bye-row':''}">
       <div class="pairing-board-num">Bàn ${bi+1}</div>
       <div class="pairing-players">
         <span class="pairing-player pairing-white">${w.name}${w.rating?`<sup style="font-size:.52rem;margin-left:.2rem;opacity:.7">${w.rating}</sup>`:''}</span>
-        <span class="pairing-vs">vs</span>
+        ${centerCol}
         <span class="pairing-player pairing-black">${b.name}${(!isBye&&b.rating)?`<sup style="font-size:.52rem;margin-left:.2rem;opacity:.7">${b.rating}</sup>`:''}</span>
       </div>
-      ${btnRow}
     </div>`;
   });
   document.getElementById('tn-pairings-body').innerHTML = html;
@@ -4333,30 +4367,15 @@ function tnSelectRound(idx) {
 }
 
 const rClass = {'*':'r-pending','1-0':'r-win','½-½':'r-draw','0-1':'r-loss','+/-':'r-bye'};
-function tnUpdateResult(roundIdx, pairIdx, result) {
+function tnUpdateResult(roundIdx, pairIdx, result, selEl) {
   const t = tnGetById(tnActive);
   if (!t) return;
   t.pairings[roundIdx][pairIdx].result = result;
   tnSave();
-  // Update button highlights in-place (no full re-render for snappy feel)
-  const body = document.getElementById('tn-pairings-body');
-  const pairingCards = body.querySelectorAll('.pairing-row');
-  const card = pairingCards[pairIdx];
-  if (card) {
-    card.querySelectorAll('.rbtn').forEach(btn => {
-      const r = btn.onclick?.toString().match(/'([^']+)'\)$/)?.[1] ||
-        [...btn.classList].find(c=>c.startsWith('r-'));
-      // Re-derive value from onclick attr
-    });
-    // Simpler: update classes of all buttons in this card's result-grp
-    const btns = card.querySelectorAll('.rbtn');
-    btns.forEach(btn => {
-      const r = btn.getAttribute('onclick')?.match(/'([^']+)'\s*\)/)?.[1];
-      if (!r) return;
-      // Remove all result classes
-      Object.values(rClass).forEach(cls => btn.classList.remove(cls));
-      if (r === result) btn.classList.add(rClass[r] || 'r-pending');
-    });
+  // Update select color class in-place
+  if (selEl) {
+    Object.values(rClass).forEach(cls => selEl.classList.remove(cls));
+    selEl.classList.add(rClass[result] || 'r-pending');
   }
   // Update count
   const round = t.pairings[roundIdx];
