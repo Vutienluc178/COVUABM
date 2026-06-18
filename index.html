@@ -172,6 +172,14 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
 #spectator-overlay.open{display:flex}
 .spec-header{background:linear-gradient(135deg,#1e3a8a,#0f172a);padding:.75rem 1.25rem;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #f59e0b;flex-shrink:0}
 .live-badge{background:#ef4444;color:white;font-size:.6rem;font-weight:900;padding:2px 8px;border-radius:999px;letter-spacing:.08em;animation:livePulse 1.5s infinite}
+.vw-tab-btn{padding:.3rem .7rem;border-radius:.35rem;font-size:.72rem;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.18);color:#cbd5e1;background:transparent;transition:all .15s}
+.vw-tab-btn.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+.vw-tab-btn:not(.active):hover{background:rgba(255,255,255,.08)}
+.vw-tourn-card{border-radius:.6rem;border:1.5px solid #1e293b;padding:.75rem;margin-bottom:.5rem;cursor:pointer;transition:border-color .15s,transform .1s;background:#1e293b}
+.vw-tourn-card:hover{border-color:#3b82f6;transform:translateY(-1px)}
+.vw-tourn-card.selected{border-color:#f59e0b;background:#1c1a0a}
+.vw-tourn-card.live-card{border-color:#dc2626;animation:cardPulse 2s infinite}
+@keyframes cardPulse{0%,100%{border-color:#dc2626}50%{border-color:#f87171}}
 @keyframes livePulse{0%,100%{opacity:1}50%{opacity:.6}}
 .spec-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
 .spec-tab{padding:.3rem .75rem;border-radius:.35rem;font-size:.7rem;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.2);color:#cbd5e1;background:transparent;transition:all .15s}
@@ -221,6 +229,7 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
 
 <!-- Mode Nav -->
 <nav class="mode-nav">
+  <button class="mode-btn" id="mode-btn-viewer" onclick="switchMode('viewer')" style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;font-weight:800;border:none">🏆 Xem Giải</button>
   <button class="mode-btn active" id="mode-btn-opening" onclick="switchMode('opening')">📖 Khai Cuộc</button>
   <button class="mode-btn" id="mode-btn-tactics" onclick="switchMode('tactics')">⚔️ Chiến Thuật</button>
   <button class="mode-btn" id="mode-btn-endgame" onclick="switchMode('endgame')">🏁 Tàn Cuộc</button>
@@ -295,35 +304,43 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
 
     <!-- Panel: Tournament (hidden by default) -->
     <div id="panel-tournament" class="hidden overflow-y-auto flex-1 custom-scrollbar flex flex-col">
-      <!-- Header với nút tạo giải -->
-      <div class="p-2.5 bg-gradient-to-r from-blue-900 to-blue-800">
-        <div class="flex items-center justify-between mb-2">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-900 to-blue-800 px-3 pt-2.5 pb-2">
+        <div class="flex items-center justify-between mb-1.5">
           <div>
             <p class="text-xs font-bold text-blue-100 uppercase tracking-wide">🏆 Quản Lý Giải Đấu</p>
             <p class="text-xs text-blue-300">Swiss · Vòng tròn · Loại trực tiếp</p>
           </div>
-          <button onclick="pwPrompt('create','Tạo giải đấu mới',tnShowCreate)" class="tn-btn tn-btn-amber text-xs px-2 py-1">+ Tạo Giải</button>
         </div>
-        <!-- Admin status badge -->
-        <div id="tn-admin-badge" class="flex items-center gap-1.5 mb-1.5"></div>
+        <!-- Admin badge -->
+        <div id="tn-admin-badge" class="flex items-center gap-1.5 mb-2"></div>
         <!-- Action bar -->
         <div class="flex gap-1 flex-wrap">
-          <button onclick="tnToggleSheetsConfig()" class="tn-btn tn-btn-slate text-xs" style="padding:.25rem .5rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
-            <span id="sheets-status-dot">⬜</span> Google Sheets
+          <button onclick="pwPrompt('create','Tạo giải đấu mới',tnShowCreate)"
+            class="tn-btn text-xs" style="padding:.28rem .6rem;font-size:.65rem;background:#f59e0b;color:#0f172a;border:none;font-weight:800">
+            ＋ Tạo Giải
           </button>
-          <button onclick="pwPrompt('sync','Đồng bộ lên Google Sheets',tnSyncToSheets)" class="tn-btn text-xs" style="padding:.25rem .5rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
-            ☁️ Lưu lên Sheets
+          <button onclick="tnToggleSheetsConfig()"
+            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
+            <span id="sheets-status-dot">⬜</span> Sheets
           </button>
-          <button onclick="tnLoadFromSheets()" class="tn-btn text-xs" style="padding:.25rem .5rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
-            ⬇️ Tải từ Sheets
+          <button onclick="pwPrompt('sync','Đồng bộ lên Google Sheets',tnSyncToSheets)"
+            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
+            ☁️ Lưu
           </button>
-          <button onclick="specEnter()" class="tn-btn text-xs" style="padding:.25rem .5rem;font-size:.65rem;background:#f59e0b;color:#0f172a;border:none;font-weight:800">
-            👁 Khán Giả
+          <button onclick="tnLoadFromSheets()"
+            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
+            ⬇️ Tải
+          </button>
+          <button onclick="tnToggleViewMenu()"
+            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:#1d4ed8;color:white;border:none;font-weight:700">
+            🏆 Xem Giải
           </button>
         </div>
       </div>
 
-      <!-- Google Sheets Config Panel -->
+      <!-- Google Sheets Config Panel (ẩn mặc định) -->
       <div id="tn-sheets-config">
         <div class="flex items-center justify-between mb-1.5">
           <p class="text-xs font-bold text-green-800">☁️ Cấu hình Google Sheets</p>
@@ -333,51 +350,89 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
         <input id="gas-url-input" type="text" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:.7rem">
         <div class="flex gap-1.5 mt-1.5">
           <button onclick="tnSaveGasUrl()" class="tn-btn tn-btn-green flex-1" style="padding:.3rem;font-size:.7rem">💾 Lưu URL</button>
-          <button onclick="tnTestConnection()" class="tn-btn tn-btn-slate flex-1" style="padding:.3rem;font-size:.7rem">🔌 Test kết nối</button>
+          <button onclick="tnTestConnection()" class="tn-btn tn-btn-slate flex-1" style="padding:.3rem;font-size:.7rem">🔌 Test</button>
         </div>
         <p id="gas-connection-status" class="text-xs mt-1.5 hidden"></p>
         <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
           <b>Link khán giả:</b><br>
           <span id="spectator-link-display" class="text-xs text-green-800 break-all" style="font-size:.6rem">Cần nhập URL Apps Script trước</span>
-          <button onclick="copySpectatorLink()" class="tn-btn tn-btn-green mt-1 w-full" style="padding:.2rem;font-size:.65rem">📋 Copy link khán giả</button>
+          <button onclick="copySpectatorLink()" class="tn-btn tn-btn-green mt-1 w-full" style="padding:.2rem;font-size:.65rem">📋 Copy link</button>
         </div>
       </div>
 
-      <!-- Form tạo giải (ẩn mặc định) -->
-      <div id="tn-create-form" class="hidden p-3 bg-blue-50 border-b border-blue-200 form-tn">
-        <p class="text-xs font-bold text-blue-800 mb-2">📋 Thông tin giải đấu</p>
-        <div class="field"><label>Tên giải đấu *</label><input id="tn-f-name" type="text" placeholder="VD: Giải Cờ Vua Hè 2026"></div>
-        <div class="field"><label>Hệ thống thi đấu</label>
-          <select id="tn-f-system">
-            <option value="swiss">Swiss (Hệ Thụy Sĩ)</option>
-            <option value="roundrobin">Vòng Tròn (Round Robin)</option>
-            <option value="knockout">Loại Trực Tiếp (Knockout)</option>
-          </select>
+      <!-- Form tạo giải (ẩn hoàn toàn, chỉ hiện khi click) -->
+      <div id="tn-create-form" class="hidden form-tn" style="background:#eff6ff;border-bottom:2px solid #3b82f6;overflow:hidden;transition:max-height .35s ease">
+        <div class="flex items-center justify-between px-3 pt-2.5 pb-1 border-b border-blue-200">
+          <p class="text-xs font-bold text-blue-800">📋 Tạo giải đấu mới</p>
+          <button onclick="tnHideCreate()" class="text-blue-400 hover:text-blue-700 font-bold text-base leading-none">✕</button>
         </div>
-        <div class="field"><label>Số vòng đấu</label><input id="tn-f-rounds" type="number" min="1" max="15" value="7" placeholder="7"></div>
-        <div class="field"><label>Kiểm soát thời gian</label>
-          <select id="tn-f-tc">
-            <option value="Classical (90+30)">Classical (90+30 phút)</option>
-            <option value="Rapid (15+10)">Rapid (15+10 phút)</option>
-            <option value="Rapid (25+10)">Rapid (25+10 phút)</option>
-            <option value="Blitz (3+2)">Blitz (3+2 phút)</option>
-            <option value="Blitz (5+3)">Blitz (5+3 phút)</option>
-            <option value="Bullet (1+0)">Bullet (1+0 phút)</option>
-          </select>
-        </div>
-        <div class="field"><label>Địa điểm</label><input id="tn-f-venue" type="text" placeholder="VD: Câu lạc bộ Cờ Vua Trung Tâm"></div>
-        <div class="field"><label>Trọng tài trưởng</label><input id="tn-f-arbiter" type="text" placeholder="VD: Nguyễn Văn A"></div>
-        <div class="field"><label>Ngày bắt đầu</label><input id="tn-f-date" type="date"></div>
-        <div class="flex gap-2 mt-1">
-          <button onclick="tnCreateTournament()" class="tn-btn tn-btn-primary flex-1">✓ Tạo Giải</button>
-          <button onclick="document.getElementById('tn-create-form').classList.add('hidden')" class="tn-btn tn-btn-slate flex-1">Hủy</button>
+        <div class="p-3">
+          <div class="field"><label>Tên giải đấu *</label><input id="tn-f-name" type="text" placeholder="VD: Giải Cờ Vua Hè 2026"></div>
+          <div class="field"><label>Hệ thống thi đấu</label>
+            <select id="tn-f-system">
+              <option value="swiss">Swiss (Hệ Thụy Sĩ)</option>
+              <option value="roundrobin">Vòng Tròn (Round Robin)</option>
+              <option value="knockout">Loại Trực Tiếp (Knockout)</option>
+            </select>
+          </div>
+          <div class="field"><label>Số vòng đấu</label><input id="tn-f-rounds" type="number" min="1" max="15" value="7"></div>
+          <div class="field"><label>Kiểm soát thời gian</label>
+            <select id="tn-f-tc">
+              <option value="Classical (90+30)">Classical (90+30 phút)</option>
+              <option value="Rapid (15+10)">Rapid (15+10 phút)</option>
+              <option value="Rapid (25+10)">Rapid (25+10 phút)</option>
+              <option value="Blitz (3+2)">Blitz (3+2 phút)</option>
+              <option value="Blitz (5+3)">Blitz (5+3 phút)</option>
+              <option value="Bullet (1+0)">Bullet (1+0 phút)</option>
+            </select>
+          </div>
+          <div class="field"><label>Địa điểm</label><input id="tn-f-venue" type="text" placeholder="VD: CLB Cờ Vua Trung Tâm"></div>
+          <div class="field"><label>Trọng tài trưởng</label><input id="tn-f-arbiter" type="text" placeholder="VD: Nguyễn Văn A"></div>
+          <div class="field"><label>Ngày bắt đầu</label><input id="tn-f-date" type="date"></div>
+          <div class="flex gap-2 mt-2">
+            <button onclick="tnCreateTournament()" class="tn-btn tn-btn-primary flex-1">✓ Tạo &amp; Lưu lên Sheets</button>
+            <button onclick="tnHideCreate()" class="tn-btn tn-btn-slate">Hủy</button>
+          </div>
         </div>
       </div>
 
-      <!-- Danh sách giải -->
+      <!-- Menu Xem Giải Đấu (ẩn mặc định) -->
+      <div id="tn-view-menu" class="hidden" style="background:#1e293b;border-bottom:2px solid #1d4ed8">
+        <div class="flex items-center justify-between px-3 py-2 border-b border-slate-700">
+          <p class="text-xs font-bold text-white">🏆 Xem Giải Đấu</p>
+          <div class="flex gap-1">
+            <button onclick="tnLoadAndRefreshViewMenu()" class="text-xs text-blue-300 hover:text-white" style="background:none;border:none;cursor:pointer">⬇️ Tải mới</button>
+            <button onclick="tnToggleViewMenu()" class="text-slate-400 hover:text-white font-bold text-sm ml-2" style="background:none;border:none;cursor:pointer">✕</button>
+          </div>
+        </div>
+        <div id="tn-view-menu-body" class="overflow-y-auto" style="max-height:280px"></div>
+      </div>
+
+      <!-- Danh sách giải (quản lý) -->
       <div id="tn-list" class="flex-1 p-2">
-        <p class="text-xs text-slate-400 italic text-center mt-4 px-4">Chưa có giải đấu nào.<br>Nhấn <b>+ Tạo Giải</b> để bắt đầu!</p>
+        <p class="text-xs text-slate-400 italic text-center mt-4 px-4">Chưa có giải đấu nào.<br>Nhấn <b>＋ Tạo Giải</b> để bắt đầu!</p>
       </div>
+    </div>
+
+    <!-- Panel: Xem Giải (hidden by default) -->
+    <div id="panel-viewer" class="hidden flex-1 flex flex-col overflow-hidden" style="background:#0f172a">
+
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);padding:.75rem 1rem">
+        <div class="flex items-center justify-between mb-1">
+          <div>
+            <p style="font-size:.75rem;font-weight:800;color:#fff;letter-spacing:.06em;text-transform:uppercase">🏆 Xem Giải Đấu</p>
+            <p id="vw-status-line" style="font-size:.6rem;color:#a5b4fc">Đang tải...</p>
+          </div>
+          <button onclick="vwLoadFromSheets()" id="vw-refresh-btn"
+            style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:.4rem;padding:.3rem .65rem;font-size:.65rem;cursor:pointer;font-weight:700">
+            ⟳ Tải mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Tournament list -->
+      <div id="vw-list" class="overflow-y-auto custom-scrollbar flex-1" style="padding:.5rem"></div>
     </div>
 
     <!-- Panel: Tàn Cuộc (hidden by default) -->
@@ -411,6 +466,62 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
         <p class="text-xs text-slate-400 italic">Chưa hoàn thành bài nào.</p>
       </div>
       <button onclick="if(confirm('Xóa toàn bộ dữ liệu học?')){resetPlayerData();}" class="mt-3 w-full text-xs text-red-400 hover:text-red-600 transition border border-red-100 rounded py-1">🗑️ Đặt lại tiến độ</button>
+    </div>
+  </div>
+
+  <!-- Viewer Right Panel (audience mode) -->
+  <div id="viewer-right-panel" class="hidden w-full md:w-2/3 rounded-lg shadow-lg flex flex-col overflow-hidden border border-slate-700" style="background:#0f172a">
+
+    <!-- Viewer: empty state -->
+    <div id="vw-rp-empty" class="flex-1 flex flex-col items-center justify-center" style="color:#475569">
+      <div style="font-size:3rem;margin-bottom:1rem">🏆</div>
+      <p style="font-size:1rem;font-weight:700;color:#64748b;margin-bottom:.5rem">Chọn một giải đấu để xem</p>
+      <p style="font-size:.8rem;color:#334155">Nhấn vào giải đấu bên trái để xem chi tiết</p>
+    </div>
+
+    <!-- Viewer: tournament detail -->
+    <div id="vw-rp-detail" class="hidden flex-1 flex flex-col overflow-hidden">
+
+      <!-- Detail header -->
+      <div id="vw-rp-header" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8);padding:1rem 1.25rem">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p id="vw-rp-name" style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:.25rem"></p>
+            <div class="flex gap-2 flex-wrap" id="vw-rp-badges"></div>
+          </div>
+          <div id="vw-live-badge" class="hidden" style="background:#dc2626;color:#fff;font-size:.65rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;letter-spacing:.06em;animation:pulse 2s infinite">● LIVE</div>
+        </div>
+        <p id="vw-rp-info" style="font-size:.75rem;color:#93c5fd;margin-bottom:.75rem"></p>
+        <!-- Tab bar -->
+        <div class="flex gap-1 flex-wrap">
+          <button class="vw-tab-btn active" id="vw-tab-pairings" onclick="vwSwitchTab('pairings')">🎯 Xếp Cặp</button>
+          <button class="vw-tab-btn" id="vw-tab-standings" onclick="vwSwitchTab('standings')">📊 BXH</button>
+          <button class="vw-tab-btn" id="vw-tab-crosstable" onclick="vwSwitchTab('crosstable')">📋 Đối Chiếu</button>
+        </div>
+      </div>
+
+      <!-- Tab: Pairings -->
+      <div id="vw-view-pairings" class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex gap-1 flex-wrap px-3 py-2" id="vw-round-tabs" style="border-bottom:1px solid #1e293b;background:#0f172a"></div>
+        <div id="vw-pairings-body" class="overflow-y-auto flex-1 custom-scrollbar" style="background:#0f172a"></div>
+      </div>
+
+      <!-- Tab: Standings -->
+      <div id="vw-view-standings" class="hidden flex-1 flex flex-col overflow-hidden" style="background:#0f172a">
+        <div id="vw-standings-body" class="overflow-y-auto flex-1 custom-scrollbar"></div>
+      </div>
+
+      <!-- Tab: Crosstable -->
+      <div id="vw-view-crosstable" class="hidden flex-1 overflow-auto custom-scrollbar p-2" style="background:#0f172a">
+        <div id="vw-crosstable-body"></div>
+      </div>
+
+    </div>
+
+    <!-- Auto-refresh bar -->
+    <div style="background:#0f172a;border-top:1px solid #1e293b;padding:.4rem .75rem;display:flex;align-items:center;justify-content:space-between">
+      <span id="vw-refresh-status" style="font-size:.6rem;color:#475569">Chưa tải dữ liệu</span>
+      <button onclick="vwLoadFromSheets()" style="background:none;border:none;color:#60a5fa;font-size:.65rem;cursor:pointer;font-weight:700">⟳ Làm mới</button>
     </div>
   </div>
 
@@ -1138,70 +1249,73 @@ function showToast(msg, cls) {
 }
 
 // ===================== TRẠNG THÁI TOÀN CỤC =====================
-let currentMode = 'opening'; // 'opening' | 'tactics' | 'endgame' | 'tournament'
+let currentMode = 'opening'; // 'opening' | 'tactics' | 'endgame' | 'tournament' | 'viewer'
 
 // ===================== CHUYỂN MODE =====================
 function switchMode(mode) {
+  // Exit viewer auto-refresh when leaving viewer mode
+  if (currentMode === 'viewer' && mode !== 'viewer') vwExit();
   currentMode = mode;
   stopAutoPlay();
 
   // Mode nav buttons
-  ['opening','tactics','endgame','tournament'].forEach(m => {
-    document.getElementById('mode-btn-' + m).classList.toggle('active', m === mode);
+  ['opening','tactics','endgame','tournament','viewer'].forEach(m => {
+    const btn = document.getElementById('mode-btn-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
   });
 
-  // Tournament mode: show/hide panels
   const chessRightPanel = document.getElementById('chess-right-panel');
   const tournamentRightPanel = document.getElementById('tournament-right-panel');
-  if (mode === 'tournament') {
-    chessRightPanel.classList.add('hidden');
-    tournamentRightPanel.classList.remove('hidden');
-    tnInitMode();
-    // Sidebar
-    const openingTabBar = document.querySelector('.flex.border-b.border-slate-200.bg-slate-50');
-    const tabLessons = document.getElementById('tab-lessons');
-    const tabChallenge = document.getElementById('tab-challenge');
-    const tabStats = document.getElementById('tab-stats');
-    const panelTactics = document.getElementById('panel-tactics');
-    const panelEndgame = document.getElementById('panel-endgame');
-    const panelTournament = document.getElementById('panel-tournament');
-    openingTabBar.classList.add('hidden');
-    tabLessons.classList.add('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
-    panelTactics.classList.add('hidden'); panelEndgame.classList.add('hidden');
-    panelTournament.classList.remove('hidden');
-    return;
-  } else {
-    chessRightPanel.classList.remove('hidden');
-    tournamentRightPanel.classList.add('hidden');
-    document.getElementById('panel-tournament').classList.add('hidden');
-  }
+  const viewerRightPanel = document.getElementById('viewer-right-panel');
 
-  // Sidebar panels
-  const openingSidebar = document.getElementById('tab-lessons').parentElement;
-  // Opening mode: show 3 opening tabs; Tactics/Endgame: hide them
+  // Hide all right panels first, then show the right one
+  chessRightPanel.classList.add('hidden');
+  tournamentRightPanel.classList.add('hidden');
+  viewerRightPanel.classList.add('hidden');
+
+  // Hide all sidebar panels
   const openingTabBar = document.querySelector('.flex.border-b.border-slate-200.bg-slate-50');
   const tabLessons = document.getElementById('tab-lessons');
   const tabChallenge = document.getElementById('tab-challenge');
   const tabStats = document.getElementById('tab-stats');
   const panelTactics = document.getElementById('panel-tactics');
   const panelEndgame = document.getElementById('panel-endgame');
+  const panelTournament = document.getElementById('panel-tournament');
+  const panelViewer = document.getElementById('panel-viewer');
+  openingTabBar.classList.add('hidden');
+  tabLessons.classList.add('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
+  panelTactics.classList.add('hidden'); panelEndgame.classList.add('hidden');
+  panelTournament.classList.add('hidden'); panelViewer.classList.add('hidden');
 
+  if (mode === 'viewer') {
+    viewerRightPanel.classList.remove('hidden');
+    panelViewer.classList.remove('hidden');
+    vwInit();
+    return;
+  } else if (mode === 'tournament') {
+    tournamentRightPanel.classList.remove('hidden');
+    panelTournament.classList.remove('hidden');
+    tnInitMode();
+    return;
+  } else {
+    chessRightPanel.classList.remove('hidden');
+  }
+
+  // Sidebar panels
+  const openingSidebar = document.getElementById('tab-lessons').parentElement;
+  // Opening mode: show 3 opening tabs; Tactics/Endgame: hide them
+  // Sidebar: show appropriate panel for chess modes
   if (mode === 'opening') {
     openingTabBar.classList.remove('hidden');
-    tabLessons.classList.remove('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
-    panelTactics.classList.add('hidden'); panelEndgame.classList.add('hidden');
+    tabLessons.classList.remove('hidden');
     document.getElementById('tab-btn-lessons').classList.add('active');
     document.getElementById('tab-btn-challenge').classList.remove('active');
     document.getElementById('tab-btn-stats').classList.remove('active');
   } else if (mode === 'tactics') {
-    openingTabBar.classList.add('hidden');
-    tabLessons.classList.add('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
-    panelTactics.classList.remove('hidden'); panelEndgame.classList.add('hidden');
+    panelTactics.classList.remove('hidden');
     initTacticsMenu();
   } else if (mode === 'endgame') {
-    openingTabBar.classList.add('hidden');
-    tabLessons.classList.add('hidden'); tabChallenge.classList.add('hidden'); tabStats.classList.add('hidden');
-    panelTactics.classList.add('hidden'); panelEndgame.classList.remove('hidden');
+    panelEndgame.classList.remove('hidden');
     initEndgameMenu();
   }
 
@@ -2471,6 +2585,269 @@ function copyGasCode(el) {
     .catch(() => {});
 }
 
+// ===================== VIEWER MODE (khán giả - inline) =====================
+let vwSelectedId = null;
+let vwCurrentTab = 'pairings';
+let vwCurrentRound = 0;
+let vwRefreshTimer = null;
+
+function vwInit() {
+  // Auto-load from Sheets on first entry
+  if (tnData.tournaments.length === 0) {
+    vwLoadFromSheets();
+  } else {
+    vwRenderList();
+    // Auto-select first live or first tournament
+    const live = tnData.tournaments.find(t => t.status === 'running');
+    if (live) vwSelectTournament(live.id);
+    else if (tnData.tournaments.length > 0) vwSelectTournament(tnData.tournaments[0].id);
+  }
+  // Start auto-refresh every 60s
+  if (vwRefreshTimer) clearInterval(vwRefreshTimer);
+  vwRefreshTimer = setInterval(() => vwLoadFromSheets(true), 60000);
+}
+
+function vwExit() {
+  if (vwRefreshTimer) { clearInterval(vwRefreshTimer); vwRefreshTimer = null; }
+}
+
+async function vwLoadFromSheets(silent) {
+  const url = gasUrl || DEFAULT_GAS_URL;
+  if (!silent) {
+    document.getElementById('vw-status-line').textContent = '⏳ Đang tải từ Google Sheets...';
+    document.getElementById('vw-refresh-status').textContent = '⏳ Đang tải...';
+  }
+  try {
+    const res = await fetch(url + '?action=getData&t=' + Date.now());
+    const data = await res.json();
+    if (data.ok && data.tournaments) {
+      data.tournaments.forEach(remote => {
+        const idx = tnData.tournaments.findIndex(l => l.id === remote.id);
+        if (idx >= 0) tnData.tournaments[idx] = remote;
+        else tnData.tournaments.unshift(remote);
+      });
+      tnSave();
+    }
+    const now = new Date().toLocaleTimeString('vi-VN');
+    document.getElementById('vw-status-line').textContent = `✅ Cập nhật lúc ${now} · Tự làm mới mỗi 60 giây`;
+    document.getElementById('vw-refresh-status').textContent = `✅ Cập nhật lúc ${now}`;
+  } catch(e) {
+    document.getElementById('vw-status-line').textContent = '❌ Không kết nối được · Hiển thị dữ liệu cục bộ';
+    document.getElementById('vw-refresh-status').textContent = '❌ Lỗi kết nối';
+  }
+  vwRenderList();
+  if (vwSelectedId) vwRenderDetail(vwSelectedId);
+  else if (tnData.tournaments.length > 0) {
+    const live = tnData.tournaments.find(t => t.status === 'running');
+    vwSelectTournament((live || tnData.tournaments[0]).id);
+  }
+}
+
+function vwRenderList() {
+  const el = document.getElementById('vw-list');
+  if (!tnData.tournaments.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:#475569"><div style="font-size:2rem;margin-bottom:.5rem">🏆</div><p style="font-size:.8rem">Chưa có giải đấu nào.<br>Nhấn ⟳ Tải mới để lấy từ Google Sheets.</p></div>';
+    return;
+  }
+  // Sort: running first, then by id desc
+  const sorted = [...tnData.tournaments].sort((a,b) => {
+    if (a.status === 'running' && b.status !== 'running') return -1;
+    if (b.status === 'running' && a.status !== 'running') return 1;
+    return b.id - a.id;
+  });
+  const sysLabel = {swiss:'Swiss',roundrobin:'Vòng Tròn',knockout:'Loại Trực Tiếp'};
+  el.innerHTML = sorted.map(t => {
+    const isLive = t.status === 'running';
+    const isSelected = t.id === vwSelectedId;
+    const statusBadge = isLive
+      ? `<span style="background:#dc2626;color:#fff;font-size:.55rem;font-weight:800;padding:1px 5px;border-radius:999px;letter-spacing:.05em">● LIVE</span>`
+      : t.status === 'finished'
+        ? `<span style="background:#065f46;color:#6ee7b7;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:999px">✓ Kết thúc</span>`
+        : `<span style="background:#1e3a8a;color:#93c5fd;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:999px">⚙ Chuẩn bị</span>`;
+    return `<div class="vw-tourn-card ${isLive?'live-card':''} ${isSelected?'selected':''}" onclick="vwSelectTournament('${t.id}')">
+      <div class="flex items-center justify-between mb-1">
+        <p style="font-size:.8rem;font-weight:800;color:#e2e8f0;flex:1;padding-right:.5rem">${t.name}</p>
+        ${statusBadge}
+      </div>
+      <p style="font-size:.65rem;color:#64748b">${sysLabel[t.system]||t.system} · ${t.tc} · ${t.players.length} thí sinh</p>
+      <div style="margin-top:.4rem;background:#0f172a;border-radius:.3rem;overflow:hidden;height:4px">
+        <div style="height:100%;background:${isLive?'#f59e0b':'#1d4ed8'};width:${t.rounds?Math.round((t.currentRound/t.rounds)*100):0}%"></div>
+      </div>
+      <p style="font-size:.58rem;color:#475569;margin-top:.2rem">Vòng ${t.currentRound}/${t.rounds}</p>
+    </div>`;
+  }).join('');
+}
+
+function vwSelectTournament(id) {
+  vwSelectedId = id;
+  vwCurrentRound = 0;
+  vwRenderList(); // re-render to update selected state
+  const t = tnGetById(id);
+  if (!t) return;
+  // Show detail panel
+  document.getElementById('vw-rp-empty').classList.add('hidden');
+  document.getElementById('vw-rp-detail').classList.remove('hidden');
+  vwRenderDetail(id);
+}
+
+function vwRenderDetail(id) {
+  const t = tnGetById(id);
+  if (!t) return;
+  const sysLabel = {swiss:'Swiss',roundrobin:'Vòng Tròn',knockout:'Loại Trực Tiếp'};
+  document.getElementById('vw-rp-name').textContent = t.name;
+  document.getElementById('vw-rp-info').textContent =
+    `${sysLabel[t.system]||t.system} · ${t.tc} · ${t.players.length} thí sinh · Vòng ${t.currentRound}/${t.rounds}${t.venue?' · '+t.venue:''}`;
+  // Badges
+  const badgesEl = document.getElementById('vw-rp-badges');
+  const statusMap = {running:'🟢 Đang diễn ra',finished:'✅ Đã kết thúc',setup:'⚙️ Chuẩn bị'};
+  badgesEl.innerHTML = `<span style="background:rgba(255,255,255,.12);color:#c7d2fe;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:999px">${statusMap[t.status]||t.status}</span>`;
+  // Live badge
+  document.getElementById('vw-live-badge').classList.toggle('hidden', t.status !== 'running');
+  // Render current tab
+  if (vwCurrentTab === 'pairings') vwRenderPairings(t);
+  else if (vwCurrentTab === 'standings') vwRenderStandings(t);
+  else vwRenderCrosstable(t);
+}
+
+function vwSwitchTab(tab) {
+  vwCurrentTab = tab;
+  ['pairings','standings','crosstable'].forEach(t => {
+    document.getElementById('vw-view-' + t).classList.toggle('hidden', t !== tab);
+    document.getElementById('vw-tab-' + t).classList.toggle('active', t === tab);
+  });
+  const t = tnGetById(vwSelectedId);
+  if (!t) return;
+  if (tab === 'pairings') vwRenderPairings(t);
+  else if (tab === 'standings') vwRenderStandings(t);
+  else vwRenderCrosstable(t);
+}
+
+function vwRenderPairings(t) {
+  // Round tabs
+  const navEl = document.getElementById('vw-round-tabs');
+  if (!t.pairings.length) {
+    navEl.innerHTML = '';
+    document.getElementById('vw-pairings-body').innerHTML = '<p style="color:#475569;text-align:center;padding:2rem;font-size:.85rem">Chưa có lịch thi đấu.</p>';
+    return;
+  }
+  // Default to latest round
+  if (vwCurrentRound >= t.pairings.length) vwCurrentRound = t.pairings.length - 1;
+  navEl.innerHTML = t.pairings.map((_,i) =>
+    `<button onclick="vwCurrentRound=${i};vwRenderPairings(tnGetById('${t.id}'))"
+      style="padding:.25rem .55rem;border-radius:.3rem;font-size:.65rem;font-weight:700;cursor:pointer;border:1.5px solid ${i===vwCurrentRound?'#f59e0b':'rgba(255,255,255,.15)'};color:${i===vwCurrentRound?'#0f172a':'#94a3b8'};background:${i===vwCurrentRound?'#f59e0b':'transparent'}">
+      V${i+1}</button>`
+  ).join('');
+  const round = t.pairings[vwCurrentRound];
+  const playerMap = {};
+  t.players.forEach(p => { playerMap[p.id] = p; });
+  const scores = tnComputeScores(t);
+  const done = round.filter(p=>p.result!=='*').length;
+  const total = round.filter(p=>p.black!=='BYE').length;
+  let html = `<div style="padding:.25rem 0">
+    <div style="padding:.4rem .75rem;border-bottom:1px solid #1e293b;margin-bottom:.25rem">
+      <p style="color:#64748b;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em">Vòng ${vwCurrentRound+1} — ${done}/${total} ván có kết quả</p>
+    </div>`;
+  round.forEach((pair, bi) => {
+    const w = pair.white === 'BYE' ? {name:'BYE'} : (playerMap[pair.white]||{name:'?'});
+    const b = pair.black === 'BYE' ? {name:'Điểm Trắng'} : (playerMap[pair.black]||{name:'?'});
+    const wScore = tnFmtScore(scores[pair.white]?.score||0);
+    const bScore = pair.black === 'BYE' ? '' : tnFmtScore(scores[pair.black]?.score||0);
+    const r = pair.result;
+    const rColor = r==='1-0'?'#10b981':r==='0-1'?'#f87171':r==='½-½'?'#fbbf24':'#475569';
+    const rText = r==='*'?'—':r;
+    const wBold = r==='1-0';
+    const bBold = r==='0-1';
+    const isBye = pair.black === 'BYE';
+    html += `<div style="display:flex;align-items:center;gap:.5rem;padding:.7rem .75rem;border-bottom:1px solid #1e293b${isBye?';opacity:.5':''}">
+      <span style="color:#334155;font-size:.6rem;width:20px;text-align:center;font-weight:700;flex-shrink:0">${bi+1}</span>
+      <span style="flex:1;font-size:.82rem;color:${wBold?'#fbbf24':'#e2e8f0'};font-weight:${wBold?'800':'500'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.name} <span style="color:#475569;font-size:.62rem">(${wScore})</span></span>
+      <span style="min-width:38px;text-align:center;font-weight:900;color:${rColor};font-size:.9rem;flex-shrink:0">${rText}</span>
+      <span style="flex:1;text-align:right;font-size:.82rem;color:${bBold?'#fbbf24':'#64748b'};font-weight:${bBold?'800':'400'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.name}${bScore?` <span style='color:#475569;font-size:.62rem'>(${bScore})</span>`:''}</span>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('vw-pairings-body').innerHTML = html;
+}
+
+function vwRenderStandings(t) {
+  const scores = tnComputeScores(t);
+  const sorted = [...t.players].sort((a,b) => {
+    const ss = (scores[b.id]?.score||0) - (scores[a.id]?.score||0);
+    if (ss !== 0) return ss;
+    const buch = (scores[b.id]?.buchholz||0) - (scores[a.id]?.buchholz||0);
+    if (buch !== 0) return buch;
+    return (scores[b.id]?.sb||0) - (scores[a.id]?.sb||0);
+  });
+  const medals = ['🥇','🥈','🥉'];
+  let html = `<div>
+    <div style="display:flex;background:#1e293b;color:#64748b;font-size:.65rem;font-weight:700;padding:.5rem .75rem;gap:.3rem;border-bottom:2px solid #f59e0b">
+      <span style="width:28px">#</span>
+      <span style="flex:1">Thí sinh</span>
+      <span style="width:44px;text-align:center">Pts</span>
+      <span style="width:46px;text-align:center">Buch</span>
+      <span style="width:46px;text-align:center">SB</span>
+      <span style="width:30px;text-align:center">W</span>
+    </div>`;
+  sorted.forEach((p, i) => {
+    const sc = scores[p.id] || {};
+    const bg = i===0?'rgba(245,158,11,.08)':i===1?'rgba(148,163,184,.05)':i===2?'rgba(180,100,40,.05)':'transparent';
+    html += `<div style="display:flex;align-items:center;gap:.3rem;padding:.5rem .75rem;border-bottom:1px solid #1e293b;font-size:.8rem;background:${bg}">
+      <span style="width:28px;font-size:.75rem;text-align:center">${medals[i]||i+1}</span>
+      <span style="flex:1;color:#e2e8f0;font-weight:${i<3?'700':'400'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}${p.club?`<span style="font-size:.6rem;color:#475569;margin-left:.3rem">${p.club}</span>`:''}${p.rating?`<span style="font-size:.6rem;color:#475569;margin-left:.2rem">${p.rating}</span>`:''}</span>
+      <span style="width:44px;text-align:center;font-weight:800;color:#60a5fa;font-size:.95rem">${tnFmtScore(sc.score||0)}</span>
+      <span style="width:46px;text-align:center;font-size:.68rem;color:#64748b">${tnFmtScore(sc.buchholz||0)}</span>
+      <span style="width:46px;text-align:center;font-size:.68rem;color:#64748b">${tnFmtScore(sc.sb||0)}</span>
+      <span style="width:30px;text-align:center;font-size:.72rem;color:#10b981;font-weight:700">${sc.wins||0}</span>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('vw-standings-body').innerHTML = html;
+}
+
+function vwRenderCrosstable(t) {
+  const scores = tnComputeScores(t);
+  const sorted = [...t.players].sort((a,b) => (scores[b.id]?.score||0) - (scores[a.id]?.score||0));
+  const matrix = {};
+  t.players.forEach(p => { matrix[p.id] = {}; });
+  t.pairings.forEach(round => {
+    round.forEach(pair => {
+      if (pair.black === 'BYE') return;
+      const r = pair.result;
+      if (!r || r === '*') return;
+      if (r === '1-0') { matrix[pair.white][pair.black] = '1'; matrix[pair.black][pair.white] = '0'; }
+      else if (r === '0-1') { matrix[pair.white][pair.black] = '0'; matrix[pair.black][pair.white] = '1'; }
+      else if (r === '½-½') { matrix[pair.white][pair.black] = '½'; matrix[pair.black][pair.white] = '½'; }
+    });
+  });
+  const cellColor = {
+    '1':'rgba(16,185,129,.18)', '0':'rgba(239,68,68,.15)', '½':'rgba(245,158,11,.12)', '':'transparent'
+  };
+  const cellText = {'1':'<span style="color:#10b981;font-weight:800">1</span>', '0':'<span style="color:#ef4444;font-weight:800">0</span>', '½':'<span style="color:#f59e0b;font-weight:700">½</span>', '':'<span style="color:#334155">·</span>'};
+  let html = `<table style="border-collapse:collapse;font-size:.68rem;color:#e2e8f0;width:100%;min-width:400px">
+    <thead><tr>
+      <th style="padding:.35rem .5rem;background:#1e293b;border:1px solid #334155;color:#64748b;text-align:left;position:sticky;left:0">#</th>
+      <th style="padding:.35rem .5rem;background:#1e293b;border:1px solid #334155;color:#64748b;text-align:left;min-width:120px;position:sticky;left:24px">Thí sinh</th>
+      ${sorted.map((_,i)=>`<th style="padding:.35rem .4rem;background:#1e293b;border:1px solid #334155;color:#64748b;text-align:center;width:28px">${i+1}</th>`).join('')}
+      <th style="padding:.35rem .5rem;background:#1e293b;border:1px solid #334155;color:#60a5fa;text-align:center;width:36px;font-weight:800">Pts</th>
+    </tr></thead>
+    <tbody>`;
+  sorted.forEach((p,i) => {
+    const sc = scores[p.id]||{};
+    html += `<tr style="${i%2===0?'background:#0f172a':'background:#111827'}">
+      <td style="padding:.35rem .5rem;border:1px solid #1e293b;text-align:center;color:#64748b;position:sticky;left:0;background:${i%2===0?'#0f172a':'#111827'}">${i+1}</td>
+      <td style="padding:.35rem .5rem;border:1px solid #1e293b;font-weight:600;color:#e2e8f0;position:sticky;left:24px;background:${i%2===0?'#0f172a':'#111827'};white-space:nowrap">${p.name}${p.rating?`<span style='color:#475569;font-size:.58rem;margin-left:.25rem'>${p.rating}</span>`:''}</td>
+      ${sorted.map(q => {
+        if (q.id === p.id) return `<td style="padding:.35rem .4rem;border:1px solid #1e293b;text-align:center;background:#1e293b">✕</td>`;
+        const v = matrix[p.id][q.id] ?? '';
+        return `<td style="padding:.35rem .4rem;border:1px solid #1e293b;text-align:center;background:${cellColor[v]||'transparent'}">${cellText[v]||'<span style="color:#334155">·</span>'}</td>`;
+      }).join('')}
+      <td style="padding:.35rem .5rem;border:1px solid #1e293b;text-align:center;font-weight:800;color:#60a5fa;font-size:.82rem">${tnFmtScore(sc.score||0)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('vw-crosstable-body').innerHTML = html;
+}
+
 // ===================== SPECTATOR MODE =====================
 let specActive = false;
 let specTournamentId = null;
@@ -2770,13 +3147,18 @@ function tnGetById(id) {
 
 function tnShowCreate() {
   const f = document.getElementById('tn-create-form');
-  f.classList.toggle('hidden');
-  if (!f.classList.contains('hidden')) {
-    document.getElementById('tn-f-name').focus();
-    // Set default date to today
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('tn-f-date').value = today;
-  }
+  // Đóng menu xem giải nếu đang mở
+  document.getElementById('tn-view-menu').classList.add('hidden');
+  f.classList.remove('hidden');
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tn-f-date').value = today;
+  setTimeout(() => document.getElementById('tn-f-name').focus(), 80);
+  // Cuộn form vào view
+  f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function tnHideCreate() {
+  document.getElementById('tn-create-form').classList.add('hidden');
 }
 
 function tnCreateTournament() {
@@ -2792,19 +3174,95 @@ function tnCreateTournament() {
   const t = {
     id: 'tn_' + Date.now(),
     name, system, rounds, tc, venue, arbiter, date,
-    status: 'setup', // setup | running | finished
+    status: 'setup',
     players: [],
-    pairings: [], // array of rounds; each round = array of {white, black, result}
+    pairings: [],
     currentRound: 0,
     createdAt: Date.now()
   };
   tnData.tournaments.unshift(t);
   tnSave();
-  document.getElementById('tn-create-form').classList.add('hidden');
-  document.getElementById('tn-f-name').value = '';
+  tnHideCreate();
+  // Xóa form
+  ['tn-f-name','tn-f-venue','tn-f-arbiter'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
   tnRenderList();
   tnOpenTournament(t.id);
-  showToast('🏆 Đã tạo giải: ' + name, 'toast-level');
+  showToast('🏆 Đã tạo: ' + name + ' — Đang đồng bộ lên Sheets...', 'toast-level');
+  // Tự động đồng bộ lên Google Sheets ngay sau khi tạo
+  tnSyncToSheets();
+}
+
+// ---- MENU XEM GIẢI ĐẤU ----
+function tnToggleViewMenu() {
+  const menu = document.getElementById('tn-view-menu');
+  const isHidden = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden');
+  if (isHidden) {
+    // Đóng form tạo giải nếu đang mở
+    tnHideCreate();
+    tnRefreshViewMenu();
+  }
+}
+
+function tnRefreshViewMenu() {
+  const body = document.getElementById('tn-view-menu-body');
+  if (!tnData.tournaments.length) {
+    body.innerHTML = `<div style="padding:1rem;text-align:center;color:#64748b;font-size:.75rem">
+      Chưa có giải đấu.<br>Nhấn <b>⬇️ Tải mới</b> để tải từ Google Sheets.
+    </div>`;
+    return;
+  }
+  const scores = {};
+  body.innerHTML = tnData.tournaments.map(t => {
+    const sysLabel = {swiss:'Swiss',roundrobin:'Vòng Tròn',knockout:'Loại Trực Tiếp'}[t.system]||t.system;
+    const statusColor = {setup:'#f59e0b',running:'#10b981',finished:'#60a5fa'}[t.status]||'#94a3b8';
+    const statusLabel = {setup:'Cài đặt',running:`Vòng ${t.currentRound}/${t.rounds}`,finished:'Kết thúc'}[t.status]||t.status;
+
+    // Tính top 3 nếu có kết quả
+    let topHtml = '';
+    if (t.pairings.length > 0 && t.players.length > 0) {
+      const sc = tnComputeScores(t);
+      const sorted = [...t.players].sort((a,b) => (sc[b.id]?.score||0) - (sc[a.id]?.score||0)).slice(0,3);
+      const medals = ['🥇','🥈','🥉'];
+      topHtml = `<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.3rem">` +
+        sorted.map((p,i) => `<span style="font-size:.6rem;color:#94a3b8">${medals[i]} ${p.name} <b style="color:#60a5fa">${tnFmtScore(sc[p.id]?.score||0)}</b></span>`).join('') +
+        `</div>`;
+    }
+
+    return `<div style="padding:.65rem .85rem;border-bottom:1px solid #334155;cursor:pointer;transition:background .15s"
+        onmouseover="this.style.background='#334155'" onmouseout="this.style.background=''"
+        onclick="tnViewMenuSelect('${t.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+        <span style="font-size:.8rem;font-weight:700;color:#e2e8f0;flex:1">${t.name}</span>
+        <span style="font-size:.6rem;font-weight:700;color:${statusColor};white-space:nowrap">${statusLabel}</span>
+      </div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.2rem">
+        <span style="font-size:.6rem;color:#64748b">${sysLabel}</span>
+        <span style="font-size:.6rem;color:#64748b">·</span>
+        <span style="font-size:.6rem;color:#64748b">${t.tc}</span>
+        <span style="font-size:.6rem;color:#64748b">·</span>
+        <span style="font-size:.6rem;color:#64748b">${t.players.length} thí sinh</span>
+        ${t.date ? `<span style="font-size:.6rem;color:#64748b">· 📅 ${t.date}</span>` : ''}
+      </div>
+      ${topHtml}
+    </div>`;
+  }).join('');
+}
+
+async function tnLoadAndRefreshViewMenu() {
+  const body = document.getElementById('tn-view-menu-body');
+  body.innerHTML = `<div style="padding:1rem;text-align:center;color:#64748b;font-size:.75rem">⏳ Đang tải từ Google Sheets...</div>`;
+  await tnLoadFromSheets();
+  tnRefreshViewMenu();
+}
+
+function tnViewMenuSelect(id) {
+  // Đóng menu và mở spectator view cho giải này
+  document.getElementById('tn-view-menu').classList.add('hidden');
+  specTournamentId = id;
+  specEnter(id, false);
 }
 
 function tnRenderList() {
@@ -3193,7 +3651,8 @@ function tnGenerateNextRound() {
   tnCurrentRound = t.pairings.length - 1;
   tnOpenTournament(tnActive);
   tnSwitchView('pairings');
-  showToast(`🎯 Đã xếp cặp Vòng ${t.currentRound}`, 'toast-xp');
+  showToast(`🎯 Đã xếp cặp Vòng ${t.currentRound} — Đang đồng bộ...`, 'toast-xp');
+  tnSyncToSheets();
 }
 
 // ---- PAIRINGS VIEW ----
@@ -3251,7 +3710,7 @@ function tnSaveResults() {
   const t = tnGetById(tnActive);
   if (!t) return;
   tnSave();
-  // Check if all rounds done and all results in
+  // Kiểm tra nếu tất cả vòng và kết quả đã hoàn thành
   const allRoundsDone = t.currentRound >= t.rounds;
   if (allRoundsDone) {
     const lastRound = t.pairings[t.pairings.length-1];
@@ -3262,8 +3721,10 @@ function tnSaveResults() {
       tnOpenTournament(tnActive);
     }
   }
-  showToast('💾 Đã lưu kết quả!', 'toast-xp');
+  showToast('💾 Đã lưu — Đang cập nhật lên Google Sheets...', 'toast-xp');
   tnRenderList();
+  // Tự động đồng bộ lên Google Sheets để máy khác xem được ngay
+  tnSyncToSheets();
 }
 
 // ---- STANDINGS ----
