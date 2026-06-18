@@ -181,22 +181,36 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
 .vw-tourn-card.live-card{border-color:#dc2626;animation:cardPulse 2s infinite}
 @keyframes cardPulse{0%,100%{border-color:#dc2626}50%{border-color:#f87171}}
 @keyframes livePulse{0%,100%{opacity:1}50%{opacity:.6}}
-/* Viewer mode: mobile-first overrides */
+/* ── Viewer mode: mobile-first ── */
 @media(max-width:767px){
   body.vw-active #main-sidebar{display:none!important}
   body.vw-active #viewer-right-panel{width:100%!important;border-radius:.5rem!important}
   body.vw-active main{padding:.4rem!important;gap:.4rem!important}
-  /* Mobile chip strip: visible only on mobile */
   .vw-chips-strip{display:flex!important}
-  /* Content rows: slightly larger touch targets on mobile */
   .vw-row{min-height:44px}
 }
 @media(min-width:768px){
-  /* Hide mobile chips on desktop (sidebar handles selection) */
   .vw-chips-strip{display:none!important}
-  /* Compact rows on desktop */
   .vw-row{min-height:0}
 }
+/* ── Solo view: only the tournament panel, nothing else ── */
+body.solo-view header,
+body.solo-view nav.mode-nav,
+body.solo-view #main-sidebar{display:none!important}
+body.solo-view main{
+  padding:0!important;gap:0!important;
+  border-radius:0!important;height:100%!important;
+  max-width:100%!important;
+}
+body.solo-view #viewer-right-panel{
+  width:100%!important;border-radius:0!important;
+  border:none!important;
+}
+/* In solo view, hide the mobile chips strip (we have the back bar instead) */
+body.solo-view .vw-chips-strip{display:none!important}
+/* Show the solo back bar only in solo view */
+#vw-solo-bar{display:none}
+body.solo-view #vw-solo-bar{display:flex!important}
 /* Common chip style */
 .vw-chip{flex-shrink:0;padding:.3rem .65rem;border-radius:999px;font-size:.68rem;font-weight:700;cursor:pointer;border:1.5px solid #1e293b;color:#64748b;background:#1e293b;white-space:nowrap;transition:all .12s}
 .vw-chip.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
@@ -495,7 +509,22 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
   <!-- Viewer Right Panel (audience mode) -->
   <div id="viewer-right-panel" class="hidden w-full md:w-2/3 rounded-lg shadow-lg flex flex-col overflow-hidden border border-slate-700" style="background:#0f172a">
 
-    <!-- ① MOBILE ONLY: horizontal tournament chip strip -->
+    <!-- ① SOLO: back bar (shown only in solo-view mode) -->
+    <div id="vw-solo-bar" style="align-items:center;justify-content:space-between;gap:.5rem;padding:.5rem .75rem;background:#0a0f1a;border-bottom:1px solid #1e293b;flex-shrink:0">
+      <button onclick="vwExitSolo()"
+        style="display:flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#cbd5e1;border-radius:.4rem;padding:.3rem .7rem;font-size:.72rem;cursor:pointer;font-weight:700">
+        ← Danh sách
+      </button>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <span id="vw-solo-title" style="font-size:.7rem;font-weight:700;color:#64748b;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button onclick="vwCopySoloLink()" title="Copy link"
+          style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#60a5fa;border-radius:.35rem;padding:.25rem .5rem;font-size:.65rem;cursor:pointer">
+          🔗 Copy link
+        </button>
+      </div>
+    </div>
+
+    <!-- ③ MOBILE ONLY: horizontal tournament chip strip -->
     <div class="vw-chips-strip" style="align-items:center;gap:.4rem;padding:.45rem .6rem;border-bottom:1px solid #1e293b;background:#0a0f1a;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
       <!-- chips injected by vwRenderChips() -->
       <div id="vw-chips" style="display:flex;gap:.35rem;min-width:max-content"></div>
@@ -2625,12 +2654,13 @@ function copyGasCode(el) {
     .catch(() => {});
 }
 
-// ===================== VIEWER MODE (khán giả - mobile-first) =====================
+// ===================== VIEWER MODE (khán giả - mobile-first + solo URL) =====================
 let vwSelectedId = null;
 let vwCurrentTab = 'pairings';
 let vwCurrentRound = 0;
 let vwRefreshTimer = null;
-let vwDetailQuery = ''; // search query within selected tournament
+let vwDetailQuery = '';
+let vwSoloMode = false;
 
 // Highlight helper: wrap matching text with a span
 function vwHL(text, q) {
@@ -2681,8 +2711,81 @@ function vwInit() {
 
 function vwExit() {
   document.body.classList.remove('vw-active');
+  if (vwSoloMode) vwExitSolo();
   if (vwRefreshTimer) { clearInterval(vwRefreshTimer); vwRefreshTimer = null; }
 }
+
+function vwEnterSolo(id) {
+  vwSoloMode = true;
+  vwSelectedId = id;
+  // Ensure viewer right panel is visible (don't call switchMode to avoid recursion)
+  document.getElementById('viewer-right-panel').classList.remove('hidden');
+  document.body.classList.add('solo-view');
+  // Update URL
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', id);
+    history.pushState({ vwSolo: id }, '', url.toString());
+  } catch(e) {}
+  // Update solo bar title
+  const t = tnGetById(id);
+  if (t) {
+    const el = document.getElementById('vw-solo-title');
+    if (el) el.textContent = t.name;
+  }
+  // Auto-refresh in solo mode
+  if (vwRefreshTimer) clearInterval(vwRefreshTimer);
+  vwRefreshTimer = setInterval(() => vwLoadFromSheets(true), 60000);
+  vwRenderDetail(id);
+}
+
+function vwExitSolo() {
+  vwSoloMode = false;
+  document.body.classList.remove('solo-view');
+  // Remove ?view param from URL
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('view');
+    history.pushState({}, '', url.toString());
+  } catch(e) {}
+  // Restore normal viewer layout (re-init without entering solo again)
+  vwRenderList();
+  vwRenderChips();
+}
+
+function vwCopySoloLink() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('view', vwSelectedId);
+  if (gasUrl) url.searchParams.set('gas', encodeURIComponent(gasUrl));
+  try {
+    navigator.clipboard.writeText(url.toString()).then(() => showToast('📋 Đã copy link giải!', 'toast-level'));
+  } catch(e) {
+    prompt('Copy link này:', url.toString());
+  }
+}
+
+// Handle browser back/forward in solo mode
+window.addEventListener('popstate', function(e) {
+  const params = new URLSearchParams(window.location.search);
+  const viewId = params.get('view');
+  if (viewId) {
+    // Navigated forward to a solo view
+    vwSoloMode = true;
+    document.body.classList.add('solo-view');
+    vwSelectedId = viewId;
+    document.getElementById('vw-rp-empty').classList.add('hidden');
+    document.getElementById('vw-rp-detail').classList.remove('hidden');
+    const t = tnGetById(viewId);
+    if (t) { document.getElementById('vw-solo-title').textContent = t.name; vwRenderDetail(viewId); }
+    else { vwLoadFromSheets(true); }
+  } else if (vwSoloMode) {
+    // Navigated back from solo view
+    vwSoloMode = false;
+    document.body.classList.remove('solo-view');
+    // Stay in viewer mode
+    if (currentMode !== 'viewer') switchMode('viewer');
+  }
+});
 
 async function vwLoadFromSheets(silent) {
   const url = gasUrl || DEFAULT_GAS_URL;
@@ -2772,22 +2875,20 @@ function vwRenderList() {
 }
 
 function vwSelectTournament(id) {
-  vwSelectedId = id;
   vwCurrentRound = 0;
   vwDetailQuery = '';
   const di = document.getElementById('vw-detail-search');
   if (di) di.value = '';
-  vwRenderList();
-  vwRenderChips();
-  document.getElementById('vw-rp-empty').classList.add('hidden');
-  document.getElementById('vw-rp-detail').classList.remove('hidden');
   // Reset to pairings tab
   vwCurrentTab = 'pairings';
   ['pairings','standings','crosstable'].forEach(t => {
     document.getElementById('vw-view-' + t).classList.toggle('hidden', t !== 'pairings');
     document.getElementById('vw-tab-' + t).classList.toggle('active', t === 'pairings');
   });
-  vwRenderDetail(id);
+  document.getElementById('vw-rp-empty').classList.add('hidden');
+  document.getElementById('vw-rp-detail').classList.remove('hidden');
+  // Enter full-screen solo mode with URL update
+  vwEnterSolo(id);
 }
 
 function vwRenderDetail(id) {
@@ -3202,18 +3303,63 @@ function specRenderCrosstable(t) {
   document.getElementById('spec-crosstable-body').innerHTML = html;
 }
 
-// Check URL params on load for spectator mode
+// Check URL params on load
 function checkUrlParams() {
   const params = new URLSearchParams(window.location.search);
   const isSpectator = params.get('spectator') === '1';
   const urlGas = params.get('gas');
+  const viewId = params.get('view');
+
   if (urlGas) {
-    specGasUrl = decodeURIComponent(urlGas);
-    gasUrl = specGasUrl;
+    const decoded = decodeURIComponent(urlGas);
+    specGasUrl = decoded;
+    gasUrl = decoded;
     try { localStorage.setItem(GAS_KEY, gasUrl); } catch(e) {}
   }
+
+  // ?view=<id>  →  full-screen solo viewer for that tournament
+  if (viewId) {
+    setTimeout(async () => {
+      // Load from sheets first, then open solo view
+      const url = gasUrl || DEFAULT_GAS_URL;
+      try {
+        const res = await fetch(url + '?action=getData&t=' + Date.now());
+        const data = await res.json();
+        if (data.ok && data.tournaments) {
+          data.tournaments.forEach(remote => {
+            const idx = tnData.tournaments.findIndex(l => l.id === remote.id);
+            if (idx >= 0) tnData.tournaments[idx] = remote;
+            else tnData.tournaments.unshift(remote);
+          });
+          tnSave();
+        }
+      } catch(e) {}
+      // Enter viewer + solo mode
+      switchMode('viewer');
+      vwSoloMode = true;
+      document.body.classList.add('vw-active', 'solo-view');
+      vwSelectedId = viewId;
+      vwCurrentTab = 'pairings';
+      ['pairings','standings','crosstable'].forEach(t => {
+        document.getElementById('vw-view-' + t).classList.toggle('hidden', t !== 'pairings');
+        document.getElementById('vw-tab-' + t).classList.toggle('active', t === 'pairings');
+      });
+      document.getElementById('vw-rp-empty').classList.add('hidden');
+      document.getElementById('vw-rp-detail').classList.remove('hidden');
+      const t = tnGetById(viewId);
+      if (t) {
+        document.getElementById('vw-solo-title').textContent = t.name;
+        vwRenderDetail(viewId);
+      }
+      // Auto-refresh every 60s
+      if (vwRefreshTimer) clearInterval(vwRefreshTimer);
+      vwRefreshTimer = setInterval(() => vwLoadFromSheets(true), 60000);
+    }, 600);
+    return; // Skip other URL checks
+  }
+
+  // ?spectator=1  →  legacy full-screen spectator overlay
   if (isSpectator) {
-    // Auto-enter spectator mode after a short delay (wait for DOM)
     setTimeout(() => {
       switchMode('tournament');
       setTimeout(() => specEnter(null, true), 500);
