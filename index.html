@@ -417,22 +417,25 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
     <!-- Panel: Xem Giải (hidden by default) -->
     <div id="panel-viewer" class="hidden flex-1 flex flex-col overflow-hidden" style="background:#0f172a">
 
-      <!-- Header -->
-      <div style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);padding:.75rem 1rem">
-        <div class="flex items-center justify-between mb-1">
-          <div>
-            <p style="font-size:.75rem;font-weight:800;color:#fff;letter-spacing:.06em;text-transform:uppercase">🏆 Xem Giải Đấu</p>
-            <p id="vw-status-line" style="font-size:.6rem;color:#a5b4fc">Đang tải...</p>
-          </div>
-          <button onclick="vwLoadFromSheets()" id="vw-refresh-btn"
-            style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:.4rem;padding:.3rem .65rem;font-size:.65rem;cursor:pointer;font-weight:700">
-            ⟳ Tải mới
-          </button>
+      <!-- Compact header -->
+      <div style="padding:.65rem .75rem;border-bottom:1px solid #1e293b;background:#0f172a;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+          <span style="font-size:.7rem;font-weight:800;color:#f59e0b;letter-spacing:.06em;text-transform:uppercase">🏆 Giải Đấu</span>
+          <button onclick="vwLoadFromSheets()" title="Tải mới từ Sheets"
+            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#94a3b8;border-radius:.35rem;padding:.2rem .5rem;font-size:.65rem;cursor:pointer">⟳</button>
         </div>
+        <!-- Search box -->
+        <div style="position:relative">
+          <input id="vw-search" type="text" placeholder="🔍 Tìm giải đấu hoặc thí sinh..."
+            oninput="vwRenderList()"
+            style="width:100%;padding:.4rem .6rem .4rem 1.8rem;background:#1e293b;border:1.5px solid #334155;border-radius:.45rem;color:#e2e8f0;font-size:.72rem;outline:none;box-sizing:border-box">
+          <span style="position:absolute;left:.5rem;top:50%;transform:translateY(-50%);font-size:.65rem;color:#475569;pointer-events:none">🔍</span>
+        </div>
+        <p id="vw-status-line" style="font-size:.58rem;color:#475569;margin-top:.4rem">Chưa tải</p>
       </div>
 
       <!-- Tournament list -->
-      <div id="vw-list" class="overflow-y-auto custom-scrollbar flex-1" style="padding:.5rem"></div>
+      <div id="vw-list" class="overflow-y-auto custom-scrollbar flex-1" style="padding:.4rem"></div>
     </div>
 
     <!-- Panel: Tàn Cuộc (hidden by default) -->
@@ -472,56 +475,64 @@ body { background-color:#f1f5f9; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sa
   <!-- Viewer Right Panel (audience mode) -->
   <div id="viewer-right-panel" class="hidden w-full md:w-2/3 rounded-lg shadow-lg flex flex-col overflow-hidden border border-slate-700" style="background:#0f172a">
 
-    <!-- Viewer: empty state -->
-    <div id="vw-rp-empty" class="flex-1 flex flex-col items-center justify-center" style="color:#475569">
-      <div style="font-size:3rem;margin-bottom:1rem">🏆</div>
-      <p style="font-size:1rem;font-weight:700;color:#64748b;margin-bottom:.5rem">Chọn một giải đấu để xem</p>
-      <p style="font-size:.8rem;color:#334155">Nhấn vào giải đấu bên trái để xem chi tiết</p>
+    <!-- Empty state -->
+    <div id="vw-rp-empty" class="flex-1 flex flex-col items-center justify-center gap-3">
+      <div style="font-size:3.5rem">🏆</div>
+      <p style="font-size:.95rem;font-weight:700;color:#475569">Chọn một giải đấu để xem</p>
+      <p style="font-size:.75rem;color:#334155;text-align:center;max-width:260px">Nhấn vào tên giải bên trái hoặc tìm kiếm thí sinh bằng thanh tìm kiếm</p>
     </div>
 
-    <!-- Viewer: tournament detail -->
+    <!-- Detail view -->
     <div id="vw-rp-detail" class="hidden flex-1 flex flex-col overflow-hidden">
 
-      <!-- Detail header -->
-      <div id="vw-rp-header" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8);padding:1rem 1.25rem">
-        <div class="flex items-start justify-between mb-2">
-          <div>
-            <p id="vw-rp-name" style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:.25rem"></p>
-            <div class="flex gap-2 flex-wrap" id="vw-rp-badges"></div>
+      <!-- Header: tournament name + meta + tabs -->
+      <div style="background:#1e293b;border-bottom:2px solid #f59e0b;padding:.75rem 1rem;flex-shrink:0">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.4rem">
+          <div style="flex:1;min-width:0">
+            <p id="vw-rp-name" style="font-size:1rem;font-weight:800;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></p>
+            <p id="vw-rp-info" style="font-size:.65rem;color:#64748b;margin-top:.2rem"></p>
           </div>
-          <div id="vw-live-badge" class="hidden" style="background:#dc2626;color:#fff;font-size:.65rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;letter-spacing:.06em;animation:pulse 2s infinite">● LIVE</div>
+          <div id="vw-live-badge" class="hidden" style="background:#dc2626;color:#fff;font-size:.6rem;font-weight:800;padding:.2rem .55rem;border-radius:999px;white-space:nowrap;animation:livePulse 1.5s infinite;flex-shrink:0">● LIVE</div>
         </div>
-        <p id="vw-rp-info" style="font-size:.75rem;color:#93c5fd;margin-bottom:.75rem"></p>
-        <!-- Tab bar -->
-        <div class="flex gap-1 flex-wrap">
+        <!-- Tabs -->
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem">
           <button class="vw-tab-btn active" id="vw-tab-pairings" onclick="vwSwitchTab('pairings')">🎯 Xếp Cặp</button>
           <button class="vw-tab-btn" id="vw-tab-standings" onclick="vwSwitchTab('standings')">📊 BXH</button>
           <button class="vw-tab-btn" id="vw-tab-crosstable" onclick="vwSwitchTab('crosstable')">📋 Đối Chiếu</button>
         </div>
       </div>
 
+      <!-- Search bar (inside detail panel) -->
+      <div style="padding:.5rem .75rem;border-bottom:1px solid #1e293b;background:#0f172a;flex-shrink:0">
+        <input id="vw-detail-search" type="text" placeholder="🔍 Tìm thí sinh trong giải này..."
+          oninput="vwApplyDetailSearch()"
+          style="width:100%;padding:.35rem .65rem;background:#1e293b;border:1.5px solid #334155;border-radius:.4rem;color:#e2e8f0;font-size:.72rem;outline:none;box-sizing:border-box">
+      </div>
+
       <!-- Tab: Pairings -->
       <div id="vw-view-pairings" class="flex-1 flex flex-col overflow-hidden">
-        <div class="flex gap-1 flex-wrap px-3 py-2" id="vw-round-tabs" style="border-bottom:1px solid #1e293b;background:#0f172a"></div>
-        <div id="vw-pairings-body" class="overflow-y-auto flex-1 custom-scrollbar" style="background:#0f172a"></div>
+        <!-- Round tabs -->
+        <div id="vw-round-tabs" style="display:flex;flex-wrap:wrap;gap:.3rem;padding:.5rem .75rem;border-bottom:1px solid #1e293b;background:#0a0f1a;flex-shrink:0;overflow-x:auto"></div>
+        <!-- Pairings content -->
+        <div id="vw-pairings-body" class="overflow-y-auto flex-1 custom-scrollbar"></div>
       </div>
 
       <!-- Tab: Standings -->
-      <div id="vw-view-standings" class="hidden flex-1 flex flex-col overflow-hidden" style="background:#0f172a">
+      <div id="vw-view-standings" class="hidden flex-1 overflow-hidden flex flex-col">
         <div id="vw-standings-body" class="overflow-y-auto flex-1 custom-scrollbar"></div>
       </div>
 
       <!-- Tab: Crosstable -->
-      <div id="vw-view-crosstable" class="hidden flex-1 overflow-auto custom-scrollbar p-2" style="background:#0f172a">
+      <div id="vw-view-crosstable" class="hidden flex-1 overflow-auto custom-scrollbar p-2">
         <div id="vw-crosstable-body"></div>
       </div>
 
     </div>
 
-    <!-- Auto-refresh bar -->
-    <div style="background:#0f172a;border-top:1px solid #1e293b;padding:.4rem .75rem;display:flex;align-items:center;justify-content:space-between">
-      <span id="vw-refresh-status" style="font-size:.6rem;color:#475569">Chưa tải dữ liệu</span>
-      <button onclick="vwLoadFromSheets()" style="background:none;border:none;color:#60a5fa;font-size:.65rem;cursor:pointer;font-weight:700">⟳ Làm mới</button>
+    <!-- Footer: refresh status -->
+    <div style="background:#0a0f1a;border-top:1px solid #1e293b;padding:.3rem .75rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span id="vw-refresh-status" style="font-size:.58rem;color:#334155">Chưa tải</span>
+      <button onclick="vwLoadFromSheets()" style="background:none;border:none;color:#475569;font-size:.6rem;cursor:pointer;font-weight:700">⟳ Làm mới</button>
     </div>
   </div>
 
@@ -2585,24 +2596,37 @@ function copyGasCode(el) {
     .catch(() => {});
 }
 
-// ===================== VIEWER MODE (khán giả - inline) =====================
+// ===================== VIEWER MODE (khán giả - tối giản) =====================
 let vwSelectedId = null;
 let vwCurrentTab = 'pairings';
 let vwCurrentRound = 0;
 let vwRefreshTimer = null;
+let vwDetailQuery = ''; // search query within selected tournament
+
+// Highlight helper: wrap matching text with a span
+function vwHL(text, q) {
+  if (!q) return text;
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return text.replace(new RegExp('(' + esc + ')', 'gi'), '<mark style="background:#f59e0b;color:#0f172a;border-radius:2px;padding:0 1px">$1</mark>');
+}
 
 function vwInit() {
-  // Auto-load from Sheets on first entry
+  vwCurrentTab = 'pairings';
+  vwCurrentRound = 0;
+  vwDetailQuery = '';
+  const si = document.getElementById('vw-search');
+  if (si) si.value = '';
+  const di = document.getElementById('vw-detail-search');
+  if (di) di.value = '';
+
   if (tnData.tournaments.length === 0) {
     vwLoadFromSheets();
   } else {
     vwRenderList();
-    // Auto-select first live or first tournament
     const live = tnData.tournaments.find(t => t.status === 'running');
     if (live) vwSelectTournament(live.id);
     else if (tnData.tournaments.length > 0) vwSelectTournament(tnData.tournaments[0].id);
   }
-  // Start auto-refresh every 60s
   if (vwRefreshTimer) clearInterval(vwRefreshTimer);
   vwRefreshTimer = setInterval(() => vwLoadFromSheets(true), 60000);
 }
@@ -2613,10 +2637,11 @@ function vwExit() {
 
 async function vwLoadFromSheets(silent) {
   const url = gasUrl || DEFAULT_GAS_URL;
-  if (!silent) {
-    document.getElementById('vw-status-line').textContent = '⏳ Đang tải từ Google Sheets...';
-    document.getElementById('vw-refresh-status').textContent = '⏳ Đang tải...';
-  }
+  const setStatus = (txt) => {
+    document.getElementById('vw-status-line').textContent = txt;
+    document.getElementById('vw-refresh-status').textContent = txt;
+  };
+  if (!silent) setStatus('⏳ Đang tải từ Google Sheets...');
   try {
     const res = await fetch(url + '?action=getData&t=' + Date.now());
     const data = await res.json();
@@ -2628,12 +2653,9 @@ async function vwLoadFromSheets(silent) {
       });
       tnSave();
     }
-    const now = new Date().toLocaleTimeString('vi-VN');
-    document.getElementById('vw-status-line').textContent = `✅ Cập nhật lúc ${now} · Tự làm mới mỗi 60 giây`;
-    document.getElementById('vw-refresh-status').textContent = `✅ Cập nhật lúc ${now}`;
+    setStatus('✅ ' + new Date().toLocaleTimeString('vi-VN') + ' · Tự làm mới mỗi 60s');
   } catch(e) {
-    document.getElementById('vw-status-line').textContent = '❌ Không kết nối được · Hiển thị dữ liệu cục bộ';
-    document.getElementById('vw-refresh-status').textContent = '❌ Lỗi kết nối';
+    setStatus('❌ Không kết nối · Hiển thị dữ liệu cục bộ');
   }
   vwRenderList();
   if (vwSelectedId) vwRenderDetail(vwSelectedId);
@@ -2645,35 +2667,56 @@ async function vwLoadFromSheets(silent) {
 
 function vwRenderList() {
   const el = document.getElementById('vw-list');
+  const q = (document.getElementById('vw-search')?.value || '').trim().toLowerCase();
+
   if (!tnData.tournaments.length) {
-    el.innerHTML = '<div style="text-align:center;padding:2rem;color:#475569"><div style="font-size:2rem;margin-bottom:.5rem">🏆</div><p style="font-size:.8rem">Chưa có giải đấu nào.<br>Nhấn ⟳ Tải mới để lấy từ Google Sheets.</p></div>';
+    el.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:#334155"><div style="font-size:2rem;margin-bottom:.75rem">🏆</div><p style="font-size:.75rem;font-weight:600;color:#475569">Chưa có giải đấu</p><p style="font-size:.65rem;margin-top:.25rem;color:#334155">Nhấn ⟳ để tải từ Google Sheets</p></div>';
     return;
   }
-  // Sort: running first, then by id desc
-  const sorted = [...tnData.tournaments].sort((a,b) => {
-    if (a.status === 'running' && b.status !== 'running') return -1;
-    if (b.status === 'running' && a.status !== 'running') return 1;
+
+  // Sort: running first, then newest
+  const allSorted = [...tnData.tournaments].sort((a,b) => {
+    if (a.status==='running' && b.status!=='running') return -1;
+    if (b.status==='running' && a.status!=='running') return 1;
     return b.id - a.id;
   });
-  const sysLabel = {swiss:'Swiss',roundrobin:'Vòng Tròn',knockout:'Loại Trực Tiếp'};
-  el.innerHTML = sorted.map(t => {
+
+  // Filter: match tournament name OR player name
+  const filtered = !q ? allSorted : allSorted.filter(t => {
+    if (t.name.toLowerCase().includes(q)) return true;
+    return t.players.some(p => p.name.toLowerCase().includes(q));
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="text-align:center;padding:2rem 1rem;color:#334155"><p style="font-size:.75rem">Không tìm thấy "<b style="color:#f59e0b">${q}</b>"</p></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(t => {
     const isLive = t.status === 'running';
     const isSelected = t.id === vwSelectedId;
-    const statusBadge = isLive
-      ? `<span style="background:#dc2626;color:#fff;font-size:.55rem;font-weight:800;padding:1px 5px;border-radius:999px;letter-spacing:.05em">● LIVE</span>`
-      : t.status === 'finished'
-        ? `<span style="background:#065f46;color:#6ee7b7;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:999px">✓ Kết thúc</span>`
-        : `<span style="background:#1e3a8a;color:#93c5fd;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:999px">⚙ Chuẩn bị</span>`;
-    return `<div class="vw-tourn-card ${isLive?'live-card':''} ${isSelected?'selected':''}" onclick="vwSelectTournament('${t.id}')">
-      <div class="flex items-center justify-between mb-1">
-        <p style="font-size:.8rem;font-weight:800;color:#e2e8f0;flex:1;padding-right:.5rem">${t.name}</p>
-        ${statusBadge}
+    const pct = t.rounds ? Math.round((t.currentRound / t.rounds) * 100) : 0;
+    const dot = isLive ? '🟢' : t.status === 'finished' ? '⚫' : '🔵';
+    // If query matches a player, show matched players below
+    let matchedPlayers = '';
+    if (q && t.players.some(p => p.name.toLowerCase().includes(q))) {
+      const hits = t.players.filter(p => p.name.toLowerCase().includes(q)).slice(0,3);
+      matchedPlayers = `<p style="font-size:.6rem;color:#64748b;margin-top:.3rem">👤 ${hits.map(p=>vwHL(p.name,q)).join(' · ')}</p>`;
+    }
+    return `<div onclick="vwSelectTournament('${t.id}')"
+      style="padding:.6rem .75rem;border-radius:.5rem;border:1.5px solid ${isSelected?'#f59e0b':isLive?'rgba(220,38,38,.4)':'#1e293b'};background:${isSelected?'#1c1a0a':isLive?'rgba(220,38,38,.05)':'#1e293b'};margin-bottom:.35rem;cursor:pointer;transition:border-color .15s">
+      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem">
+        <span style="font-size:.65rem;flex-shrink:0">${dot}</span>
+        <p style="font-size:.78rem;font-weight:700;color:${isSelected?'#fbbf24':'#e2e8f0'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${vwHL(t.name, q)}</p>
+        ${isLive ? '<span style="font-size:.55rem;font-weight:800;color:#ef4444;flex-shrink:0">LIVE</span>' : ''}
       </div>
-      <p style="font-size:.65rem;color:#64748b">${sysLabel[t.system]||t.system} · ${t.tc} · ${t.players.length} thí sinh</p>
-      <div style="margin-top:.4rem;background:#0f172a;border-radius:.3rem;overflow:hidden;height:4px">
-        <div style="height:100%;background:${isLive?'#f59e0b':'#1d4ed8'};width:${t.rounds?Math.round((t.currentRound/t.rounds)*100):0}%"></div>
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <div style="flex:1;height:3px;background:#0f172a;border-radius:2px;overflow:hidden">
+          <div style="height:100%;background:${isLive?'#ef4444':isSelected?'#f59e0b':'#1d4ed8'};width:${pct}%"></div>
+        </div>
+        <span style="font-size:.58rem;color:#475569;white-space:nowrap">V${t.currentRound}/${t.rounds}</span>
       </div>
-      <p style="font-size:.58rem;color:#475569;margin-top:.2rem">Vòng ${t.currentRound}/${t.rounds}</p>
+      ${matchedPlayers}
     </div>`;
   }).join('');
 }
@@ -2681,12 +2724,18 @@ function vwRenderList() {
 function vwSelectTournament(id) {
   vwSelectedId = id;
   vwCurrentRound = 0;
-  vwRenderList(); // re-render to update selected state
-  const t = tnGetById(id);
-  if (!t) return;
-  // Show detail panel
+  vwDetailQuery = '';
+  const di = document.getElementById('vw-detail-search');
+  if (di) di.value = '';
+  vwRenderList();
   document.getElementById('vw-rp-empty').classList.add('hidden');
   document.getElementById('vw-rp-detail').classList.remove('hidden');
+  // Reset to pairings tab
+  vwCurrentTab = 'pairings';
+  ['pairings','standings','crosstable'].forEach(t => {
+    document.getElementById('vw-view-' + t).classList.toggle('hidden', t !== 'pairings');
+    document.getElementById('vw-tab-' + t).classList.toggle('active', t === 'pairings');
+  });
   vwRenderDetail(id);
 }
 
@@ -2697,13 +2746,7 @@ function vwRenderDetail(id) {
   document.getElementById('vw-rp-name').textContent = t.name;
   document.getElementById('vw-rp-info').textContent =
     `${sysLabel[t.system]||t.system} · ${t.tc} · ${t.players.length} thí sinh · Vòng ${t.currentRound}/${t.rounds}${t.venue?' · '+t.venue:''}`;
-  // Badges
-  const badgesEl = document.getElementById('vw-rp-badges');
-  const statusMap = {running:'🟢 Đang diễn ra',finished:'✅ Đã kết thúc',setup:'⚙️ Chuẩn bị'};
-  badgesEl.innerHTML = `<span style="background:rgba(255,255,255,.12);color:#c7d2fe;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:999px">${statusMap[t.status]||t.status}</span>`;
-  // Live badge
   document.getElementById('vw-live-badge').classList.toggle('hidden', t.status !== 'running');
-  // Render current tab
   if (vwCurrentTab === 'pairings') vwRenderPairings(t);
   else if (vwCurrentTab === 'standings') vwRenderStandings(t);
   else vwRenderCrosstable(t);
@@ -2722,47 +2765,69 @@ function vwSwitchTab(tab) {
   else vwRenderCrosstable(t);
 }
 
+function vwApplyDetailSearch() {
+  vwDetailQuery = (document.getElementById('vw-detail-search')?.value || '').trim().toLowerCase();
+  const t = tnGetById(vwSelectedId);
+  if (!t) return;
+  if (vwCurrentTab === 'pairings') vwRenderPairings(t);
+  else if (vwCurrentTab === 'standings') vwRenderStandings(t);
+}
+
 function vwRenderPairings(t) {
-  // Round tabs
   const navEl = document.getElementById('vw-round-tabs');
   if (!t.pairings.length) {
     navEl.innerHTML = '';
-    document.getElementById('vw-pairings-body').innerHTML = '<p style="color:#475569;text-align:center;padding:2rem;font-size:.85rem">Chưa có lịch thi đấu.</p>';
+    document.getElementById('vw-pairings-body').innerHTML =
+      '<p style="color:#475569;text-align:center;padding:2.5rem;font-size:.82rem">Chưa có lịch thi đấu.</p>';
     return;
   }
-  // Default to latest round
   if (vwCurrentRound >= t.pairings.length) vwCurrentRound = t.pairings.length - 1;
-  navEl.innerHTML = t.pairings.map((_,i) =>
-    `<button onclick="vwCurrentRound=${i};vwRenderPairings(tnGetById('${t.id}'))"
-      style="padding:.25rem .55rem;border-radius:.3rem;font-size:.65rem;font-weight:700;cursor:pointer;border:1.5px solid ${i===vwCurrentRound?'#f59e0b':'rgba(255,255,255,.15)'};color:${i===vwCurrentRound?'#0f172a':'#94a3b8'};background:${i===vwCurrentRound?'#f59e0b':'transparent'}">
-      V${i+1}</button>`
-  ).join('');
+
+  navEl.innerHTML = t.pairings.map((_,i) => {
+    const isActive = i === vwCurrentRound;
+    return `<button onclick="vwCurrentRound=${i};vwRenderPairings(tnGetById('${t.id}'))"
+      style="padding:.22rem .5rem;border-radius:.3rem;font-size:.65rem;font-weight:700;cursor:pointer;
+        border:1.5px solid ${isActive?'#f59e0b':'rgba(255,255,255,.12)'};
+        color:${isActive?'#0f172a':'#64748b'};
+        background:${isActive?'#f59e0b':'transparent'}">V${i+1}</button>`;
+  }).join('');
+
   const round = t.pairings[vwCurrentRound];
   const playerMap = {};
   t.players.forEach(p => { playerMap[p.id] = p; });
   const scores = tnComputeScores(t);
+  const q = vwDetailQuery;
   const done = round.filter(p=>p.result!=='*').length;
   const total = round.filter(p=>p.black!=='BYE').length;
-  let html = `<div style="padding:.25rem 0">
-    <div style="padding:.4rem .75rem;border-bottom:1px solid #1e293b;margin-bottom:.25rem">
-      <p style="color:#64748b;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em">Vòng ${vwCurrentRound+1} — ${done}/${total} ván có kết quả</p>
+
+  let html = `<div>
+    <div style="padding:.4rem .75rem;border-bottom:1px solid #1e293b;background:#0a0f1a">
+      <span style="color:#475569;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Vòng ${vwCurrentRound+1} &nbsp;·&nbsp; ${done}/${total} kết quả</span>
     </div>`;
+
   round.forEach((pair, bi) => {
-    const w = pair.white === 'BYE' ? {name:'BYE'} : (playerMap[pair.white]||{name:'?'});
-    const b = pair.black === 'BYE' ? {name:'Điểm Trắng'} : (playerMap[pair.black]||{name:'?'});
+    const w = pair.white === 'BYE' ? {name:'BYE',id:'_bye'} : (playerMap[pair.white]||{name:'?',id:pair.white});
+    const b = pair.black === 'BYE' ? {name:'Điểm Trắng',id:'_bye'} : (playerMap[pair.black]||{name:'?',id:pair.black});
+    // Filter by search
+    if (q && !w.name.toLowerCase().includes(q) && !b.name.toLowerCase().includes(q)) return;
     const wScore = tnFmtScore(scores[pair.white]?.score||0);
     const bScore = pair.black === 'BYE' ? '' : tnFmtScore(scores[pair.black]?.score||0);
     const r = pair.result;
-    const rColor = r==='1-0'?'#10b981':r==='0-1'?'#f87171':r==='½-½'?'#fbbf24':'#475569';
-    const rText = r==='*'?'—':r;
-    const wBold = r==='1-0';
-    const bBold = r==='0-1';
+    const rColor = r==='1-0'?'#10b981':r==='0-1'?'#f87171':r==='½-½'?'#fbbf24':'#334155';
+    const rText = r==='*'?'·':r;
+    const wWin = r==='1-0', bWin = r==='0-1';
     const isBye = pair.black === 'BYE';
-    html += `<div style="display:flex;align-items:center;gap:.5rem;padding:.7rem .75rem;border-bottom:1px solid #1e293b${isBye?';opacity:.5':''}">
-      <span style="color:#334155;font-size:.6rem;width:20px;text-align:center;font-weight:700;flex-shrink:0">${bi+1}</span>
-      <span style="flex:1;font-size:.82rem;color:${wBold?'#fbbf24':'#e2e8f0'};font-weight:${wBold?'800':'500'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.name} <span style="color:#475569;font-size:.62rem">(${wScore})</span></span>
-      <span style="min-width:38px;text-align:center;font-weight:900;color:${rColor};font-size:.9rem;flex-shrink:0">${rText}</span>
-      <span style="flex:1;text-align:right;font-size:.82rem;color:${bBold?'#fbbf24':'#64748b'};font-weight:${bBold?'800':'400'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.name}${bScore?` <span style='color:#475569;font-size:.62rem'>(${bScore})</span>`:''}</span>
+    const wHighlight = q && w.name.toLowerCase().includes(q);
+    const bHighlight = q && b.name.toLowerCase().includes(q);
+    html += `<div style="display:flex;align-items:center;gap:.4rem;padding:.65rem .75rem;border-bottom:1px solid #111827;${q?(wHighlight||bHighlight?'background:rgba(245,158,11,.04)':''):''}${isBye?';opacity:.45':''}">
+      <span style="color:#1e293b;font-size:.58rem;width:18px;text-align:right;flex-shrink:0">${bi+1}</span>
+      <span style="flex:1;font-size:.82rem;color:${wWin?'#fbbf24':'#cbd5e1'};font-weight:${wWin?'800':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
+        ${vwHL(w.name,q)} <span style="color:#334155;font-size:.6rem">(${wScore})</span>
+      </span>
+      <span style="min-width:36px;text-align:center;font-weight:900;color:${rColor};font-size:.88rem;flex-shrink:0">${rText}</span>
+      <span style="flex:1;text-align:right;font-size:.82rem;color:${bWin?'#fbbf24':'#475569'};font-weight:${bWin?'800':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
+        ${vwHL(b.name,q)}${bScore?` <span style="color:#334155;font-size:.6rem">(${bScore})</span>`:''}
+      </span>
     </div>`;
   });
   html += '</div>';
@@ -2778,26 +2843,31 @@ function vwRenderStandings(t) {
     if (buch !== 0) return buch;
     return (scores[b.id]?.sb||0) - (scores[a.id]?.sb||0);
   });
+  const q = vwDetailQuery;
   const medals = ['🥇','🥈','🥉'];
   let html = `<div>
-    <div style="display:flex;background:#1e293b;color:#64748b;font-size:.65rem;font-weight:700;padding:.5rem .75rem;gap:.3rem;border-bottom:2px solid #f59e0b">
-      <span style="width:28px">#</span>
+    <div style="display:flex;align-items:center;background:#1e293b;padding:.45rem .75rem;border-bottom:2px solid #f59e0b;font-size:.6rem;font-weight:700;color:#475569;gap:.25rem;flex-shrink:0">
+      <span style="width:26px">#</span>
       <span style="flex:1">Thí sinh</span>
-      <span style="width:44px;text-align:center">Pts</span>
-      <span style="width:46px;text-align:center">Buch</span>
-      <span style="width:46px;text-align:center">SB</span>
-      <span style="width:30px;text-align:center">W</span>
+      <span style="width:40px;text-align:center">Pts</span>
+      <span style="width:44px;text-align:center">Buch</span>
+      <span style="width:44px;text-align:center">SB</span>
+      <span style="width:26px;text-align:center">W</span>
     </div>`;
   sorted.forEach((p, i) => {
+    if (q && !p.name.toLowerCase().includes(q) && !p.club?.toLowerCase().includes(q)) return;
     const sc = scores[p.id] || {};
-    const bg = i===0?'rgba(245,158,11,.08)':i===1?'rgba(148,163,184,.05)':i===2?'rgba(180,100,40,.05)':'transparent';
-    html += `<div style="display:flex;align-items:center;gap:.3rem;padding:.5rem .75rem;border-bottom:1px solid #1e293b;font-size:.8rem;background:${bg}">
-      <span style="width:28px;font-size:.75rem;text-align:center">${medals[i]||i+1}</span>
-      <span style="flex:1;color:#e2e8f0;font-weight:${i<3?'700':'400'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}${p.club?`<span style="font-size:.6rem;color:#475569;margin-left:.3rem">${p.club}</span>`:''}${p.rating?`<span style="font-size:.6rem;color:#475569;margin-left:.2rem">${p.rating}</span>`:''}</span>
-      <span style="width:44px;text-align:center;font-weight:800;color:#60a5fa;font-size:.95rem">${tnFmtScore(sc.score||0)}</span>
-      <span style="width:46px;text-align:center;font-size:.68rem;color:#64748b">${tnFmtScore(sc.buchholz||0)}</span>
-      <span style="width:46px;text-align:center;font-size:.68rem;color:#64748b">${tnFmtScore(sc.sb||0)}</span>
-      <span style="width:30px;text-align:center;font-size:.72rem;color:#10b981;font-weight:700">${sc.wins||0}</span>
+    const bg = i===0?'rgba(245,158,11,.07)':i===1?'rgba(148,163,184,.04)':i===2?'rgba(180,100,40,.04)':'transparent';
+    const nameHtml = vwHL(p.name, q);
+    html += `<div style="display:flex;align-items:center;gap:.25rem;padding:.5rem .75rem;border-bottom:1px solid #111827;font-size:.78rem;background:${bg}${q&&p.name.toLowerCase().includes(q)?';box-shadow:inset 3px 0 0 #f59e0b':''}">
+      <span style="width:26px;font-size:.7rem;text-align:center">${medals[i]||i+1}</span>
+      <span style="flex:1;color:#e2e8f0;font-weight:${i<3?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
+        ${nameHtml}${p.club?`<span style="font-size:.58rem;color:#334155;margin-left:.3rem">${p.club}</span>`:''}${p.rating?`<span style="font-size:.58rem;color:#334155;margin-left:.25rem">${p.rating}</span>`:''}
+      </span>
+      <span style="width:40px;text-align:center;font-weight:800;color:#60a5fa;font-size:.9rem">${tnFmtScore(sc.score||0)}</span>
+      <span style="width:44px;text-align:center;font-size:.65rem;color:#334155">${tnFmtScore(sc.buchholz||0)}</span>
+      <span style="width:44px;text-align:center;font-size:.65rem;color:#334155">${tnFmtScore(sc.sb||0)}</span>
+      <span style="width:26px;text-align:center;font-size:.68rem;color:#10b981;font-weight:700">${sc.wins||0}</span>
     </div>`;
   });
   html += '</div>';
@@ -2819,29 +2889,34 @@ function vwRenderCrosstable(t) {
       else if (r === '½-½') { matrix[pair.white][pair.black] = '½'; matrix[pair.black][pair.white] = '½'; }
     });
   });
-  const cellColor = {
-    '1':'rgba(16,185,129,.18)', '0':'rgba(239,68,68,.15)', '½':'rgba(245,158,11,.12)', '':'transparent'
+  const cellBg = {'1':'rgba(16,185,129,.15)','0':'rgba(239,68,68,.12)','½':'rgba(245,158,11,.10)'};
+  const cellHtml = {
+    '1':'<span style="color:#10b981;font-weight:800">1</span>',
+    '0':'<span style="color:#ef4444;font-weight:800">0</span>',
+    '½':'<span style="color:#f59e0b;font-weight:700">½</span>'
   };
-  const cellText = {'1':'<span style="color:#10b981;font-weight:800">1</span>', '0':'<span style="color:#ef4444;font-weight:800">0</span>', '½':'<span style="color:#f59e0b;font-weight:700">½</span>', '':'<span style="color:#334155">·</span>'};
-  let html = `<table style="border-collapse:collapse;font-size:.68rem;color:#e2e8f0;width:100%;min-width:400px">
-    <thead><tr>
-      <th style="padding:.35rem .5rem;background:#1e293b;border:1px solid #334155;color:#64748b;text-align:left;position:sticky;left:0">#</th>
-      <th style="padding:.35rem .5rem;background:#1e293b;border:1px solid #334155;color:#64748b;text-align:left;min-width:120px;position:sticky;left:24px">Thí sinh</th>
-      ${sorted.map((_,i)=>`<th style="padding:.35rem .4rem;background:#1e293b;border:1px solid #334155;color:#64748b;text-align:center;width:28px">${i+1}</th>`).join('')}
-      <th style="padding:.35rem .5rem;background:#1e293b;border:1px solid #334155;color:#60a5fa;text-align:center;width:36px;font-weight:800">Pts</th>
+  const q = vwDetailQuery;
+  let html = `<table style="border-collapse:collapse;font-size:.68rem;color:#e2e8f0;min-width:380px;width:100%">
+    <thead><tr style="position:sticky;top:0;z-index:1">
+      <th style="padding:.3rem .4rem;background:#1e293b;border:1px solid #0f172a;color:#475569;width:22px;text-align:center">#</th>
+      <th style="padding:.3rem .5rem;background:#1e293b;border:1px solid #0f172a;color:#475569;text-align:left;min-width:110px">Thí sinh</th>
+      ${sorted.map((_,i)=>`<th style="padding:.3rem .3rem;background:#1e293b;border:1px solid #0f172a;color:#475569;text-align:center;width:26px">${i+1}</th>`).join('')}
+      <th style="padding:.3rem .4rem;background:#1e293b;border:1px solid #0f172a;color:#60a5fa;text-align:center;width:34px;font-weight:800">Pts</th>
     </tr></thead>
     <tbody>`;
   sorted.forEach((p,i) => {
     const sc = scores[p.id]||{};
-    html += `<tr style="${i%2===0?'background:#0f172a':'background:#111827'}">
-      <td style="padding:.35rem .5rem;border:1px solid #1e293b;text-align:center;color:#64748b;position:sticky;left:0;background:${i%2===0?'#0f172a':'#111827'}">${i+1}</td>
-      <td style="padding:.35rem .5rem;border:1px solid #1e293b;font-weight:600;color:#e2e8f0;position:sticky;left:24px;background:${i%2===0?'#0f172a':'#111827'};white-space:nowrap">${p.name}${p.rating?`<span style='color:#475569;font-size:.58rem;margin-left:.25rem'>${p.rating}</span>`:''}</td>
-      ${sorted.map(q => {
-        if (q.id === p.id) return `<td style="padding:.35rem .4rem;border:1px solid #1e293b;text-align:center;background:#1e293b">✕</td>`;
-        const v = matrix[p.id][q.id] ?? '';
-        return `<td style="padding:.35rem .4rem;border:1px solid #1e293b;text-align:center;background:${cellColor[v]||'transparent'}">${cellText[v]||'<span style="color:#334155">·</span>'}</td>`;
+    const matched = q && p.name.toLowerCase().includes(q);
+    const bg = matched ? 'rgba(245,158,11,.06)' : i%2===0?'#0f172a':'#111827';
+    html += `<tr style="background:${bg}${matched?';outline:1px solid rgba(245,158,11,.3)':''}">
+      <td style="padding:.3rem .4rem;border:1px solid #0a0f1a;text-align:center;color:#334155">${i+1}</td>
+      <td style="padding:.3rem .5rem;border:1px solid #0a0f1a;font-weight:${matched?'700':'500'};color:${matched?'#fbbf24':'#cbd5e1'};white-space:nowrap">${vwHL(p.name,q)}${p.rating?`<span style='color:#334155;font-size:.55rem;margin-left:.2rem'>${p.rating}</span>`:''}</td>
+      ${sorted.map(qq => {
+        if (qq.id === p.id) return `<td style="padding:.3rem;border:1px solid #0a0f1a;text-align:center;background:#1e293b;color:#334155">✕</td>`;
+        const v = matrix[p.id][qq.id] ?? '';
+        return `<td style="padding:.3rem;border:1px solid #0a0f1a;text-align:center;background:${cellBg[v]||'transparent'}">${cellHtml[v]||'<span style="color:#1e293b">·</span>'}</td>`;
       }).join('')}
-      <td style="padding:.35rem .5rem;border:1px solid #1e293b;text-align:center;font-weight:800;color:#60a5fa;font-size:.82rem">${tnFmtScore(sc.score||0)}</td>
+      <td style="padding:.3rem .4rem;border:1px solid #0a0f1a;text-align:center;font-weight:800;color:#60a5fa;font-size:.8rem">${tnFmtScore(sc.score||0)}</td>
     </tr>`;
   });
   html += '</tbody></table>';
