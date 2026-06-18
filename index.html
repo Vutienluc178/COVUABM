@@ -211,6 +211,21 @@ body.solo-view .vw-chips-strip{display:none!important}
 /* Show the solo back bar only in solo view */
 #vw-solo-bar{display:none}
 body.solo-view #vw-solo-bar{display:flex!important}
+/* ── Tournament management solo mode ── */
+body.tn-solo header,
+body.tn-solo nav.mode-nav,
+body.tn-solo #main-sidebar{display:none!important}
+body.tn-solo main{
+  padding:0!important;gap:0!important;
+  border-radius:0!important;height:100%!important;
+  max-width:100%!important;
+}
+body.tn-solo #tournament-right-panel{
+  width:100%!important;border-radius:0!important;
+  border:none!important;
+}
+#tn-solo-bar{display:none}
+body.tn-solo #tn-solo-bar{display:flex!important}
 /* Common chip style */
 .vw-chip{flex-shrink:0;padding:.3rem .65rem;border-radius:999px;font-size:.68rem;font-weight:700;cursor:pointer;border:1.5px solid #1e293b;color:#64748b;background:#1e293b;white-space:nowrap;transition:all .12s}
 .vw-chip.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
@@ -337,41 +352,28 @@ body.solo-view #vw-solo-bar{display:flex!important}
     </div>
 
     <!-- Panel: Tournament (hidden by default) -->
-    <div id="panel-tournament" class="hidden overflow-y-auto flex-1 custom-scrollbar flex flex-col">
+    <div id="panel-tournament" class="hidden flex-1 flex flex-col overflow-hidden" style="background:#0f172a">
 
-      <!-- Header -->
-      <div class="bg-gradient-to-r from-blue-900 to-blue-800 px-3 pt-2.5 pb-2">
-        <div class="flex items-center justify-between mb-1.5">
-          <div>
-            <p class="text-xs font-bold text-blue-100 uppercase tracking-wide">🏆 Quản Lý Giải Đấu</p>
-            <p class="text-xs text-blue-300">Swiss · Vòng tròn · Loại trực tiếp</p>
-          </div>
+      <!-- Compact admin header -->
+      <div style="padding:.65rem .75rem;border-bottom:1px solid #1e293b;background:#0f172a;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+          <span style="font-size:.7rem;font-weight:800;color:#f59e0b;letter-spacing:.06em;text-transform:uppercase">⚙️ Quản Lý Giải</span>
+          <div id="tn-admin-badge" style="display:flex;align-items:center;gap:.35rem"></div>
         </div>
-        <!-- Admin badge -->
-        <div id="tn-admin-badge" class="flex items-center gap-1.5 mb-2"></div>
-        <!-- Action bar -->
-        <div class="flex gap-1 flex-wrap">
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.5rem">
           <button onclick="pwPrompt('create','Tạo giải đấu mới',tnShowCreate)"
-            class="tn-btn text-xs" style="padding:.28rem .6rem;font-size:.65rem;background:#f59e0b;color:#0f172a;border:none;font-weight:800">
-            ＋ Tạo Giải
-          </button>
+            style="background:#f59e0b;color:#0f172a;border:none;border-radius:.35rem;padding:.3rem .6rem;font-size:.65rem;font-weight:800;cursor:pointer">＋ Tạo Giải</button>
           <button onclick="tnToggleSheetsConfig()"
-            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
-            <span id="sheets-status-dot">⬜</span> Sheets
-          </button>
+            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#94a3b8;border-radius:.35rem;padding:.3rem .5rem;font-size:.65rem;cursor:pointer"><span id="sheets-status-dot">⬜</span> Sheets</button>
           <button onclick="pwPrompt('sync','Đồng bộ lên Google Sheets',tnSyncToSheets)"
-            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
-            ☁️ Lưu
-          </button>
+            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#94a3b8;border-radius:.35rem;padding:.3rem .5rem;font-size:.65rem;cursor:pointer">☁️ Lưu</button>
           <button onclick="tnLoadFromSheets()"
-            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)">
-            ⬇️ Tải
-          </button>
-          <button onclick="tnToggleViewMenu()"
-            class="tn-btn text-xs" style="padding:.28rem .55rem;font-size:.65rem;background:#1d4ed8;color:white;border:none;font-weight:700">
-            🏆 Xem Giải
-          </button>
+            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#94a3b8;border-radius:.35rem;padding:.3rem .5rem;font-size:.65rem;cursor:pointer">⬇️ Tải</button>
         </div>
+        <input id="tn-search" type="text" placeholder="🔍 Tìm giải đấu..."
+          oninput="tnRenderList()"
+          style="width:100%;padding:.4rem .6rem;background:#1e293b;border:1.5px solid #334155;border-radius:.45rem;color:#e2e8f0;font-size:.72rem;outline:none;box-sizing:border-box">
+        <p id="tn-status-line" style="font-size:.58rem;color:#475569;margin-top:.35rem">Chưa có giải nào</p>
       </div>
 
       <!-- Google Sheets Config Panel (ẩn mặc định) -->
@@ -430,22 +432,8 @@ body.solo-view #vw-solo-bar{display:flex!important}
         </div>
       </div>
 
-      <!-- Menu Xem Giải Đấu (ẩn mặc định) -->
-      <div id="tn-view-menu" class="hidden" style="background:#1e293b;border-bottom:2px solid #1d4ed8">
-        <div class="flex items-center justify-between px-3 py-2 border-b border-slate-700">
-          <p class="text-xs font-bold text-white">🏆 Xem Giải Đấu</p>
-          <div class="flex gap-1">
-            <button onclick="tnLoadAndRefreshViewMenu()" class="text-xs text-blue-300 hover:text-white" style="background:none;border:none;cursor:pointer">⬇️ Tải mới</button>
-            <button onclick="tnToggleViewMenu()" class="text-slate-400 hover:text-white font-bold text-sm ml-2" style="background:none;border:none;cursor:pointer">✕</button>
-          </div>
-        </div>
-        <div id="tn-view-menu-body" class="overflow-y-auto" style="max-height:280px"></div>
-      </div>
-
       <!-- Danh sách giải (quản lý) -->
-      <div id="tn-list" class="flex-1 p-2">
-        <p class="text-xs text-slate-400 italic text-center mt-4 px-4">Chưa có giải đấu nào.<br>Nhấn <b>＋ Tạo Giải</b> để bắt đầu!</p>
-      </div>
+      <div id="tn-list" class="overflow-y-auto custom-scrollbar flex-1" style="padding:.4rem"></div>
     </div>
 
     <!-- Panel: Xem Giải (hidden by default) -->
@@ -596,6 +584,12 @@ body.solo-view #vw-solo-bar{display:flex!important}
 
   <!-- Tournament Right Panel -->
   <div id="tournament-right-panel" class="hidden w-full md:w-2/3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden border border-slate-200">
+    <!-- SOLO: back bar (shown only in tn-solo mode) -->
+    <div id="tn-solo-bar" style="align-items:center;justify-content:space-between;gap:.5rem;padding:.5rem .75rem;background:#0f172a;border-bottom:1px solid #334155;flex-shrink:0">
+      <button onclick="tnExitSolo()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#e2e8f0;border-radius:.35rem;padding:.3rem .75rem;font-size:.75rem;font-weight:700;cursor:pointer">← Danh sách</button>
+      <span id="tn-solo-title" style="font-size:.8rem;font-weight:800;color:#fff;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 .5rem"></span>
+      <div style="width:80px"></div>
+    </div>
     <!-- Tournament header -->
     <div id="tn-rp-header" class="bg-gradient-to-r from-slate-900 to-blue-900 text-white px-4 py-3">
       <div class="flex items-start justify-between mb-2">
@@ -1329,6 +1323,8 @@ function switchMode(mode) {
   }
   // Exit viewer auto-refresh when leaving viewer mode
   if (currentMode === 'viewer' && mode !== 'viewer') vwExit();
+  // Exit tournament solo when leaving tournament mode
+  if (currentMode === 'tournament' && mode !== 'tournament' && tnSoloMode) tnExitSolo();
   currentMode = mode;
   stopAutoPlay();
 
@@ -3378,6 +3374,7 @@ let tnData = { tournaments: [] };
 let tnActive = null; // active tournament id
 let tnCurrentView = 'players';
 let tnCurrentRound = 0;
+let tnSoloMode = false;
 
 function tnLoad() {
   try {
@@ -3544,28 +3541,45 @@ function tnViewMenuSelect(id) {
 
 function tnRenderList() {
   const el = document.getElementById('tn-list');
-  if (!tnData.tournaments.length) {
-    el.innerHTML = '<p class="text-xs text-slate-400 italic text-center mt-4 px-4">Chưa có giải đấu nào.<br>Nhấn <b>+ Tạo Giải</b> để bắt đầu!</p>';
+  const query = (document.getElementById('tn-search')?.value || '').toLowerCase().trim();
+  const sl = document.getElementById('tn-status-line');
+  const all = tnData.tournaments;
+  const filtered = query ? all.filter(t =>
+    t.name.toLowerCase().includes(query) ||
+    (t.venue||'').toLowerCase().includes(query) ||
+    (t.arbiter||'').toLowerCase().includes(query)
+  ) : all;
+  if (sl) sl.textContent = all.length ? `${filtered.length}/${all.length} giải` : 'Chưa có giải nào — nhấn ＋ Tạo Giải';
+  if (!filtered.length) {
+    el.innerHTML = all.length
+      ? '<p style="color:#475569;font-size:.72rem;text-align:center;padding:1.5rem 1rem;font-style:italic">Không tìm thấy giải phù hợp</p>'
+      : '<p style="color:#475569;font-size:.72rem;text-align:center;padding:1.5rem 1rem;font-style:italic">Chưa có giải đấu nào.</p>';
     return;
   }
-  el.innerHTML = tnData.tournaments.map(t => {
-    const sysLabel = {swiss:'Swiss',roundrobin:'Vòng Tròn',knockout:'Loại Trực Tiếp'}[t.system]||t.system;
-    const statusLabel = {setup:'⚙️ Cài đặt',running:'▶ Đang diễn ra',finished:'✅ Kết thúc'}[t.status]||t.status;
-    const statusClass = {setup:'status-setup',running:'status-running',finished:'status-finished'}[t.status]||'status-setup';
+  const statusIcon = {setup:'⚙️',running:'▶',finished:'✅'};
+  const statusColor = {setup:'#64748b',running:'#22c55e',finished:'#3b82f6'};
+  const sysLabel = {swiss:'Swiss',roundrobin:'Vòng Tròn',knockout:'Loại Trực Tiếp'};
+  el.innerHTML = filtered.map(t => {
     const isActive = tnActive === t.id;
-    return `<div class="tourn-card ${isActive?'active-tourn':''}" onclick="tnOpenTournament('${t.id}')">
-      <div class="flex justify-between items-start mb-1">
-        <span class="font-bold text-sm text-slate-800">${t.name}</span>
-        <button onclick="event.stopPropagation();tnConfirmDelete('${t.id}')" class="text-slate-300 hover:text-red-400 text-xs ml-1" title="Xóa">✕</button>
+    const pct = t.rounds > 0 ? Math.round((t.currentRound / t.rounds) * 100) : 0;
+    const sts = t.status;
+    return `<div onclick="tnOpenTournament('${t.id}')" style="
+        background:${isActive ? '#1e3a5f' : '#111827'};
+        border:1.5px solid ${isActive ? '#3b82f6' : '#1e293b'};
+        border-radius:.5rem;padding:.65rem .75rem;margin-bottom:.4rem;
+        cursor:pointer;min-height:48px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem;margin-bottom:.3rem">
+        <p style="font-size:.78rem;font-weight:800;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${t.name}</p>
+        <button onclick="event.stopPropagation();tnConfirmDelete('${t.id}')" title="Xóa"
+          style="background:none;border:none;color:#334155;font-size:.75rem;cursor:pointer;padding:.1rem .25rem;flex-shrink:0;line-height:1">✕</button>
       </div>
-      <div class="flex gap-1.5 flex-wrap">
-        <span class="tourn-status ${statusClass}">${statusLabel}</span>
-        <span class="tourn-sys-badge">${sysLabel}</span>
-        <span class="tourn-sys-badge">${t.tc}</span>
-        <span class="tourn-sys-badge">${t.players.length} TS</span>
-        <span class="tourn-sys-badge">${t.currentRound}/${t.rounds} VĐ</span>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:${sts==='running'?'.35rem':'0'}">
+        <span style="font-size:.62rem;font-weight:700;color:${statusColor[sts]||'#94a3b8'}">${statusIcon[sts]||''} ${sts==='running'?`Vòng ${t.currentRound}/${t.rounds}`:sts==='setup'?'Cài đặt':'Kết thúc'}</span>
+        <span style="font-size:.6rem;color:#475569">· ${sysLabel[t.system]||t.system}</span>
+        <span style="font-size:.6rem;color:#475569">· ${t.players.length} thí sinh</span>
       </div>
-      ${t.date ? `<p class="text-xs text-slate-400 mt-1">📅 ${t.date}${t.venue?' · '+t.venue:''}</p>` : ''}
+      ${sts==='running' ? `<div style="background:#1e293b;border-radius:999px;height:3px;overflow:hidden"><div style="background:#3b82f6;height:100%;width:${pct}%"></div></div>` : ''}
+      ${t.date ? `<p style="font-size:.58rem;color:#334155;margin-top:.3rem">📅 ${t.date}${t.venue?' · '+t.venue:''}</p>` : ''}
     </div>`;
   }).join('');
 }
@@ -3578,7 +3592,8 @@ function tnConfirmDelete(id) {
   tnSave();
   if (tnActive === id) {
     tnActive = null;
-    document.getElementById('tournament-right-panel').classList.add('hidden');
+    if (tnSoloMode) tnExitSolo();
+    else document.getElementById('tournament-right-panel').classList.add('hidden');
   }
   tnRenderList();
 }
@@ -3628,6 +3643,22 @@ function tnOpenTournament(id) {
 
   tnCurrentRound = t.currentRound > 0 ? t.currentRound - 1 : 0;
   tnSwitchView(t.status === 'setup' ? 'players' : 'pairings');
+  tnEnterSolo(id);
+}
+
+function tnEnterSolo(id) {
+  tnSoloMode = true;
+  document.getElementById('tournament-right-panel').classList.remove('hidden');
+  const t = tnGetById(id);
+  if (t) document.getElementById('tn-solo-title').textContent = t.name;
+  document.body.classList.add('tn-solo');
+}
+
+function tnExitSolo() {
+  tnSoloMode = false;
+  document.body.classList.remove('tn-solo');
+  document.getElementById('tournament-right-panel').classList.add('hidden');
+  tnRenderList();
 }
 
 function tnSwitchView(view) {
