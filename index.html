@@ -3864,9 +3864,7 @@ function tnCreateTournament() {
   });
   tnRenderList();
   tnOpenTournament(t.id);
-  showToast('🏆 Đã tạo: ' + name + ' — Đang đồng bộ lên Sheets...', 'toast-level');
-  // Tự động đồng bộ lên Google Sheets ngay sau khi tạo
-  tnSyncToSheets();
+  showToast('🏆 Đã tạo giải: ' + name, 'toast-level');
 }
 
 // ---- MENU XEM GIẢI ĐẤU (legacy stubs - menu removed, kept for compat) ----
@@ -4612,9 +4610,8 @@ $(document).ready(function() {
 </script>
 
 <!-- ═══ Create Tournament Modal (bottom-sheet) ═══ -->
-<div id="tn-create-modal" class="hidden">
-  <div style="position:absolute;inset:0" onclick="tnHideCreate()"></div>
-  <div id="tn-create-modal-inner">
+<div id="tn-create-modal" class="hidden" onclick="if(event.target===this)tnHideCreate()">
+  <div id="tn-create-modal-inner" style="position:relative;z-index:1">
     <!-- Handle bar -->
     <div style="width:44px;height:4px;background:#d1d5db;border-radius:999px;margin:0 auto .85rem"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
