@@ -263,8 +263,8 @@ body.solo-view #vw-solo-bar{display:flex!important}
 
 <!-- Mode Nav -->
 <nav class="mode-nav">
-  <button class="mode-btn" id="mode-btn-viewer" onclick="switchMode('viewer')" style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;font-weight:800;border:none">🏆 Xem Giải</button>
-  <button class="mode-btn active" id="mode-btn-opening" onclick="switchMode('opening')">📖 Khai Cuộc</button>
+  <button class="mode-btn active" id="mode-btn-viewer" onclick="switchMode('viewer')" style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;font-weight:800;border:none">🏆 Xem Giải</button>
+  <button class="mode-btn" id="mode-btn-opening" onclick="switchMode('opening')">📖 Khai Cuộc</button>
   <button class="mode-btn" id="mode-btn-tactics" onclick="switchMode('tactics')">⚔️ Chiến Thuật</button>
   <button class="mode-btn" id="mode-btn-endgame" onclick="switchMode('endgame')">🏁 Tàn Cuộc</button>
   <button class="mode-btn" id="mode-btn-tournament" onclick="switchMode('tournament')">🏆 Thi Đấu</button>
@@ -1318,10 +1318,15 @@ function showToast(msg, cls) {
 }
 
 // ===================== TRẠNG THÁI TOÀN CỤC =====================
-let currentMode = 'opening'; // 'opening' | 'tactics' | 'endgame' | 'tournament' | 'viewer'
+let currentMode = 'viewer'; // 'opening' | 'tactics' | 'endgame' | 'tournament' | 'viewer'
 
 // ===================== CHUYỂN MODE =====================
 function switchMode(mode) {
+  // 🔒 Tournament mode requires password
+  if (mode === 'tournament' && !pwGranted) {
+    pwPrompt('tournament-access', 'Quản Lý Giải Đấu — Nhập mật khẩu', () => switchMode('tournament'));
+    return; // don't change mode until password is correct
+  }
   // Exit viewer auto-refresh when leaving viewer mode
   if (currentMode === 'viewer' && mode !== 'viewer') vwExit();
   currentMode = mode;
@@ -4186,6 +4191,13 @@ $(document).ready(function() {
   tnLoad();
   tnLoadGasUrl();
   checkUrlParams();
+
+  // Default mode: Xem Giải — unless URL params already handle navigation
+  const _urlHasMode = new URLSearchParams(window.location.search).get('view') ||
+                      new URLSearchParams(window.location.search).get('spectator');
+  if (!_urlHasMode) {
+    switchMode('viewer');
+  }
 
   const firstCat = document.querySelector('#menu-container > div');
   if (firstCat) {
